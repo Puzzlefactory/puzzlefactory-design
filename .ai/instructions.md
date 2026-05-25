@@ -2,15 +2,12 @@
 
 These instructions apply to agents working in this repo.
 
-## Project Goal
-
-[Project goal goes here — keep this in sync with context.md.]
-
 ## Working Rules
 
 - Prefer small, scoped changes.
 - Read context before writing code.
 - Update the relevant workstream when current state or next actions change.
+- Write a dated context record in `.ai/context/` when a session produces strategic insight with cross-session value that does not fit a workstream or decisions entry. Create the directory and a `README.md` index on first use.
 
 ## Naming
 
@@ -19,13 +16,11 @@ These instructions apply to agents working in this repo.
 
 ## Before Editing
 
-- Read `.ai/context.md`.
-- Read `.ai/decisions.md`.
-- Read the relevant `.ai/workstreams/*.md`.
-- Classify the work using `.ai/tasks/README.md`.
-- Create a disposable task file for Tier 1 and Tier 2 work.
-- Update the relevant workstream when the current state or next action changes.
-- Delete completed task files after durable findings are copied to the workstream.
+1. Read `.ai/context.md`.
+2. Read `.ai/decisions.md`.
+3. Read the relevant `.ai/workstreams/*.md`. If no workstream is relevant to the current work, proceed without — create one if the work meets the criteria in the Workstreams section below.
+4. Classify the work using `.ai/tasks/README.md`. If it is Tier 1 or Tier 2, create a disposable task file before proceeding.
+5. On completion, update the relevant workstream and delete the task file after copying any durable findings.
 
 ## Workstreams
 
@@ -40,7 +35,7 @@ Do not create a workstream for:
 - Single contained tasks (use a disposable task file instead).
 - Work that is complete with no ongoing successor thread.
 
-Update workstreams in-place — overwrite Current State and Next Actions as things change. Do not append. Add completed work to the Index in `.ai/workstreams/README.md`.
+Update workstreams in-place — overwrite Current State and Next Actions as things change. Do not append. Add new workstreams to the index in `.ai/workstreams/README.md`.
 
 ## What Not To Store
 
