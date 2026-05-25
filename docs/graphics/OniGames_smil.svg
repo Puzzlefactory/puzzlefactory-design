@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OniGames Robot Logo — SMIL Animated SVG
+  Pure SVG animation using SMIL <animate>, <animateTransform>, and <set>.
+  No JavaScript. No HTML. Open directly in a browser.
+
+  20-second cycle, repeatCount="indefinite":
+    t= 1.5s  — blink
+    t= 5.0s  — eye scan right
+    t= 8.0s  — eye flicker
+    t=11.0s  — electric spark + horn jolt
+    t=14.0s  — blink
+    t=17.0s  — eye scan left
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 440 160"
+     width="880" height="320">
+
+  <defs>
+    <radialGradient id="badgeBg" cx="50%" cy="25%" r="72%">
+      <stop offset="0%"   stop-color="#200606"/>
+      <stop offset="100%" stop-color="#060101"/>
+    </radialGradient>
+    <linearGradient id="redFace" x1="18%" y1="0%" x2="82%" y2="100%">
+      <stop offset="0%"   stop-color="#FF6666"/>
+      <stop offset="45%"  stop-color="#EE2828"/>
+      <stop offset="100%" stop-color="#AA1010"/>
+    </linearGradient>
+    <linearGradient id="redHorn" x1="25%" y1="0%" x2="75%" y2="100%">
+      <stop offset="0%"   stop-color="#DD2222"/>
+      <stop offset="100%" stop-color="#6A0808"/>
+    </linearGradient>
+    <filter id="eyeGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="mouthGlowFilter" x="-30%" y="-50%" width="160%" height="200%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="sparkGlow" x="-120%" y="-120%" width="340%" height="340%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Dark background -->
+  <rect width="440" height="160" fill="#1A1A1A"/>
+
+  <!-- Badge -->
+  <rect x="8" y="8" width="144" height="144" rx="22" fill="url(#badgeBg)"/>
+
+  <!--
+    HORN GROUP
+    <animateTransform> jolts the horns upward when the spark fires at t=11s.
+    calcMode="discrete" gives hard frame-by-frame movement (no interpolation).
+  -->
+  <g>
+    <animateTransform attributeName="transform" type="translate"
+      values="0,0; 0,0; 0,-2; 0,0; 0,-1.5; 0,0; 0,-2; 0,0; 0,-1; 0,0; 0,0"
+      keyTimes="0;0.549;0.55;0.556;0.561;0.566;0.572;0.577;0.582;0.587;1"
+      calcMode="discrete"
+      dur="20s" repeatCount="indefinite"/>
+
+    <path d="M54,52 L54,40 L56,40 L57,30 L62,16 L67,30 L68,40 L70,40 L70,52 Z" fill="url(#redHorn)"/>
+    <line x1="54" y1="40" x2="70" y2="40" stroke="#4A0606" stroke-width="1" opacity="0.9"/>
+    <line x1="56" y1="30" x2="68" y2="30" stroke="#4A0606" stroke-width="1" opacity="0.9"/>
+    <rect x="57" y="43" width="3" height="7" rx="1" fill="#EE4444" opacity="0.62"/>
+    <rect x="57" y="32" width="3" height="6" rx="1" fill="#EE4444" opacity="0.62"/>
+
+    <path d="M90,52 L90,40 L92,40 L93,30 L98,16 L103,30 L104,40 L106,40 L106,52 Z" fill="url(#redHorn)"/>
+    <line x1="90" y1="40" x2="106" y2="40" stroke="#4A0606" stroke-width="1" opacity="0.9"/>
+    <line x1="92" y1="30" x2="104" y2="30" stroke="#4A0606" stroke-width="1" opacity="0.9"/>
+    <rect x="93" y="43" width="3" height="7" rx="1" fill="#EE4444" opacity="0.62"/>
+    <rect x="93" y="32" width="3" height="6" rx="1" fill="#EE4444" opacity="0.62"/>
+  </g>
+
+  <!-- Faceplate -->
+  <rect x="43" y="48" width="74" height="74" rx="5" fill="url(#redFace)"/>
+  <line x1="43" y1="62" x2="117" y2="62" stroke="#5A0A0A" stroke-width="0.8" opacity="0.5"/>
+  <line x1="80" y1="48" x2="80"  y2="122" stroke="#5A0A0A" stroke-width="1"   opacity="0.35"/>
+  <circle cx="49"  cy="54"  r="2.5" fill="#5A0A0A"/>
+  <circle cx="111" cy="54"  r="2.5" fill="#5A0A0A"/>
+  <circle cx="49"  cy="116" r="2.5" fill="#5A0A0A"/>
+  <circle cx="111" cy="116" r="2.5" fill="#5A0A0A"/>
+  <rect x="50" y="58" width="26" height="6" rx="1" fill="#8A0808"/>
+  <rect x="84" y="58" width="26" height="6" rx="1" fill="#8A0808"/>
+
+  <!-- LEFT EYE — static outer rings, no animation needed -->
+  <circle cx="63" cy="76" r="12"   fill="#1A0404"/>
+  <circle cx="63" cy="76" r="10.5" fill="#3A0606"/>
+  <circle cx="63" cy="76" r="9"    fill="#0D0000"/>
+  <circle cx="63" cy="76" r="7"    fill="#330000"/>
+  <circle cx="63" cy="76" r="5.5"  fill="#550000"/>
+
+  <!--
+    LEFT GLOW (cx=63) — two animations inside:
+      1. <animate attributeName="opacity"> — handles blink (t=1.5s, t=14s)
+         and flicker (t=8s) in a single keyframe sequence
+      2. <animate attributeName="cx"> — handles scan right (t=5s) and
+         scan left (t=17s)
+    Both run on the same 20s dur with repeatCount="indefinite".
+  -->
+  <circle cx="63" cy="76" r="4" fill="#FF2200" filter="url(#eyeGlow)">
+    <animate attributeName="opacity"
+      values="1;1;0;0;1;1;0.05;1;0.05;1;0.1;1;0.05;1;1;0;0;1;1"
+      keyTimes="0;0.074;0.075;0.085;0.095;0.399;0.4;0.4025;0.405;0.4075;0.41;0.4125;0.415;0.4175;0.699;0.7;0.71;0.72;1"
+      dur="20s" repeatCount="indefinite"/>
+    <animate attributeName="cx"
+      values="63;63;67;67;63;63;59;59;63;63"
+      keyTimes="0;0.25;0.2625;0.2775;0.29;0.85;0.8625;0.8775;0.89;1"
+      dur="20s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- LEFT PUPIL (cx=63) — blink opacity only, same cx scan -->
+  <circle cx="63" cy="76" r="1.8" fill="#1A0000">
+    <animate attributeName="opacity"
+      values="1;1;0;0;1;1;0;0;1;1"
+      keyTimes="0;0.074;0.075;0.085;0.095;0.699;0.7;0.71;0.72;1"
+      dur="20s" repeatCount="indefinite"/>
+    <animate attributeName="cx"
+      values="63;63;67;67;63;63;59;59;63;63"
+      keyTimes="0;0.25;0.2625;0.2775;0.29;0.85;0.8625;0.8775;0.89;1"
+      dur="20s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- LEFT HIGHLIGHT 1 (cx=59) — scan only, no blink -->
+  <circle cx="59" cy="72" r="1.8" fill="white" opacity="0.65">
+    <animate attributeName="cx"
+      values="59;59;63;63;59;59;55;55;59;59"
+      keyTimes="0;0.25;0.2625;0.2775;0.29;0.85;0.8625;0.8775;0.89;1"
+      dur="20s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- LEFT HIGHLIGHT 2 (cx=67) — scan only -->
+  <circle cx="67" cy="80" r="0.9" fill="white" opacity="0.28">
+    <animate attributeName="cx"
+      values="67;67;71;71;67;67;63;63;67;67"
+      keyTimes="0;0.25;0.2625;0.2775;0.29;0.85;0.8625;0.8775;0.89;1"
+      dur="20s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- RIGHT EYE — static outer rings -->
+  <circle cx="97" cy="76" r="12"   fill="#1A0404"/>
+  <circle cx="97" cy="76" r="10.5" fill="#3A0606"/>
+  <circle cx="97" cy="76" r="9"    fill="#0D0000"/>
+  <circle cx="97" cy="76" r="7"    fill="#330000"/>
+  <circle cx="97" cy="76" r="5.5"  fill="#550000"/>
+
+  <!-- RIGHT GLOW (cx=97) -->
+  <circle cx="97" cy="76" r="4" fill="#FF2200" filter="url(#eyeGlow)">
+    <animate attributeName="opacity"
+      values="1;1;0;0;1;1;0.05;1;0.05;1;0.1;1;0.05;1;1;0;0;1;1"
+      keyTimes="0;0.074;0.075;0.085;0.095;0.399;0.4;0.4025;0.405;0.4075;0.41;0.4125;0.415;0.4175;0.699;0.7;0.71;0.72;1"
+      dur="20s" repeatCount="indefinite"/>
+    <animate attributeName="cx"
+      values="97;97;101;101;97;97;93;93;97;97"
+      keyTimes="0;0.25;0.2625;0.2775;0.29;0.85;0.8625;0.8775;0.89;1"
+      dur="20s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- RIGHT PUPIL (cx=97) -->
+  <circle cx="97" cy="76" r="1.8" fill="#1A0000">
+    <animate attributeName="opacity"
+      values="1;1;0;0;1;1;0;0;1;1"
+      keyTimes="0;0.074;0.075;0.085;0.095;0.699;0.7;0.71;0.72;1"
+      dur="20s" repeatCount="indefinite"/>
+    <animate attributeName="cx"
+      values="97;97;101;101;97;97;93;93;97;97"
+      keyTimes="0;0.25;0.2625;0.2775;0.29;0.85;0.8625;0.8775;0.89;1"
+      dur="20s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- RIGHT HIGHLIGHT 1 (cx=93) -->
+  <circle cx="93" cy="72" r="1.8" fill="white" opacity="0.65">
+    <animate attributeName="cx"
+      values="93;93;97;97;93;93;89;89;93;93"
+      keyTimes="0;0.25;0.2625;0.2775;0.29;0.85;0.8625;0.8775;0.89;1"
+      dur="20s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- RIGHT HIGHLIGHT 2 (cx=101) -->
+  <circle cx="101" cy="80" r="0.9" fill="white" opacity="0.28">
+    <animate attributeName="cx"
+      values="101;101;105;105;101;101;97;97;101;101"
+      keyTimes="0;0.25;0.2625;0.2775;0.29;0.85;0.8625;0.8775;0.89;1"
+      dur="20s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Jagged mouth -->
+  <path d="
+    M54,96 L57,103 L60,96 L64,101 L68,96
+    L72,105 L76,96 L79,102 L82,96
+    L86,106 L90,96 L93,102 L96,96
+    L100,104 L103,96 L106,96
+    L106,118
+    L103,111 L100,118 L97,112 L94,118
+    L91,109 L88,118 L85,112 L82,118
+    L79,110 L76,118 L73,111 L70,118
+    L67,109 L64,118 L61,112 L58,118 L55,118 L54,118 Z
+  " fill="#140000"/>
+  <rect x="62" y="104" width="36" height="8" rx="2"
+        fill="#FF3300" opacity="0.28" filter="url(#mouthGlowFilter)"/>
+
+  <!-- Cheek panels -->
+  <rect x="44"  y="84" width="10" height="12" rx="2" fill="#8A0808" opacity="0.5"/>
+  <rect x="106" y="84" width="10" height="12" rx="2" fill="#8A0808" opacity="0.5"/>
+
+  <!-- Divider -->
+  <line x1="170" y1="34" x2="170" y2="126" stroke="#2A2A2A" stroke-width="1"/>
+
+  <!-- Wordmark -->
+  <text x="186" y="90"
+    font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif"
+    font-size="70" font-weight="900"
+    fill="white" stroke="black" stroke-width="4"
+    stroke-linejoin="round" paint-order="stroke fill"
+    letter-spacing="-1">ONI</text>
+  <text x="190" y="125"
+    font-family="Arial, 'Helvetica Neue', sans-serif"
+    font-size="26" font-weight="300"
+    fill="#E82020" letter-spacing="13">GAMES</text>
+
+  <!--
+    ELECTRIC SPARK — two paths alternate between horn tips (62,17) → (98,17).
+    calcMode="discrete" gives hard on/off flashes with no interpolation.
+    The second path is offset by half a flash interval to create alternation.
+  -->
+  <path d="M62,17 L67,10 L73,20 L79,9 L85,18 L91,11 L98,17"
+        stroke="#38C8FF" stroke-width="1.8" stroke-linecap="round"
+        fill="none" filter="url(#sparkGlow)" opacity="0">
+    <animate attributeName="opacity"
+      values="0;0;1;0;1;0;1;0;1;0;0"
+      keyTimes="0;0.549;0.55;0.554;0.558;0.562;0.566;0.571;0.576;0.581;1"
+      calcMode="discrete"
+      dur="20s" repeatCount="indefinite"/>
+  </path>
+
+  <path d="M62,17 L68,22 L74,11 L80,21 L86,10 L92,20 L98,17"
+        stroke="#A0EEFF" stroke-width="0.7" stroke-linecap="round"
+        fill="none" opacity="0">
+    <animate attributeName="opacity"
+      values="0;0;1;0;1;0;1;0;1;0;0"
+      keyTimes="0;0.552;0.553;0.557;0.561;0.565;0.569;0.574;0.579;0.584;1"
+      calcMode="discrete"
+      dur="20s" repeatCount="indefinite"/>
+  </path>
+
+</svg>
