@@ -1,27 +1,44 @@
 # Stack
 
-## Component API Shape
+## Monorepo
 
-[What is the component primitive? Web Components, React, both, or something else? Record the decision and the reason once it is made.]
+Turborepo. Package namespace is `@ds/`. Workspaces are `packages/@ds/*` and `apps/*`.
+
+## Color Space
+
+OKLCH throughout the engine and token layers. HSL was evaluated and rejected — perceptually non-uniform, not suitable for programmatic ramp generation. Agents should not reopen this choice.
 
 ## Token Format
 
-[How are design tokens defined, stored, and distributed? CSS custom properties, Style Dictionary, JSON, or a combination?]
+- Primitive and semantic tokens output as CSS custom properties
+- Six output files per theme variant, applied via `data-theme` attribute
+- sRGB and P3 variants generated for all tokens
+- P3 tokens use `color(display-p3 R G B)` string format — not `oklch()` — required for `@supports` guard to be meaningful
+- Token themes: light, dark, high-contrast light (`data-theme="high-contrast"`), high-contrast dark (`data-theme="high-contrast-dark"`)
 
-## Build Tooling
+## TypeScript
 
-[What builds and packages the design system for consumption? Record the toolchain and any version baselines worth preserving.]
+Strict configuration. Full type definitions required for all engine inputs, outputs, and error types. Avoid `any`.
+
+## Dependency Policy
+
+`@ds/engine` must have zero runtime external dependencies — enforced at package level. The input normalization layer is the sole permitted exception and must have no transitive dependencies of its own. APCA must be implemented from the published specification, not pulled from npm.
+
+## Component API Shape
+
+Not yet decided. Deferred until the color engine layer is complete. Web Components (Custom Elements) are a candidate for design system distribution — they present a clean attribute/slot/event API consumable by any framework.
 
 ## Figma Integration
 
-[How does design-to-code and code-to-design flow work for this project? What is the role of the Figma MCP?]
+Figma MCP is available in Claude Code sessions and can read design files, inspect tokens, and search the design system. The approach for bidirectional design/code sync is not yet defined.
 
 ## Distribution
 
-[How is the design system consumed by other projects? npm package, monorepo package, CDN, or direct import?]
+Not yet decided. Deferred until the component layer architecture is settled.
 
 ## Open Questions
 
-[Stack questions that are not yet settled. Move items out of here when a decision is made.]
-
--
+- Component API shape — Web Components, React, or both?
+- Distribution mechanism — npm, CDN, monorepo-only?
+- CSS fallback layer for browsers without `oklch()` support (explicitly out of scope for current phase, to be revisited)
+- Bundle mode for consumers who cannot control CSS load order (explicitly out of scope for current phase)

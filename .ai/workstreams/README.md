@@ -6,4 +6,4 @@ Canonical rule: active workstreams live in `.ai/workstreams/`. Use `workstream-t
 
 ## Index
 
-[none yet]
+- [color-engine.md](color-engine.md) — Color Engine & Token Architecture: generative OKLCH color engine producing primitive and semantic tokens for light, dark, and high-contrast themes

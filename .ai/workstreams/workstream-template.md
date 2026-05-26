@@ -32,6 +32,10 @@ This workstream is substantially complete when:
 
 -
 
+## Key Decisions
+
+- **[Decision name]:** [What was decided]. [What was rejected and why, if relevant.]
+
 ## Key Files
 
 -
