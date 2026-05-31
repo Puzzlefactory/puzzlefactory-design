@@ -13,14 +13,27 @@ Build a design system with a generative color engine as its foundation. The engi
 
 ## Repository Layout
 
-- `packages/@ds/engine/` — generative color engine (not yet created)
-- `packages/@ds/tokens/` — CSS custom property output layer (not yet created)
-- `apps/kitchen-sink/` — verification and visual regression app (not yet created)
+```
+packages/
+  @ds/engine/         // generative color engine, APCA — zero runtime dependencies (not yet created)
+  @ds/tokens/         // semantic roles, CSS custom property output layer (not yet created)
+  @ds/layout/         // Stack, Box, Cluster, Sidebar, Grid, Frame, Cover, Switcher (not yet created)
+  @ds/primitives/     // forked headless behavior layer (not yet created)
+  @ds/components/     // styled components (not yet created)
+  @ds/icons/          // icon system (not yet created)
+  @ds/themes/         // pre-built configurations, generator utilities (not yet created)
+
+apps/
+  docs/               // documentation app (not yet created)
+  kitchen-sink/       // verification and visual regression app (not yet created)
+```
+
 - `.ai/` — durable agent context
 
 ## Important Artifacts
 
-- `.ai/workstreams/color-engine.md` — full color engine specification including scope, implementation order, key decisions, and completion shape
+- `docs/color-engine-spec.md` — full implementation specification for the color engine (revision 5, finalized)
+- `.ai/workstreams/color-engine.md` — color engine workstream: scope, implementation order, key decisions, completion shape
 
 ## Current Phase
 

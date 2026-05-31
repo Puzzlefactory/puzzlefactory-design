@@ -86,6 +86,7 @@ This workstream is substantially complete when:
 
 ## Key Files
 
+- `docs/color-engine-spec.md` — full implementation specification (revision 5, finalized)
 - `packages/@ds/engine/` — not yet created
 - `packages/@ds/tokens/` — not yet created
 - `apps/kitchen-sink/` — not yet created
