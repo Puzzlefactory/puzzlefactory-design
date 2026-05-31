@@ -543,7 +543,7 @@ status-danger-border        → status-danger-l-7
 
 ## CSS Custom Property Output Format
 
-A separate output layer in `@ds/tokens` consumes EngineOutput and produces CSS. The engine does not produce CSS.
+A separate output layer in `@puzzlefactory/tokens` consumes EngineOutput and produces CSS. The engine does not produce CSS.
 
 **Namespace:** Configurable via the `namespace` input argument. Default `ds`. All custom properties are prefixed: `--ds-surface-base`, `--ds-text-primary`, etc.
 
@@ -638,20 +638,20 @@ Monorepo using Turborepo.
 
 ```
 packages/
-  @ds/engine          // Color engine, APCA — zero runtime dependencies
-  @ds/tokens          // Semantic roles, CSS output layer, theme application
-  @ds/layout          // Stack, Box, Cluster, Sidebar, Grid, Frame, Cover, Switcher
-  @ds/primitives      // Forked headless behavior layer
-  @ds/components      // Styled components
-  @ds/icons           // Icon system
-  @ds/themes          // Pre-built configurations, generator utilities
+  color-engine  // @puzzlefactory/color-engine; APCA — zero runtime dependencies
+  tokens        // @puzzlefactory/tokens; semantic roles, CSS output layer, theme application
+  layout        // @puzzlefactory/layout; Stack, Box, Cluster, Sidebar, Grid, Frame, Cover, Switcher
+  primitives    // @puzzlefactory/primitives; forked headless behavior layer
+  components    // @puzzlefactory/components; styled components
+  icons         // @puzzlefactory/icons; icon system
+  themes        // @puzzlefactory/themes; pre-built configurations, generator utilities
 
 apps/
   docs/
   kitchen-sink/
 ```
 
-`@ds/engine` has zero runtime external dependencies. Enforced. The input normalization layer at the boundary may use a minimal conversion utility with no transitive dependencies — sole permitted exception.
+`@puzzlefactory/color-engine` has zero runtime external dependencies. Enforced. The input normalization layer at the boundary may use a minimal conversion utility with no transitive dependencies — sole permitted exception.
 
 ---
 

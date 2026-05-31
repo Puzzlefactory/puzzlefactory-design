@@ -2,7 +2,7 @@
 
 Status: active
 Created: 2026-05-25
-Last Updated: 2026-05-25
+Last Updated: 2026-05-31
 
 This workstream covers the design and implementation of the generative color engine that is the foundation of the design system. The engine takes a seed color, harmony strategy, and mood argument and produces a complete set of primitive and semantic tokens for light, dark, high contrast light, and high contrast dark themes — with no designer intervention required. Everything downstream (components, layout, theming) depends on this layer being correct.
 
@@ -29,17 +29,18 @@ Out of scope:
 - Escape hatch mechanism (deferred to component layer workstream)
 - CSS fallback layer for browsers without oklch() support
 - Bundle mode for consumers who cannot control CSS load order
-- Fork maintenance protocol for @ds/primitives (belongs to component layer workstream)
+- Fork maintenance protocol for @puzzlefactory/primitives (belongs to component layer workstream)
 
 ## Current State
 
 Architecture is fully specified in the workstream document. No code has been written. The specification has been through five review cycles addressing: APCA threshold corrections, smoothstep formula completeness, P3 generation logic, ramp dead zone resolution, signed Lc polarity handling, semantic-to-ramp-step reference mappings, high contrast dark mode, monochromatic harmony naming, full TypeScript type definitions, CSS output format, and error type hierarchy.
 
-The monorepo shell exists at `/design-system` with Turborepo. `@ds/engine` package has not been scaffolded yet.
+The monorepo shell exists at `/design-system` with Turborepo root config and placeholder folders under `packages/*`. `apps/kitchen-sink` is a real React + Vite + React Router 7 workspace with a static verification shell for future engine output. `packages/color-engine` exists only as a README placeholder for `@puzzlefactory/color-engine`; no package manifest, source tree, tests, or implementation have been scaffolded yet.
 
 ## Next Actions
 
-- Scaffold `@ds/engine` package in monorepo with TypeScript config and zero-dependency enforcement
+- Turn `packages/color-engine` into the real `@puzzlefactory/color-engine` package with package manifest, TypeScript config, source/test structure, and zero-dependency enforcement
+- Wire the first engine API slice into `apps/kitchen-sink` after the package can produce real output
 - Implement seed input normalization layer (hex, rgb(), hsl(), oklch() → OKLCH)
 - Implement sRGB gamut test and chroma reduction algorithm
 - Implement APCA from specification, verify against published sample values
@@ -47,14 +48,14 @@ The monorepo shell exists at `/design-system` with Turborepo. `@ds/engine` packa
 - Implement harmony hue derivation
 - Implement semantic mapping layer with reference step mappings
 - Implement assertion suite
-- Implement CSS output layer in `@ds/tokens`
+- Implement CSS output layer in `@puzzlefactory/tokens`
 - Wire engine API and verify EngineOutput shape against TypeScript types
 
 ## Completion Shape
 
 This workstream is substantially complete when:
 
-- `@ds/engine` accepts a seed + harmony + mood and returns a valid EngineOutput with no TypeScript errors
+- `@puzzlefactory/color-engine` accepts a seed + harmony + mood and returns a valid EngineOutput with no TypeScript errors
 - All six CSS output files are generated correctly for a known seed
 - APCA implementation passes all published sample values
 - Assertion suite catches a known failing token pair and a known polarity error
@@ -64,7 +65,7 @@ This workstream is substantially complete when:
 ## Blockers / Constraints
 
 - APCA must be implemented from the published specification at git.apcacontrast.com — no npm dependency permitted
-- `@ds/engine` must have zero runtime external dependencies — enforced at package level
+- `@puzzlefactory/color-engine` must have zero runtime external dependencies — enforced at package level
 - The input normalization layer at the engine boundary is the sole permitted exception and must have no transitive dependencies of its own
 - Amber status hue (H 65) may be structurally unable to achieve Lc 45 at typical background lightness — Lc 40 floor tolerance applies to warning only, engine emits STATUS_CONTRAST_LIMIT warning
 
@@ -87,6 +88,6 @@ This workstream is substantially complete when:
 ## Key Files
 
 - `docs/color-engine-spec.md` — full implementation specification (revision 5, finalized)
-- `packages/@ds/engine/` — not yet created
-- `packages/@ds/tokens/` — not yet created
-- `apps/kitchen-sink/` — not yet created
+- `packages/color-engine/` — placeholder exists; target package name `@puzzlefactory/color-engine`
+- `packages/tokens/` — placeholder exists; target package name `@puzzlefactory/tokens`
+- `apps/kitchen-sink/` — React + Vite + React Router 7 verification shell exists

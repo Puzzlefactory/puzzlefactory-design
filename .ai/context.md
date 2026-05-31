@@ -7,25 +7,27 @@ Build a design system with a generative color engine as its foundation. The engi
 ## Current Shape
 
 - Turborepo monorepo shell exists at the repo root
-- Package namespace is `@ds/`
+- Package namespace is `@puzzlefactory`
 - Color engine architecture is fully specified and through five review cycles — no code written yet
-- `@ds/engine`, `@ds/tokens`, and `apps/kitchen-sink` have not been scaffolded
+- Root workspace config exists with `packages/*` and `apps/*`
+- Placeholder folders exist for all planned packages and the docs app
+- `apps/kitchen-sink` is now a real React + Vite + React Router 7 workspace with a static verification shell; no color-engine behavior is implemented or faked yet
 
 ## Repository Layout
 
 ```
 packages/
-  @ds/engine/         // generative color engine, APCA — zero runtime dependencies (not yet created)
-  @ds/tokens/         // semantic roles, CSS custom property output layer (not yet created)
-  @ds/layout/         // Stack, Box, Cluster, Sidebar, Grid, Frame, Cover, Switcher (not yet created)
-  @ds/primitives/     // forked headless behavior layer (not yet created)
-  @ds/components/     // styled components (not yet created)
-  @ds/icons/          // icon system (not yet created)
-  @ds/themes/         // pre-built configurations, generator utilities (not yet created)
+  color-engine/  // @puzzlefactory/color-engine; generative color engine, APCA — zero runtime dependencies (placeholder only)
+  tokens/        // @puzzlefactory/tokens; semantic roles, CSS custom property output layer (placeholder only)
+  layout/        // @puzzlefactory/layout; Stack, Box, Cluster, Sidebar, Grid, Frame, Cover, Switcher (placeholder only)
+  primitives/    // @puzzlefactory/primitives; forked headless behavior layer (placeholder only)
+  components/    // @puzzlefactory/components; styled components (placeholder only)
+  icons/         // @puzzlefactory/icons; icon system (placeholder only)
+  themes/        // @puzzlefactory/themes; pre-built configurations, generator utilities (placeholder only)
 
 apps/
-  docs/               // documentation app (not yet created)
-  kitchen-sink/       // verification and visual regression app (not yet created)
+  docs/               // documentation app (placeholder only)
+  kitchen-sink/       // React + Vite + React Router 7 verification shell
 ```
 
 - `.ai/` — durable agent context
@@ -37,7 +39,7 @@ apps/
 
 ## Current Phase
 
-Pre-implementation. The color engine architecture is fully specified. The immediate next step is scaffolding `@ds/engine` and beginning implementation in the order defined in the workstream's Next Actions. Component layer work is explicitly deferred until the engine layer is complete and verified.
+Pre-implementation for the color engine. The color engine architecture is fully specified. `apps/kitchen-sink` exists as a static verification shell so the engine can be inspected once implemented. The immediate next engine step is turning `packages/color-engine` from a placeholder into the real `@puzzlefactory/color-engine` package and beginning implementation in the order defined in the workstream's Next Actions. Component layer work is explicitly deferred until the engine layer is complete and verified.
 
 ## Resume Guidance
 

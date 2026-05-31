@@ -1,3 +1,12 @@
 # Agent task files are disposable and must not be committed
 .ai/tasks/*.md
 !.ai/tasks/README.md
+
+# Dependencies
+node_modules/
+
+# Build and cache output
+dist/
+build/
+.turbo/
+*.tsbuildinfo
