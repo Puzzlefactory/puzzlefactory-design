@@ -270,6 +270,13 @@ export {
   type RgbGamut,
 } from "./gamut.js";
 export {
+  deriveHarmony,
+  isHarmonyPaletteSlot,
+  type DeriveHarmonyOptions,
+  type HarmonyPaletteDescriptor,
+  type HarmonyPaletteSlot,
+} from "./harmony.js";
+export {
   detectSeedFormat,
   normalizeParsedSeed,
   normalizeSeed,
