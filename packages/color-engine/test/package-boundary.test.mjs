@@ -31,3 +31,7 @@ test("package exposes the built public entrypoint", () => {
   });
   assert.equal(packageJson.types, "./dist/index.d.ts");
 });
+
+test("package test script includes type-level API checks", () => {
+  assert.match(packageJson.scripts.test, /tsconfig\.test\.json/);
+});

@@ -8,7 +8,7 @@ Runtime dependencies should remain zero except for the explicitly allowed seed-n
 
 ## Status
 
-Package boundary scaffold only. The public API currently exports type placeholders so downstream work can establish imports without implying implemented engine behavior.
+Public API and type model scaffold only. The package exports the planned type surface for the color engine, plus a behavior-free entry point function type. It does not implement seed parsing, color conversion, ramp generation, APCA, semantic mapping, or CSS output.
 
 ## Scripts
 
