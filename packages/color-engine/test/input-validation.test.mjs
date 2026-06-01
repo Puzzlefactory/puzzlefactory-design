@@ -3,7 +3,11 @@ import test from "node:test";
 import {
   ColorEngineValidationError,
   detectSeedFormat,
+  normalizeSeed,
+  parseHexSeed,
+  parseHslSeed,
   parseOklchSeed,
+  parseRgbSeed,
   validateEngineInput,
   validateOklchSeed,
   validateTaperConfig,
@@ -13,7 +17,11 @@ test("detectSeedFormat recognizes supported seed syntax", () => {
   assert.equal(detectSeedFormat("#abc").format, "hex");
   assert.equal(detectSeedFormat("#aabbcc").format, "hex");
   assert.equal(detectSeedFormat("rgb(12, 34, 255)").format, "rgb");
+  assert.equal(detectSeedFormat("rgb(12.5 34 255)").format, "rgb");
   assert.equal(detectSeedFormat("hsl(220, 60%, 40%)").format, "hsl");
+  assert.equal(detectSeedFormat("hsl(220deg 60% 40%)").format, "hsl");
+  assert.equal(detectSeedFormat("hsl(0.5turn 60% 40%)").format, "hsl");
+  assert.equal(detectSeedFormat("hsl(480, 60%, 40%)").format, "hsl");
   assert.equal(detectSeedFormat("oklch(0.55 0.12 245)").format, "oklch");
 });
 
@@ -35,6 +43,54 @@ test("detectSeedFormat rejects unsupported seed syntax", () => {
     "INVALID_SEED_FORMAT",
     "seed",
   );
+});
+
+test("seed channel parsers normalize accepted sRGB syntax", () => {
+  assert.deepEqual(parseHexSeed("#0f8"), {
+    r: 0,
+    g: 1,
+    b: 0.5333333333333333,
+  });
+  assert.deepEqual(parseHexSeed("#008000"), {
+    r: 0,
+    g: 128 / 255,
+    b: 0,
+  });
+  assert.deepEqual(parseRgbSeed("rgb(0, 128, 0)"), {
+    r: 0,
+    g: 128 / 255,
+    b: 0,
+  });
+  assert.deepEqual(parseRgbSeed("rgb(0 128.5 0)"), {
+    r: 0,
+    g: 128.5 / 255,
+    b: 0,
+  });
+  assertApproximatelyRgb(parseHslSeed("hsl(120, 100%, 25.0980392157%)"), {
+    r: 0,
+    g: 128 / 255,
+    b: 0,
+  });
+  assertApproximatelyRgb(parseHslSeed("hsl(0.3333333333turn 100% 25.0980392157%)"), {
+    r: 0,
+    g: 128 / 255,
+    b: 0,
+  });
+});
+
+test("normalizeSeed converts accepted sRGB seed formats to OKLCH", () => {
+  const green = {
+    l: 0.51975,
+    c: 0.17686,
+    h: 142.4953,
+  };
+
+  assertApproximatelyOklch(normalizeSeed("#008000"), green);
+  assertApproximatelyOklch(normalizeSeed("rgb(0, 128, 0)"), green);
+  assertApproximatelyOklch(normalizeSeed("rgb(0 128 0)"), green);
+  assertApproximatelyOklch(normalizeSeed("hsl(120, 100%, 25.0980392157%)"), green);
+  assertApproximatelyOklch(normalizeSeed("hsl(120deg 100% 25.0980392157%)"), green);
+  assertApproximatelyOklch(normalizeSeed("hsl(480, 100%, 25.0980392157%)"), green);
 });
 
 test("parseOklchSeed parses and normalizes hue", () => {
@@ -86,6 +142,14 @@ test("validateEngineInput reports achromatic OKLCH before harmony errors", () =>
   );
 });
 
+test("validateEngineInput reports achromatic normalized seeds before harmony errors", () => {
+  assertValidationError(
+    () => validateEngineInput({ seed: "#000000", harmony: "bad" }),
+    "ACHROMATIC_SEED",
+    "seed",
+  );
+});
+
 test("validateEngineInput reports invalid harmony after valid seed", () => {
   assertValidationError(
     () => validateEngineInput({ seed: "oklch(0.55 0.12 30)", harmony: "bad" }),
@@ -121,14 +185,18 @@ test("validateEngineInput returns parsed OKLCH seed validation result", () => {
   });
 });
 
-test("validateEngineInput recognizes accepted but not-yet-normalized seed formats", () => {
+test("validateEngineInput returns normalized OKLCH for accepted sRGB seed formats", () => {
   const result = validateEngineInput({
-    seed: "#abcdef",
+    seed: "#008000",
     harmony: "analogous",
   });
 
   assert.equal(result.seedFormat.format, "hex");
-  assert.equal(result.oklchSeed, undefined);
+  assertApproximatelyOklch(result.oklchSeed.normalizedSeed, {
+    l: 0.51975,
+    c: 0.17686,
+    h: 142.4953,
+  });
 });
 
 test("validateEngineInput validates override status hue shape", () => {
@@ -211,4 +279,16 @@ function assertValidationError(fn, code, field) {
       error.code === code &&
       error.field === field,
   );
+}
+
+function assertApproximatelyRgb(actual, expected, epsilon = 0.0000001) {
+  assert.equal(Math.abs(actual.r - expected.r) <= epsilon, true);
+  assert.equal(Math.abs(actual.g - expected.g) <= epsilon, true);
+  assert.equal(Math.abs(actual.b - expected.b) <= epsilon, true);
+}
+
+function assertApproximatelyOklch(actual, expected, epsilon = 0.0001) {
+  assert.equal(Math.abs(actual.l - expected.l) <= epsilon, true);
+  assert.equal(Math.abs(actual.c - expected.c) <= epsilon, true);
+  assert.equal(Math.abs(actual.h - expected.h) <= epsilon, true);
 }

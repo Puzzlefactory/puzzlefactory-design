@@ -11,6 +11,7 @@ import type {
 import { ColorEngineValidationError } from "./errors.js";
 import {
   detectSeedFormat,
+  normalizeParsedSeed,
   parseOklchSeed,
   validateOklchSeed,
   type OklchSeedValidationResult,
@@ -20,7 +21,7 @@ import {
 export interface InputValidationResult {
   readonly input: EngineInput;
   readonly seedFormat: ParsedSeedFormat;
-  readonly oklchSeed?: OklchSeedValidationResult;
+  readonly oklchSeed: OklchSeedValidationResult;
 }
 
 const HARMONY_STRATEGIES = new Set<HarmonyStrategy>([
@@ -66,10 +67,11 @@ export function validateEngineInput(input: unknown): InputValidationResult {
 
   validateSeedValue(input.seed);
   const seedFormat = detectSeedFormat(input.seed);
-  const oklchSeed =
+  const normalizedSeed =
     seedFormat.format === "oklch"
-      ? validateOklchSeed(parseOklchSeed(seedFormat.value))
-      : undefined;
+      ? parseOklchSeed(seedFormat.value)
+      : normalizeParsedSeed(seedFormat);
+  const oklchSeed = validateOklchSeed(normalizedSeed);
 
   validateHarmony(input.harmony);
   validateMood(input.mood);
@@ -78,17 +80,10 @@ export function validateEngineInput(input: unknown): InputValidationResult {
 
   const typedInput = input as unknown as EngineInput;
 
-  if (oklchSeed) {
-    return {
-      input: typedInput,
-      seedFormat,
-      oklchSeed,
-    };
-  }
-
   return {
     input: typedInput,
     seedFormat,
+    oklchSeed,
   };
 }
 

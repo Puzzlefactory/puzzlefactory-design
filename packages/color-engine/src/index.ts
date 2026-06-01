@@ -126,7 +126,19 @@ export interface SrgbColor {
   readonly b: number;
 }
 
+export interface LinearSrgbColor {
+  readonly r: number;
+  readonly g: number;
+  readonly b: number;
+}
+
 export interface DisplayP3Color {
+  readonly r: number;
+  readonly g: number;
+  readonly b: number;
+}
+
+export interface LinearDisplayP3Color {
   readonly r: number;
   readonly g: number;
   readonly b: number;
@@ -247,13 +259,43 @@ export type CreateColorEngineTheme = (input: EngineInput) => EngineOutput;
 
 export { ColorEngineValidationError } from "./errors.js";
 export {
+  clampRgbToGamut,
+  isInDisplayP3Gamut,
+  isInSrgbGamut,
+  isRgbInGamut,
+  oklchToLinearDisplayP3,
+  oklchToLinearSrgb,
+  reduceChromaToGamut,
+  type GamutMappingResult,
+  type RgbGamut,
+} from "./gamut.js";
+export {
   detectSeedFormat,
+  normalizeParsedSeed,
+  normalizeSeed,
+  parseHexSeed,
+  parseHslSeed,
   parseOklchSeed,
+  parseRgbSeed,
+  srgbToOklch,
   validateOklchSeed,
   type OklchSeedValidationResult,
   type ParsedSeedFormat,
   type SeedFormat,
 } from "./seed.js";
+export {
+  DEFAULT_TAPER_CONFIG,
+  applyDarkHueShift,
+  darkRampLightness,
+  generateRamp,
+  lightRampLightness,
+  moodScale,
+  resolveTaperConfig,
+  smoothstep,
+  type ColorRamp,
+  type GenerateRampOptions,
+  type RampStep,
+} from "./ramp.js";
 export {
   validateEngineInput,
   validateTaperConfig,
