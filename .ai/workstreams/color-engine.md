@@ -39,16 +39,27 @@ The monorepo shell exists at `/design-system` with Turborepo root config and pla
 
 ## Next Actions
 
-- Implement seed input normalization layer for hex, rgb(), and hsl() → OKLCH
-- Implement sRGB gamut test and chroma reduction algorithm
-- Implement APCA from specification, verify against published sample values
-- Implement OKLCH ramp generator with smoothstep chroma taper
-- Implement harmony hue derivation
-- Implement semantic mapping layer with reference step mappings
-- Implement assertion suite
-- Implement CSS output layer in `@puzzlefactory/tokens`
-- Wire engine API and verify EngineOutput shape against TypeScript types
-- Wire the first engine API slice into `apps/kitchen-sink` after the package can produce real output
+- Use the Slice Backlog IDs below when generating work authorization prompts from `.ai/prompt-templates/work-authorization.md`.
+- Do not store generated one-off work authorization prompts in `.ai/`; keep reusable wording in `.ai/prompt-templates/` and durable sequencing here.
+- Next recommended slice: `CE-01`.
+
+## Slice Backlog
+
+Use these IDs as shorthand for future work authorization prompts.
+
+| ID | Slice | Scope Summary | Stop Before |
+| --- | --- | --- | --- |
+| `CE-01` | Seed normalization | Convert `#rgb`, `#rrggbb`, `rgb()`, and `hsl()` inputs to `OklchValue`; keep existing `oklch()` parser path; add fixture tests. | Gamut mapping, ramps, harmony, APCA, semantic mapping, kitchen-sink wiring |
+| `CE-02` | Gamut utilities | Add sRGB/P3 conversion checks and chroma reduction at constant L/H with tests from known fixtures. | Ramp generation, APCA assertions, token assembly |
+| `CE-03` | Ramp generation | Generate light/dark OKLCH ramps with smoothstep chroma taper and mood scaling. | Harmony derivation, semantic mapping, APCA assertions, CSS output |
+| `CE-04` | Harmony derivation | Implement complementary, analogous, triadic, split-complementary, and monochromatic hue sets. | Ramp generation changes, semantic mapping, status/neutral token assembly |
+| `CE-05` | Primitive token assembly | Assemble palette, status, and neutral primitive token names and color values from normalized seed, harmony hues, and ramps. | Semantic role mapping, APCA assertions, CSS output |
+| `CE-06` | Semantic mapping | Map primitives to semantic roles for light, dark, high contrast, and high contrast dark variants. | APCA implementation, assertion enforcement, CSS output package |
+| `CE-07` | APCA implementation | Implement APCA from the published specification with fixture tests and no runtime dependency. | Assertion suite policy, token generation changes, kitchen-sink wiring |
+| `CE-08` | Assertion suite | Validate text, UI, non-text contrast, warning behavior, and signed polarity errors against generated semantic pairs. | CSS output, kitchen-sink visual integration |
+| `CE-09` | Engine output integration | Wire `createColorEngineTheme(input): EngineOutput`, metadata, warnings, and validation/normalization/generation flow. | `@puzzlefactory/tokens` package implementation, kitchen-sink visual wiring |
+| `CE-10` | Token CSS output | Implement `@puzzlefactory/tokens` CSS custom property output layer for the six specified output files. | Component styling, docs app, broad theming package work |
+| `CE-11` | Kitchen-sink engine wiring | Connect real engine output to the existing kitchen-sink verification shell. | Marketing/docs content, component library implementation |
 
 ## Completion Shape
 
