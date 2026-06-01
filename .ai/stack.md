@@ -14,7 +14,7 @@
 
 ### `@puzzlefactory/color-engine`
 
-Status: API/type-model scaffold only. Target runtime is a TypeScript library. Current exports define the public API type surface and behavior-free entry point function type; no engine behavior is implemented.
+Status: early validation implementation. Target runtime is a TypeScript library. Current exports define the public API type surface, behavior-free entry point function type, validation error class, input validation helpers, seed format detection, and OKLCH seed parsing. Full color normalization and theme generation are not implemented.
 
 Runtime dependencies must remain zero except for the explicitly allowed seed-normalization boundary utility, if one is selected.
 
@@ -22,7 +22,7 @@ Build/test scripts:
 
 - `build`: `tsc -p tsconfig.json`
 - `typecheck`: `tsc -p tsconfig.json --noEmit`
-- `test`: TypeScript API-shape checks plus Node test runner package-boundary checks
+- `test`: builds `dist`, then runs TypeScript API-shape checks plus Node test runner package-boundary and input-validation checks
 
 #### Color Space
 

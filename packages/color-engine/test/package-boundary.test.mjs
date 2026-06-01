@@ -35,3 +35,11 @@ test("package exposes the built public entrypoint", () => {
 test("package test script includes type-level API checks", () => {
   assert.match(packageJson.scripts.test, /tsconfig\.test\.json/);
 });
+
+test("package test script builds before runtime checks", () => {
+  assert.match(packageJson.scripts.test, /npm run build/);
+});
+
+test("package test script includes runtime validation checks", () => {
+  assert.match(packageJson.scripts.test, /node --test test\/\*\.test\.mjs/);
+});

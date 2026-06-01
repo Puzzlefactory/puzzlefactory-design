@@ -13,7 +13,7 @@ import type {
   ThemeVariant,
   ValidationError,
   WarningCode,
-} from "../src/index";
+} from "../src/index.js";
 
 type Assert<T extends true> = T;
 type IsAssignable<T, U> = T extends U ? true : false;

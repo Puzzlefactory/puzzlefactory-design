@@ -2,7 +2,7 @@
 
 Status: active
 Created: 2026-05-25
-Last Updated: 2026-05-31
+Last Updated: 2026-06-01
 
 This workstream covers the design and implementation of the generative color engine that is the foundation of the design system. The engine takes a seed color, harmony strategy, and mood argument and produces a complete set of primitive and semantic tokens for light, dark, high contrast light, and high contrast dark themes — with no designer intervention required. Everything downstream (components, layout, theming) depends on this layer being correct.
 
@@ -33,13 +33,13 @@ Out of scope:
 
 ## Current State
 
-Architecture is fully specified in the workstream document. No engine behavior has been written. The specification has been through five review cycles addressing: APCA threshold corrections, smoothstep formula completeness, P3 generation logic, ramp dead zone resolution, signed Lc polarity handling, semantic-to-ramp-step reference mappings, high contrast dark mode, monochromatic harmony naming, full TypeScript type definitions, CSS output format, and error type hierarchy.
+Architecture is fully specified in the workstream document. Generation behavior has not been written yet. The specification has been through five review cycles addressing: APCA threshold corrections, smoothstep formula completeness, P3 generation logic, ramp dead zone resolution, signed Lc polarity handling, semantic-to-ramp-step reference mappings, high contrast dark mode, monochromatic harmony naming, full TypeScript type definitions, CSS output format, and error type hierarchy.
 
-The monorepo shell exists at `/design-system` with Turborepo root config and placeholder folders under `packages/*`. `apps/kitchen-sink` is a real React + Vite + React Router 7 workspace with a static verification shell for future engine output. `packages/color-engine` is now a real `@puzzlefactory/color-engine` workspace package with package manifest, strict TypeScript config, source/test structure, concrete public API/type-model exports, and package-boundary tests enforcing zero runtime dependencies. No engine behavior has been implemented yet.
+The monorepo shell exists at `/design-system` with Turborepo root config and placeholder folders under `packages/*`. `apps/kitchen-sink` is a real React + Vite + React Router 7 workspace with a static verification shell for future engine output. `packages/color-engine` is now a real `@puzzlefactory/color-engine` workspace package with package manifest, strict TypeScript config, source/test structure, concrete public API/type-model exports, input validation utilities, OKLCH seed parsing, and package-boundary tests enforcing zero runtime dependencies. Full color normalization, theme generation, APCA, semantic mapping, and CSS output have not been implemented yet.
 
 ## Next Actions
 
-- Implement seed input normalization layer (hex, rgb(), hsl(), oklch() → OKLCH)
+- Implement seed input normalization layer for hex, rgb(), and hsl() → OKLCH
 - Implement sRGB gamut test and chroma reduction algorithm
 - Implement APCA from specification, verify against published sample values
 - Implement OKLCH ramp generator with smoothstep chroma taper

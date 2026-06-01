@@ -8,17 +8,17 @@ Build a design system with a generative color engine as its foundation. The engi
 
 - Turborepo monorepo shell exists at the repo root
 - Package namespace is `@puzzlefactory`
-- Color engine architecture is fully specified and through five review cycles — no engine behavior written yet
+- Color engine architecture is fully specified and through five review cycles; package-level API, validation behavior, and OKLCH seed parsing are now started
 - Root workspace config exists with `packages/*` and `apps/*`
 - Placeholder folders exist for all planned packages and the docs app
-- `packages/color-engine` is now a real `@puzzlefactory/color-engine` workspace package with concrete public API/type-model exports and type-focused package-boundary tests; no engine behavior is implemented yet
+- `packages/color-engine` is now a real `@puzzlefactory/color-engine` workspace package with concrete public API/type-model exports, input validation utilities, OKLCH seed parsing, and package-boundary tests; no color conversion, ramp generation, APCA, semantic mapping, or theme output is implemented yet
 - `apps/kitchen-sink` is now a real React + Vite + React Router 7 workspace with a static verification shell; no color-engine behavior is implemented or faked yet
 
 ## Repository Layout
 
 ```
 packages/
-  color-engine/  // @puzzlefactory/color-engine; API/type-model scaffold only, zero runtime dependencies
+  color-engine/  // @puzzlefactory/color-engine; API/types plus input validation and OKLCH seed parsing, zero runtime dependencies
   tokens/        // @puzzlefactory/tokens; semantic roles, CSS custom property output layer (placeholder only)
   layout/        // @puzzlefactory/layout; Stack, Box, Cluster, Sidebar, Grid, Frame, Cover, Switcher (placeholder only)
   primitives/    // @puzzlefactory/primitives; forked headless behavior layer (placeholder only)
@@ -40,7 +40,7 @@ apps/
 
 ## Current Phase
 
-Pre-implementation for engine behavior. The color engine architecture is fully specified. `packages/color-engine` exists as an API/type-model scaffold with zero runtime dependencies. `apps/kitchen-sink` exists as a static verification shell so the engine can be inspected once implemented. The immediate next engine step is beginning implementation in the order defined in the workstream's Next Actions. Component layer work is explicitly deferred until the engine layer is complete and verified.
+Early implementation for engine validation behavior. The color engine architecture is fully specified. `packages/color-engine` has API/types, input validation utilities, OKLCH seed parsing, and zero runtime dependencies. `apps/kitchen-sink` exists as a static verification shell so the engine can be inspected once implemented. The immediate next engine step is full seed normalization for hex, rgb(), and hsl() inputs. Component layer work is explicitly deferred until the engine layer is complete and verified.
 
 ## Resume Guidance
 

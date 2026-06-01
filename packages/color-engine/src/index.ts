@@ -244,3 +244,18 @@ export interface EngineOutput {
 }
 
 export type CreateColorEngineTheme = (input: EngineInput) => EngineOutput;
+
+export { ColorEngineValidationError } from "./errors.js";
+export {
+  detectSeedFormat,
+  parseOklchSeed,
+  validateOklchSeed,
+  type OklchSeedValidationResult,
+  type ParsedSeedFormat,
+  type SeedFormat,
+} from "./seed.js";
+export {
+  validateEngineInput,
+  validateTaperConfig,
+  type InputValidationResult,
+} from "./validate.js";
