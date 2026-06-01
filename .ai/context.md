@@ -8,17 +8,17 @@ Build a design system with a generative color engine as its foundation. The engi
 
 - Turborepo monorepo shell exists at the repo root
 - Package namespace is `@puzzlefactory`
-- Color engine architecture is fully specified and through five review cycles; package-level API, validation behavior, seed normalization, gamut utilities, ramp generation, and harmony derivation are now started
+- Color engine architecture is fully specified and through five review cycles; package-level API, validation behavior, seed normalization, gamut utilities, ramp generation, harmony derivation, and primitive token assembly are now started
 - Root workspace config exists with `packages/*` and `apps/*`
 - Placeholder folders exist for all planned packages and the docs app
-- `packages/color-engine` is now a real `@puzzlefactory/color-engine` workspace package with concrete public API/type-model exports, input validation utilities, seed normalization to OKLCH, gamut checking/reduction utilities, ramp generation, harmony derivation, and package-boundary tests; no primitive token assembly, APCA, semantic mapping, or theme output is implemented yet
+- `packages/color-engine` is now a real `@puzzlefactory/color-engine` workspace package with concrete public API/type-model exports, input validation utilities, seed normalization to OKLCH, gamut checking/reduction utilities, ramp generation, harmony derivation, primitive token assembly, and package-boundary tests; no semantic mapping, APCA, assertions, engine output integration, or theme output is implemented yet
 - `apps/kitchen-sink` is now a real React + Vite + React Router 7 workspace with a static verification shell; no color-engine behavior is implemented or faked yet
 
 ## Repository Layout
 
 ```
 packages/
-  color-engine/  // @puzzlefactory/color-engine; API/types plus input validation, seed normalization, gamut utilities, ramp generation, and harmony derivation, zero runtime dependencies
+  color-engine/  // @puzzlefactory/color-engine; API/types plus input validation, seed normalization, gamut utilities, ramp generation, harmony derivation, and primitive token assembly, zero runtime dependencies
   tokens/        // @puzzlefactory/tokens; semantic roles, CSS custom property output layer (placeholder only)
   layout/        // @puzzlefactory/layout; Stack, Box, Cluster, Sidebar, Grid, Frame, Cover, Switcher (placeholder only)
   primitives/    // @puzzlefactory/primitives; forked headless behavior layer (placeholder only)
@@ -40,7 +40,7 @@ apps/
 
 ## Current Phase
 
-Early implementation for engine validation, normalization, gamut, ramp, and harmony behavior. The color engine architecture is fully specified. `packages/color-engine` has API/types, input validation utilities, seed normalization to OKLCH, gamut checking/reduction utilities, ramp generation, harmony derivation, and zero runtime dependencies. `apps/kitchen-sink` exists as a static verification shell so the engine can be inspected once implemented. The immediate next engine step is primitive token assembly. Component layer work is explicitly deferred until the engine layer is complete and verified.
+Early implementation for engine validation, normalization, gamut, ramp, harmony, and primitive token behavior. The color engine architecture is fully specified. `packages/color-engine` has API/types, input validation utilities, seed normalization to OKLCH, gamut checking/reduction utilities, ramp generation, harmony derivation, primitive token assembly, and zero runtime dependencies. `apps/kitchen-sink` exists as a static verification shell so the engine can be inspected once implemented. The immediate next engine step is semantic token mapping. Component layer work is explicitly deferred until the engine layer is complete and verified.
 
 ## Resume Guidance
 

@@ -35,14 +35,14 @@ Out of scope:
 
 Architecture is fully specified in the workstream document. Generation behavior has not been written yet. The specification has been through five review cycles addressing: APCA threshold corrections, smoothstep formula completeness, P3 generation logic, ramp dead zone resolution, signed Lc polarity handling, semantic-to-ramp-step reference mappings, high contrast dark mode, monochromatic harmony naming, full TypeScript type definitions, CSS output format, and error type hierarchy.
 
-The monorepo shell exists at `/design-system` with Turborepo root config and placeholder folders under `packages/*`. `apps/kitchen-sink` is a real React + Vite + React Router 7 workspace with a static verification shell for future engine output. `packages/color-engine` is now a real `@puzzlefactory/color-engine` workspace package with package manifest, strict TypeScript config, source/test structure, concrete public API/type-model exports, input validation utilities, seed normalization to OKLCH, gamut checking/reduction utilities, ramp generation, harmony derivation, and package-boundary tests enforcing zero runtime dependencies. Primitive token assembly, theme generation, APCA, semantic mapping, and CSS output have not been implemented yet.
+The monorepo shell exists at `/design-system` with Turborepo root config and placeholder folders under `packages/*`. `apps/kitchen-sink` is a real React + Vite + React Router 7 workspace with a static verification shell for future engine output. `packages/color-engine` is now a real `@puzzlefactory/color-engine` workspace package with package manifest, strict TypeScript config, source/test structure, concrete public API/type-model exports, input validation utilities, seed normalization to OKLCH, gamut checking/reduction utilities, ramp generation, harmony derivation, primitive token assembly, and package-boundary tests enforcing zero runtime dependencies. Semantic mapping, APCA, assertion policy, engine output integration, and CSS output have not been implemented yet.
 
 ## Next Actions
 
 - Use the Slice Backlog IDs below when generating work authorization prompts from `.ai/prompt-templates/work-authorization.md`.
 - Do not store generated one-off work authorization prompts in `.ai/`; keep reusable wording in `.ai/prompt-templates/` and durable sequencing here.
-- Completed slices: `CE-01`, `CE-02`, `CE-03`, `CE-04`.
-- Next recommended slice: `CE-05`.
+- Completed slices: `CE-01`, `CE-02`, `CE-03`, `CE-04`, `CE-05`.
+- Next recommended slice: `CE-06`.
 
 ## Slice Backlog
 

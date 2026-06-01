@@ -14,7 +14,7 @@
 
 ### `@puzzlefactory/color-engine`
 
-Status: early validation, normalization, gamut, ramp, and harmony implementation. Target runtime is a TypeScript library. Current exports define the public API type surface, behavior-free entry point function type, validation error class, input validation helpers, seed format detection, seed normalization to OKLCH, linear gamut conversion/checking utilities, chroma reduction at constant L/H, light/dark ramp generation, and harmony palette descriptors. Primitive token assembly and theme generation are not implemented.
+Status: early validation, normalization, gamut, ramp, harmony, and primitive assembly implementation. Target runtime is a TypeScript library. Current exports define the public API type surface, behavior-free entry point function type, validation error class, input validation helpers, seed format detection, seed normalization to OKLCH, linear gamut conversion/checking utilities, chroma reduction at constant L/H, light/dark ramp generation, harmony palette descriptors, and primitive token assembly helpers. Semantic mapping, APCA assertions, engine output integration, CSS output, and theme generation are not implemented.
 
 Runtime dependencies must remain zero except for the explicitly allowed seed-normalization boundary utility, if one is selected.
 

@@ -304,6 +304,15 @@ export {
   type RampStep,
 } from "./ramp.js";
 export {
+  DEFAULT_STATUS_HUES,
+  assembleNeutralPrimitiveTokens,
+  assemblePalettePrimitiveTokens,
+  assemblePrimitiveTokens,
+  assembleStatusPrimitiveTokens,
+  type AssemblePrimitiveTokensOptions,
+  type PrimitiveTokenInventory,
+} from "./primitives.js";
+export {
   validateEngineInput,
   validateTaperConfig,
   type InputValidationResult,
