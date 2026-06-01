@@ -33,14 +33,13 @@ Out of scope:
 
 ## Current State
 
-Architecture is fully specified in the workstream document. No code has been written. The specification has been through five review cycles addressing: APCA threshold corrections, smoothstep formula completeness, P3 generation logic, ramp dead zone resolution, signed Lc polarity handling, semantic-to-ramp-step reference mappings, high contrast dark mode, monochromatic harmony naming, full TypeScript type definitions, CSS output format, and error type hierarchy.
+Architecture is fully specified in the workstream document. No engine behavior has been written. The specification has been through five review cycles addressing: APCA threshold corrections, smoothstep formula completeness, P3 generation logic, ramp dead zone resolution, signed Lc polarity handling, semantic-to-ramp-step reference mappings, high contrast dark mode, monochromatic harmony naming, full TypeScript type definitions, CSS output format, and error type hierarchy.
 
-The monorepo shell exists at `/design-system` with Turborepo root config and placeholder folders under `packages/*`. `apps/kitchen-sink` is a real React + Vite + React Router 7 workspace with a static verification shell for future engine output. `packages/color-engine` exists only as a README placeholder for `@puzzlefactory/color-engine`; no package manifest, source tree, tests, or implementation have been scaffolded yet.
+The monorepo shell exists at `/design-system` with Turborepo root config and placeholder folders under `packages/*`. `apps/kitchen-sink` is a real React + Vite + React Router 7 workspace with a static verification shell for future engine output. `packages/color-engine` is now a real `@puzzlefactory/color-engine` workspace package with package manifest, strict TypeScript config, source/test structure, type-only public API placeholders, and package-boundary tests enforcing zero runtime dependencies. No engine behavior has been implemented yet.
 
 ## Next Actions
 
-- Turn `packages/color-engine` into the real `@puzzlefactory/color-engine` package with package manifest, TypeScript config, source/test structure, and zero-dependency enforcement
-- Wire the first engine API slice into `apps/kitchen-sink` after the package can produce real output
+- Define the concrete engine API shape in `packages/color-engine/src/index.ts` before implementation expands beyond type placeholders
 - Implement seed input normalization layer (hex, rgb(), hsl(), oklch() → OKLCH)
 - Implement sRGB gamut test and chroma reduction algorithm
 - Implement APCA from specification, verify against published sample values
@@ -50,6 +49,7 @@ The monorepo shell exists at `/design-system` with Turborepo root config and pla
 - Implement assertion suite
 - Implement CSS output layer in `@puzzlefactory/tokens`
 - Wire engine API and verify EngineOutput shape against TypeScript types
+- Wire the first engine API slice into `apps/kitchen-sink` after the package can produce real output
 
 ## Completion Shape
 
@@ -88,6 +88,6 @@ This workstream is substantially complete when:
 ## Key Files
 
 - `docs/color-engine-spec.md` — full implementation specification (revision 5, finalized)
-- `packages/color-engine/` — placeholder exists; target package name `@puzzlefactory/color-engine`
+- `packages/color-engine/` — package scaffold exists; package name `@puzzlefactory/color-engine`
 - `packages/tokens/` — placeholder exists; target package name `@puzzlefactory/tokens`
 - `apps/kitchen-sink/` — React + Vite + React Router 7 verification shell exists

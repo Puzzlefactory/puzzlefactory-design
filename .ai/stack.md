@@ -8,14 +8,21 @@
 - Workspaces: `packages/*` and `apps/*`
 - Package folders are unscoped paths such as `packages/color-engine`; npm scope belongs in each package's `package.json` name.
 - TypeScript: strict configuration by default
+- TypeScript is a root devDependency shared by workspace package scripts.
 
 ## Packages
 
 ### `@puzzlefactory/color-engine`
 
-Status: placeholder folder only. Target runtime is a TypeScript library.
+Status: package scaffold only. Target runtime is a TypeScript library. Current exports are type-only placeholders; no engine behavior is implemented.
 
 Runtime dependencies must remain zero except for the explicitly allowed seed-normalization boundary utility, if one is selected.
+
+Build/test scripts:
+
+- `build`: `tsc -p tsconfig.json`
+- `typecheck`: `tsc -p tsconfig.json --noEmit`
+- `test`: Node test runner package-boundary checks
 
 #### Color Space
 
