@@ -313,6 +313,18 @@ export {
   type PrimitiveTokenInventory,
 } from "./primitives.js";
 export {
+  REFERENCE_SEMANTIC_MAPPINGS,
+  SEMANTIC_TOKEN_NAMES,
+  applySemanticMappingOverrides,
+  getReferenceSemanticMappings,
+  isSemanticTokenName,
+  primitiveNamesFromTokens,
+  resolveSemanticMappings,
+  type ResolveSemanticMappingsOptions,
+  type SemanticMappingRecord,
+  type SemanticThemeMappings,
+} from "./semantic.js";
+export {
   validateEngineInput,
   validateTaperConfig,
   type InputValidationResult,

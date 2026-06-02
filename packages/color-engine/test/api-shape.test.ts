@@ -6,7 +6,10 @@ import type {
   EngineWarning,
   HarmonyStrategy,
   PrimitiveTokenName,
+  ResolveSemanticMappingsOptions,
   SemanticMappingOverrides,
+  SemanticMappingRecord,
+  SemanticThemeMappings,
   SemanticTokenName,
   StatusHueAnchors,
   TaperConfig,
@@ -45,6 +48,57 @@ const statusHues: StatusHueAnchors = {
 const semanticOverrides: SemanticMappingOverrides = {
   "surface-base": "neutral-l-1",
   "status-danger-text": "neutral-l-1",
+};
+
+const semanticMapping: SemanticMappingRecord = {
+  "surface-base": "neutral-l-1",
+  "surface-raised": "neutral-l-2",
+  "surface-overlay": "neutral-l-1",
+  "surface-tinted": "palette-a-l-2",
+  "text-primary": "neutral-d-11",
+  "text-secondary": "neutral-d-8",
+  "text-disabled": "neutral-d-4",
+  "interactive-bg-rest": "palette-a-d-4",
+  "interactive-bg-hover": "palette-a-d-3",
+  "interactive-bg-active": "palette-a-d-2",
+  "interactive-bg-disabled": "neutral-l-5",
+  "interactive-text": "neutral-l-1",
+  "interactive-border": "palette-a-d-5",
+  "focus-ring": "palette-a-d-3",
+  "border-strong": "neutral-d-6",
+  "border-subtle": "neutral-l-5",
+  "status-danger-bg": "status-danger-d-4",
+  "status-danger-text": "neutral-l-1",
+  "status-danger-container": "status-danger-l-2",
+  "status-danger-on-container": "status-danger-d-9",
+  "status-danger-border": "status-danger-d-5",
+  "status-warning-bg": "status-warning-d-4",
+  "status-warning-text": "neutral-l-1",
+  "status-warning-container": "status-warning-l-2",
+  "status-warning-on-container": "status-warning-d-9",
+  "status-warning-border": "status-warning-d-5",
+  "status-success-bg": "status-success-d-4",
+  "status-success-text": "neutral-l-1",
+  "status-success-container": "status-success-l-2",
+  "status-success-on-container": "status-success-d-9",
+  "status-success-border": "status-success-d-5",
+  "status-info-bg": "status-info-d-4",
+  "status-info-text": "neutral-l-1",
+  "status-info-container": "status-info-l-2",
+  "status-info-on-container": "status-info-d-9",
+  "status-info-border": "status-info-d-5",
+};
+
+const semanticThemeMappings: SemanticThemeMappings = {
+  light: semanticMapping,
+  dark: semanticMapping,
+  highContrast: semanticMapping,
+  highContrastDark: semanticMapping,
+};
+
+const resolveSemanticOptions: ResolveSemanticMappingsOptions = {
+  primitiveNames: [primitive],
+  overrides: semanticOverrides,
 };
 
 const input: EngineInput = {
@@ -131,6 +185,8 @@ const validationError: ValidationError = {
 void createTheme(input);
 void theme;
 void validationError;
+void semanticThemeMappings;
+void resolveSemanticOptions;
 
 type _PrimitiveNameIncludesSteps = Assert<
   IsAssignable<"palette-a-l-12", PrimitiveTokenName>
