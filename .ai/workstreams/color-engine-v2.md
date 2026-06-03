@@ -76,13 +76,19 @@ CE2-05 is implemented. The v2 package now exports semantic token name constants,
 
 Kitchen-sink now consumes the exported semantic token lists, renders text/chrome semantic groups, shows a CSS output summary, and uses generated text, border, and control aliases for its own chrome.
 
-Independent sub-agent review was not performed for CE2-01 through CE2-05 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
+CE2-06 is implemented. Primary and status usage families now support per-family seed policy:
+
+- `balanced`: default behavior. Preserve hue/intent and generate comfortable soft/solid usage ramps. The exact seed may be absent from solid ramps.
+- `anchored`: preserve the parsed seed as solid level 2 for light and dark solid ramps, and expose the parsed seed as a single-token primitive family such as `primary-seed` or `warning-seed`.
+
+Soft ramps remain derived/tamed for usable containers regardless of policy. Existing semantic alias names were preserved; in anchored mode, aliases such as `primary-action-bg` and `<intent>-solid-bg` already point to solid level 2, so they resolve to the anchored seed. Kitchen-sink now has policy controls beside primary/status seeds and marks seed primitives and anchored solid steps in the primitive view.
+
+Independent sub-agent review was not performed for CE2-01 through CE2-06 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
 
 ## Next Actions
 
-- Evaluate `CE2-06`: per-family seed policy for primary and status usage families.
-- During CE2-06, preserve the current semantic alias names unless a specific alias cannot support anchored seeds.
-- If seed policy needs more than `balanced` and `anchored`, record the reason before implementation.
+- Review CE2-06 visuals in kitchen-sink, especially anchored primary and warning with bright/high-chroma seeds.
+- If CE2-06 visuals are acceptable, plan the next slice for APCA/assertion reporting over stable semantic text/background pairs.
 - Do not move to APCA/assertion enforcement until semantic aliases and CSS output are stable enough to evaluate actual text/background pairs.
 
 ## Seed Policy Plan

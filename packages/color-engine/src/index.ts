@@ -12,6 +12,8 @@ export type SurfaceLevel = 1 | 2 | 3 | 4;
 
 export type SurfaceState = "hover" | "selected" | "pressed";
 
+export type SeedPolicy = "balanced" | "anchored";
+
 export type PrimaryUsageFamilyName =
   | "primary-light-soft"
   | "primary-light-solid"
@@ -23,6 +25,10 @@ export type StatusIntent = "danger" | "warning" | "success" | "info";
 export type StatusUsageFamilyName =
   `${StatusIntent}-${"light" | "dark"}-${"soft" | "solid"}`;
 
+export type SeedPrimitiveFamilyName =
+  | "primary-seed"
+  | `${StatusIntent}-seed`;
+
 export type UsageFamilyName = PrimaryUsageFamilyName | StatusUsageFamilyName;
 
 export type PrimitiveFamilyName =
@@ -30,7 +36,8 @@ export type PrimitiveFamilyName =
   | "neutral-dark"
   | "surface-light"
   | "surface-dark"
-  | UsageFamilyName;
+  | UsageFamilyName
+  | SeedPrimitiveFamilyName;
 
 export type NeutralSemanticTokenName =
   | "text-primary"
@@ -97,10 +104,15 @@ export interface ColorEngineInput {
   readonly surfaceLightSeed?: ColorSeed | string;
   readonly surfaceDarkSeed?: ColorSeed | string;
   readonly primarySeed?: ColorSeed | string;
+  readonly primarySeedPolicy?: SeedPolicy;
   readonly dangerSeed?: ColorSeed | string;
+  readonly dangerSeedPolicy?: SeedPolicy;
   readonly warningSeed?: ColorSeed | string;
+  readonly warningSeedPolicy?: SeedPolicy;
   readonly successSeed?: ColorSeed | string;
+  readonly successSeedPolicy?: SeedPolicy;
   readonly infoSeed?: ColorSeed | string;
+  readonly infoSeedPolicy?: SeedPolicy;
   readonly preset?: SurfacePresetName;
   readonly namespace?: string;
 }
@@ -117,22 +129,27 @@ export interface PrimitiveSurfaceOutput {
   readonly "neutral-dark": readonly ColorToken[];
   readonly "surface-light": readonly ColorToken[];
   readonly "surface-dark": readonly ColorToken[];
+  readonly "primary-seed": readonly ColorToken[];
   readonly "primary-light-soft": readonly ColorToken[];
   readonly "primary-light-solid": readonly ColorToken[];
   readonly "primary-dark-soft": readonly ColorToken[];
   readonly "primary-dark-solid": readonly ColorToken[];
+  readonly "danger-seed": readonly ColorToken[];
   readonly "danger-light-soft": readonly ColorToken[];
   readonly "danger-light-solid": readonly ColorToken[];
   readonly "danger-dark-soft": readonly ColorToken[];
   readonly "danger-dark-solid": readonly ColorToken[];
+  readonly "warning-seed": readonly ColorToken[];
   readonly "warning-light-soft": readonly ColorToken[];
   readonly "warning-light-solid": readonly ColorToken[];
   readonly "warning-dark-soft": readonly ColorToken[];
   readonly "warning-dark-solid": readonly ColorToken[];
+  readonly "success-seed": readonly ColorToken[];
   readonly "success-light-soft": readonly ColorToken[];
   readonly "success-light-solid": readonly ColorToken[];
   readonly "success-dark-soft": readonly ColorToken[];
   readonly "success-dark-solid": readonly ColorToken[];
+  readonly "info-seed": readonly ColorToken[];
   readonly "info-light-soft": readonly ColorToken[];
   readonly "info-light-solid": readonly ColorToken[];
   readonly "info-dark-soft": readonly ColorToken[];
@@ -150,6 +167,10 @@ export interface ColorEngineOutput {
     readonly primary: OklchValue;
     readonly status: Readonly<Record<StatusIntent, OklchValue>>;
   };
+  readonly seedPolicies: {
+    readonly primary: SeedPolicy;
+    readonly status: Readonly<Record<StatusIntent, SeedPolicy>>;
+  };
   readonly primitives: PrimitiveSurfaceOutput;
   readonly semantics: Readonly<Record<SurfaceTheme, Readonly<Record<SemanticTokenName, `var(--${string})`>>>>;
   readonly cssOutput: ColorEngineCssOutput;
@@ -164,6 +185,7 @@ export interface ColorEngineCssOutput {
 
 export type ValidationErrorCode =
   | "INVALID_SEED"
+  | "INVALID_SEED_POLICY"
   | "INVALID_PRESET"
   | "INVALID_NAMESPACE";
 
@@ -236,6 +258,8 @@ export const SURFACE_LEVELS = [1, 2, 3, 4] as const satisfies readonly SurfaceLe
 export const SURFACE_STATES = ["hover", "selected", "pressed"] as const satisfies readonly SurfaceState[];
 
 export const STATUS_INTENTS = ["danger", "warning", "success", "info"] as const satisfies readonly StatusIntent[];
+
+export const SEED_POLICY_NAMES = ["balanced", "anchored"] as const satisfies readonly SeedPolicy[];
 
 export const NEUTRAL_SEMANTIC_TOKEN_NAMES = [
   "text-primary",
@@ -328,10 +352,15 @@ const DEFAULT_INPUT = {
   surfaceLightSeed: "oklch(0.94 0.01 255)",
   surfaceDarkSeed: "oklch(0.12 0.012 255)",
   primarySeed: "#0f6f3d",
+  primarySeedPolicy: "balanced",
   dangerSeed: "#c62828",
+  dangerSeedPolicy: "balanced",
   warningSeed: "#b26a00",
+  warningSeedPolicy: "balanced",
   successSeed: "#16823a",
+  successSeedPolicy: "balanced",
   infoSeed: "#0b6ea8",
+  infoSeedPolicy: "balanced",
   preset: "standard",
   namespace: "ds",
 } as const satisfies Required<ColorEngineInput>;
@@ -349,6 +378,15 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     success: parseColorSeed(resolvedInput.successSeed, "successSeed"),
     info: parseColorSeed(resolvedInput.infoSeed, "infoSeed"),
   } as const satisfies Readonly<Record<StatusIntent, OklchValue>>;
+  const seedPolicies = {
+    primary: resolvedInput.primarySeedPolicy,
+    status: {
+      danger: resolvedInput.dangerSeedPolicy,
+      warning: resolvedInput.warningSeedPolicy,
+      success: resolvedInput.successSeedPolicy,
+      info: resolvedInput.infoSeedPolicy,
+    },
+  } as const satisfies ColorEngineOutput["seedPolicies"];
   const neutralLight = createLevelRamp({
     family: "neutral-light",
     seed: toneSeed(surfaceLightSeed, neutralSeed, 0.75),
@@ -381,14 +419,19 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     maxLightness: 0.32,
     chromaScale: preset.chromaScale,
   });
-  const primary = createPrimaryUsageFamilies(primarySeed);
-  const status = createStatusUsageFamilies(statusSeeds);
+  const primary = createPrimaryUsageFamilies(primarySeed, seedPolicies.primary);
+  const status = createStatusUsageFamilies(statusSeeds, seedPolicies.status);
   const primitives: PrimitiveSurfaceOutput = {
     "neutral-light": neutralLight,
     "neutral-dark": neutralDark,
     "surface-light": surfaceLight,
     "surface-dark": surfaceDark,
+    "primary-seed": createSeedPrimitiveFamily("primary-seed", primarySeed),
     ...primary,
+    "danger-seed": createSeedPrimitiveFamily("danger-seed", statusSeeds.danger),
+    "warning-seed": createSeedPrimitiveFamily("warning-seed", statusSeeds.warning),
+    "success-seed": createSeedPrimitiveFamily("success-seed", statusSeeds.success),
+    "info-seed": createSeedPrimitiveFamily("info-seed", statusSeeds.info),
     ...status,
   };
   const semantics = createSemantics(resolvedInput.namespace);
@@ -405,6 +448,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
       primary: primarySeed,
       status: statusSeeds,
     },
+    seedPolicies,
     primitives,
     semantics,
     cssOutput,
@@ -459,18 +503,44 @@ function resolveInput(input: ColorEngineInput): Required<ColorEngineInput> {
     });
   }
 
+  const primarySeedPolicy = resolveSeedPolicy(input.primarySeedPolicy, "primarySeedPolicy");
+  const dangerSeedPolicy = resolveSeedPolicy(input.dangerSeedPolicy, "dangerSeedPolicy");
+  const warningSeedPolicy = resolveSeedPolicy(input.warningSeedPolicy, "warningSeedPolicy");
+  const successSeedPolicy = resolveSeedPolicy(input.successSeedPolicy, "successSeedPolicy");
+  const infoSeedPolicy = resolveSeedPolicy(input.infoSeedPolicy, "infoSeedPolicy");
+
   return {
     neutralSeed: input.neutralSeed ?? DEFAULT_INPUT.neutralSeed,
     surfaceLightSeed: input.surfaceLightSeed ?? DEFAULT_INPUT.surfaceLightSeed,
     surfaceDarkSeed: input.surfaceDarkSeed ?? DEFAULT_INPUT.surfaceDarkSeed,
     primarySeed: input.primarySeed ?? DEFAULT_INPUT.primarySeed,
+    primarySeedPolicy,
     dangerSeed: input.dangerSeed ?? DEFAULT_INPUT.dangerSeed,
+    dangerSeedPolicy,
     warningSeed: input.warningSeed ?? DEFAULT_INPUT.warningSeed,
+    warningSeedPolicy,
     successSeed: input.successSeed ?? DEFAULT_INPUT.successSeed,
+    successSeedPolicy,
     infoSeed: input.infoSeed ?? DEFAULT_INPUT.infoSeed,
+    infoSeedPolicy,
     preset,
     namespace,
   };
+}
+
+function resolveSeedPolicy(policy: SeedPolicy | undefined, field: string): SeedPolicy {
+  const resolved = policy ?? DEFAULT_INPUT.primarySeedPolicy;
+
+  if (SEED_POLICY_NAMES.includes(resolved)) {
+    return resolved;
+  }
+
+  throw new ColorEngineValidationError({
+    code: "INVALID_SEED_POLICY",
+    field,
+    value: policy,
+    message: "Seed policy must be balanced or anchored.",
+  });
 }
 
 function createLevelRamp(options: {
@@ -507,6 +577,7 @@ function toneSeed(surfaceSeed: OklchValue, neutralSeed: OklchValue, chromaScale:
 
 function createPrimaryUsageFamilies(
   seed: OklchValue,
+  policy: SeedPolicy,
 ): Pick<
   PrimitiveSurfaceOutput,
   "primary-light-soft" | "primary-light-solid" | "primary-dark-soft" | "primary-dark-solid"
@@ -527,14 +598,10 @@ function createPrimaryUsageFamilies(
     "primary-light-solid": createUsageRamp({
       family: "primary-light-solid",
       hue,
-      lightness: [
-        lightSolidBase + 0.055,
-        lightSolidBase,
-        lightSolidBase - 0.045,
-        lightSolidBase - 0.085,
-      ],
-      chroma: [chroma * 0.88, chroma, chroma * 1.03, chroma * 1.05],
+      lightness: createSolidLightness(seed, lightSolidBase, "light", policy),
+      chroma: createSolidChroma(seed, chroma, "light", policy),
       description: "primary light solid",
+      ...anchoredUsageBounds(policy),
     }),
     "primary-dark-soft": createUsageRamp({
       family: "primary-dark-soft",
@@ -546,35 +613,33 @@ function createPrimaryUsageFamilies(
     "primary-dark-solid": createUsageRamp({
       family: "primary-dark-solid",
       hue,
-      lightness: [
-        darkSolidBase + 0.045,
-        darkSolidBase,
-        darkSolidBase - 0.055,
-        darkSolidBase - 0.105,
-      ],
-      chroma: [chroma * 0.75, chroma * 0.82, chroma * 0.9, chroma],
+      lightness: createSolidLightness(seed, darkSolidBase, "dark", policy),
+      chroma: createSolidChroma(seed, chroma, "dark", policy),
       description: "primary dark solid",
+      ...anchoredUsageBounds(policy),
     }),
   };
 }
 
 function createStatusUsageFamilies(
   seeds: Readonly<Record<StatusIntent, OklchValue>>,
+  policies: Readonly<Record<StatusIntent, SeedPolicy>>,
 ): Pick<
   PrimitiveSurfaceOutput,
   | StatusUsageFamilyName
 > {
   return {
-    ...createStatusIntentFamilies("danger", seeds.danger),
-    ...createStatusIntentFamilies("warning", seeds.warning),
-    ...createStatusIntentFamilies("success", seeds.success),
-    ...createStatusIntentFamilies("info", seeds.info),
+    ...createStatusIntentFamilies("danger", seeds.danger, policies.danger),
+    ...createStatusIntentFamilies("warning", seeds.warning, policies.warning),
+    ...createStatusIntentFamilies("success", seeds.success, policies.success),
+    ...createStatusIntentFamilies("info", seeds.info, policies.info),
   };
 }
 
 function createStatusIntentFamilies(
   intent: StatusIntent,
   seed: OklchValue,
+  policy: SeedPolicy,
 ): Record<StatusUsageFamilyName, readonly ColorToken[]> {
   const hue = normalizeHue(seed.h);
   const isWarning = intent === "warning";
@@ -599,14 +664,10 @@ function createStatusIntentFamilies(
     [`${intent}-light-solid`]: createUsageRamp({
       family: `${intent}-light-solid`,
       hue,
-      lightness: [
-        lightSolidBase + 0.055,
-        lightSolidBase,
-        lightSolidBase - 0.045,
-        lightSolidBase - 0.085,
-      ],
-      chroma: [chroma * 0.86, chroma, chroma * 1.02, chroma * 1.04],
+      lightness: createSolidLightness(seed, lightSolidBase, "light", policy),
+      chroma: createSolidChroma(seed, chroma, "light", policy, 0.86),
       description: `${intent} light solid`,
+      ...anchoredUsageBounds(policy),
     }),
     [`${intent}-dark-soft`]: createUsageRamp({
       family: `${intent}-dark-soft`,
@@ -618,16 +679,91 @@ function createStatusIntentFamilies(
     [`${intent}-dark-solid`]: createUsageRamp({
       family: `${intent}-dark-solid`,
       hue,
-      lightness: [
-        darkSolidBase + 0.045,
-        darkSolidBase,
-        darkSolidBase - 0.055,
-        darkSolidBase - 0.105,
-      ],
-      chroma: [chroma * 0.72, chroma * 0.82, chroma * 0.92, chroma],
+      lightness: createSolidLightness(seed, darkSolidBase, "dark", policy),
+      chroma: createSolidChroma(seed, chroma, "dark", policy, 0.72),
       description: `${intent} dark solid`,
+      ...anchoredUsageBounds(policy),
     }),
   } as Record<StatusUsageFamilyName, readonly ColorToken[]>;
+}
+
+function createSolidLightness(
+  seed: OklchValue,
+  balancedBase: number,
+  theme: SurfaceTheme,
+  policy: SeedPolicy,
+): readonly [number, number, number, number] {
+  if (policy === "anchored") {
+    const lighterDelta = theme === "light" ? 0.055 : 0.045;
+    const darkerDelta = theme === "light" ? 0.045 : 0.055;
+    const darkestDelta = theme === "light" ? 0.085 : 0.105;
+
+    return [
+      seed.l + lighterDelta,
+      seed.l,
+      seed.l - darkerDelta,
+      seed.l - darkestDelta,
+    ];
+  }
+
+  if (theme === "light") {
+    return [
+      balancedBase + 0.055,
+      balancedBase,
+      balancedBase - 0.045,
+      balancedBase - 0.085,
+    ];
+  }
+
+  return [
+    balancedBase + 0.045,
+    balancedBase,
+    balancedBase - 0.055,
+    balancedBase - 0.105,
+  ];
+}
+
+function anchoredUsageBounds(policy: SeedPolicy): {
+  readonly maxChroma?: number;
+  readonly minLightness?: number;
+  readonly maxLightness?: number;
+} {
+  return policy === "anchored" ? { maxChroma: 1, minLightness: 0, maxLightness: 1 } : {};
+}
+
+function createSolidChroma(
+  seed: OklchValue,
+  balancedChroma: number,
+  theme: SurfaceTheme,
+  policy: SeedPolicy,
+  lightFirstStepScale = 0.88,
+  darkFirstStepScale = 0.75,
+): readonly [number, number, number, number] {
+  if (policy === "anchored") {
+    const base = seed.c;
+
+    return theme === "light"
+      ? [base * lightFirstStepScale, base, base * 1.03, base * 1.05]
+      : [base * darkFirstStepScale, base, base * 0.9, base * 1.02];
+  }
+
+  return theme === "light"
+    ? [balancedChroma * lightFirstStepScale, balancedChroma, balancedChroma * 1.02, balancedChroma * 1.04]
+    : [balancedChroma * darkFirstStepScale, balancedChroma * 0.82, balancedChroma * 0.92, balancedChroma];
+}
+
+function createSeedPrimitiveFamily(
+  family: SeedPrimitiveFamilyName,
+  seed: OklchValue,
+): readonly ColorToken[] {
+  return [
+    {
+      name: family,
+      value: formatOklch(seed),
+      oklch: seed,
+      description: `${family} exact parsed seed`,
+    },
+  ];
 }
 
 function createUsageRamp(options: {
@@ -636,13 +772,16 @@ function createUsageRamp(options: {
   readonly lightness: readonly [number, number, number, number];
   readonly chroma: readonly [number, number, number, number];
   readonly description: string;
+  readonly maxChroma?: number;
+  readonly minLightness?: number;
+  readonly maxLightness?: number;
 }): readonly ColorToken[] {
   return options.lightness.map((lightness, index) => {
     const level = (index + 1) as SurfaceLevel;
     const chroma = options.chroma[index] ?? options.chroma[3];
     const oklch = {
-      l: roundChannel(clampNumber(lightness, 0.02, 0.998)),
-      c: roundChannel(clampNumber(chroma, 0, 0.22)),
+      l: roundChannel(clampNumber(lightness, options.minLightness ?? 0.02, options.maxLightness ?? 0.998)),
+      c: roundChannel(clampNumber(chroma, 0, options.maxChroma ?? 0.22)),
       h: roundChannel(options.hue),
     };
 
@@ -810,11 +949,13 @@ function createPrimitiveCss(
   for (const tokens of Object.values(primitives)) {
     for (const token of tokens) {
       declarations.push([`--${namespace}-${token.name}`, token.value]);
-      for (const state of SURFACE_STATES) {
-        declarations.push([
-          `--${namespace}-${token.name}-${state}`,
-          createStateValue(token.oklch, state, token.name.includes("-light-"), preset),
-        ]);
+      if (!token.name.endsWith("-seed")) {
+        for (const state of SURFACE_STATES) {
+          declarations.push([
+            `--${namespace}-${token.name}-${state}`,
+            createStateValue(token.oklch, state, token.name.includes("-light-"), preset),
+          ]);
+        }
       }
     }
   }

@@ -4,6 +4,7 @@ import {
   ColorEngineValidationError,
   NEUTRAL_SEMANTIC_TOKEN_NAMES,
   PRIMARY_SEMANTIC_TOKEN_NAMES,
+  SEED_POLICY_NAMES,
   SEMANTIC_TOKEN_NAMES,
   SURFACE_PRESET_NAMES,
   SURFACE_SEMANTIC_TOKEN_NAMES,
@@ -22,31 +23,41 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
     "danger-dark-solid",
     "danger-light-soft",
     "danger-light-solid",
+    "danger-seed",
     "info-dark-soft",
     "info-dark-solid",
     "info-light-soft",
     "info-light-solid",
+    "info-seed",
     "neutral-dark",
     "neutral-light",
     "primary-dark-soft",
     "primary-dark-solid",
     "primary-light-soft",
     "primary-light-solid",
+    "primary-seed",
     "success-dark-soft",
     "success-dark-solid",
     "success-light-soft",
     "success-light-solid",
+    "success-seed",
     "surface-dark",
     "surface-light",
     "warning-dark-soft",
     "warning-dark-solid",
     "warning-light-soft",
     "warning-light-solid",
+    "warning-seed",
   ]);
+  assert.deepEqual(SEED_POLICY_NAMES, ["balanced", "anchored"]);
+  assert.equal(output.seedPolicies.primary, "balanced");
+  assert.equal(output.seedPolicies.status.danger, "balanced");
   assert.equal(output.primitives["surface-light"].length, 4);
   assert.equal(output.primitives["surface-dark"].length, 4);
+  assert.equal(output.primitives["primary-seed"].length, 1);
   assert.equal(output.primitives["primary-light-soft"].length, 4);
   assert.equal(output.primitives["primary-dark-solid"].length, 4);
+  assert.equal(output.primitives["warning-seed"].length, 1);
   assert.equal(output.primitives["danger-light-soft"].length, 4);
   assert.equal(output.primitives["warning-dark-solid"].length, 4);
   assert.equal(NEUTRAL_SEMANTIC_TOKEN_NAMES.length, 8);
@@ -71,10 +82,60 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
   assert.match(output.cssOutput.themes.dark, /^\[data-theme-v2="dark"\] \{/);
   assert.equal(output.css, output.cssOutput.all);
   assert.match(output.css, /\[data-theme-v2="light"\]/);
+  assert.match(output.css, /--ds-primary-seed: oklch\(/);
+  assert.doesNotMatch(output.css, /--ds-primary-seed-hover:/);
   assert.match(output.css, /--ds-text-primary: var\(--ds-neutral-dark-1\);/);
   assert.match(output.css, /--ds-surface-1-hover: var\(--ds-surface-light-1-hover\);/);
   assert.match(output.css, /--ds-primary-action-bg: var\(--ds-primary-light-solid-2\);/);
   assert.match(output.css, /--ds-success-soft-border: var\(--ds-success-light-soft-4\);/);
+});
+
+test("anchored seed policy preserves exact parsed seeds as solid rest steps", () => {
+  const primarySeed = "oklch(0.51 0.123 144)";
+  const dangerSeed = "oklch(0.57 0.155 28)";
+  const warningSeed = "oklch(0.72 0.18 88)";
+  const infoSeed = "oklch(0.5 0.31 250)";
+  const output = createColorEngineTheme({
+    primarySeed,
+    primarySeedPolicy: "anchored",
+    dangerSeed,
+    dangerSeedPolicy: "anchored",
+    warningSeed,
+    warningSeedPolicy: "anchored",
+    infoSeed,
+    infoSeedPolicy: "anchored",
+  });
+
+  assert.deepEqual(output.primitives["primary-seed"][0]?.oklch, parseColorSeed(primarySeed));
+  assert.deepEqual(output.primitives["danger-seed"][0]?.oklch, parseColorSeed(dangerSeed));
+  assert.deepEqual(output.primitives["warning-seed"][0]?.oklch, parseColorSeed(warningSeed));
+  assert.deepEqual(output.primitives["info-seed"][0]?.oklch, parseColorSeed(infoSeed));
+  assert.deepEqual(output.primitives["primary-light-solid"][1]?.oklch, parseColorSeed(primarySeed));
+  assert.deepEqual(output.primitives["primary-dark-solid"][1]?.oklch, parseColorSeed(primarySeed));
+  assert.deepEqual(output.primitives["danger-light-solid"][1]?.oklch, parseColorSeed(dangerSeed));
+  assert.deepEqual(output.primitives["warning-dark-solid"][1]?.oklch, parseColorSeed(warningSeed));
+  assert.deepEqual(output.primitives["info-light-solid"][1]?.oklch, parseColorSeed(infoSeed));
+  assert.equal(output.semantics.light["primary-action-bg"], "var(--ds-primary-light-solid-2)");
+  assert.equal(output.semantics.light["warning-solid-bg"], "var(--ds-warning-light-solid-2)");
+  assert.equal(output.seedPolicies.primary, "anchored");
+  assert.equal(output.seedPolicies.status.warning, "anchored");
+});
+
+test("balanced seed policy keeps previous status recipe behavior", () => {
+  const seed = "oklch(0.72 0.18 88)";
+  const balanced = createColorEngineTheme({ warningSeed: seed });
+  const explicitBalanced = createColorEngineTheme({
+    warningSeed: seed,
+    warningSeedPolicy: "balanced",
+  });
+  const anchored = createColorEngineTheme({
+    warningSeed: seed,
+    warningSeedPolicy: "anchored",
+  });
+
+  assert.deepEqual(explicitBalanced.primitives["warning-light-solid"], balanced.primitives["warning-light-solid"]);
+  assert.notDeepEqual(anchored.primitives["warning-light-solid"][1]?.oklch, balanced.primitives["warning-light-solid"][1]?.oklch);
+  assert.deepEqual(anchored.primitives["warning-light-solid"][1]?.oklch, parseColorSeed(seed));
 });
 
 test("surface, primary, and status seeds control usage families independently", () => {
@@ -220,6 +281,16 @@ test("createColorEngineTheme rejects invalid seeds", () => {
       error instanceof ColorEngineValidationError &&
       error.code === "INVALID_SEED" &&
       error.field === "warningSeed",
+  );
+});
+
+test("createColorEngineTheme rejects invalid seed policies", () => {
+  assert.throws(
+    () => createColorEngineTheme({ primarySeedPolicy: "strict" }),
+    (error) =>
+      error instanceof ColorEngineValidationError &&
+      error.code === "INVALID_SEED_POLICY" &&
+      error.field === "primarySeedPolicy",
   );
 });
 

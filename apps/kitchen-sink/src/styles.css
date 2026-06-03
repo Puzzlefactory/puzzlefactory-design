@@ -317,6 +317,7 @@ h3 {
 }
 
 .swatch-card {
+  position: relative;
   display: grid;
   gap: 8px;
   min-width: 0;
@@ -334,11 +335,34 @@ h3 {
   font-size: 0.9rem;
 }
 
+.swatch-card-anchor .swatch {
+  border-color: var(--ds-primary-focus-ring);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--ds-primary-focus-ring), transparent 72%);
+}
+
+.swatch-badge {
+  justify-self: start;
+  border: 1px solid var(--app-border-strong);
+  border-radius: 999px;
+  padding: 3px 7px;
+  background: var(--ds-surface-1);
+  color: var(--app-text-primary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .swatch-card code,
 .semantic-swatch code {
   color: var(--app-text-secondary);
   font-size: 0.72rem;
   overflow-wrap: anywhere;
+}
+
+.ramp-meta {
+  color: var(--app-text-secondary);
+  font-size: 0.86rem;
+  line-height: 1.4;
 }
 
 .css-output-grid {

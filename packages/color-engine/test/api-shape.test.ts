@@ -6,6 +6,7 @@ import type {
   NeutralSemanticTokenName,
   OklchValue,
   PrimarySemanticTokenName,
+  SeedPolicy,
   SurfacePreset,
   SurfacePresetName,
   SemanticTokenName,
@@ -15,6 +16,7 @@ import type {
 import {
   NEUTRAL_SEMANTIC_TOKEN_NAMES,
   PRIMARY_SEMANTIC_TOKEN_NAMES,
+  SEED_POLICY_NAMES,
   SEMANTIC_TOKEN_NAMES,
   SURFACE_PRESETS,
   SURFACE_SEMANTIC_TOKEN_NAMES,
@@ -29,17 +31,24 @@ const darkStepDelta: number = preset.darkStepDelta;
 const input: ColorEngineInput = {
   neutralSeed: "#d8dee8",
   primarySeed: "#0f6f3d",
+  primarySeedPolicy: "anchored",
   dangerSeed: "#c62828",
+  dangerSeedPolicy: "balanced",
   warningSeed: "#b26a00",
+  warningSeedPolicy: "anchored",
   successSeed: "#16823a",
+  successSeedPolicy: "balanced",
   infoSeed: "#0b6ea8",
+  infoSeedPolicy: "balanced",
   surfaceLightSeed: "oklch(0.94 0.01 255)",
   surfaceDarkSeed: "#111827",
   preset: presetName,
   namespace: "pf",
 };
 const output: ColorEngineOutput = createColorEngineTheme(input);
+const seedPolicy: SeedPolicy = "anchored";
 const token: ColorToken | undefined = output.primitives["primary-light-solid"][0];
+const seedToken: ColorToken | undefined = output.primitives["primary-seed"][0];
 const statusToken: ColorToken | undefined = output.primitives["danger-light-soft"][0];
 const neutralSemanticName: NeutralSemanticTokenName = "text-primary";
 const surfaceSemanticName: SemanticTokenName = "surface-1-hover";
@@ -49,13 +58,16 @@ const statusIntent: StatusIntent = "warning";
 const oklch: OklchValue = output.seeds.neutral;
 const primarySeed: OklchValue = output.seeds.primary;
 const warningSeed: OklchValue = output.seeds.status.warning;
+const warningSeedPolicy: SeedPolicy = output.seedPolicies.status.warning;
 const cssOutput: ColorEngineCssOutput = output.cssOutput;
 const semanticTokenNames: readonly SemanticTokenName[] = SEMANTIC_TOKEN_NAMES;
 
 void preset;
 void lightStepDelta;
 void darkStepDelta;
+void seedPolicy;
 void token;
+void seedToken;
 void statusToken;
 void neutralSemanticName;
 void surfaceSemanticName;
@@ -65,9 +77,11 @@ void statusIntent;
 void oklch;
 void primarySeed;
 void warningSeed;
+void warningSeedPolicy;
 void cssOutput;
 void semanticTokenNames;
 void NEUTRAL_SEMANTIC_TOKEN_NAMES;
 void SURFACE_SEMANTIC_TOKEN_NAMES;
 void PRIMARY_SEMANTIC_TOKEN_NAMES;
 void STATUS_SEMANTIC_TOKEN_NAMES;
+void SEED_POLICY_NAMES;
