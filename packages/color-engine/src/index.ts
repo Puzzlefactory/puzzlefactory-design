@@ -12,6 +12,8 @@ export type SurfaceLevel = 1 | 2 | 3 | 4;
 
 export type SurfaceState = "hover" | "selected" | "pressed";
 
+export type ChromeLevel = "subtle" | "default" | "strong";
+
 export type SeedPolicy = "balanced" | "anchored";
 
 export type PrimaryUsageFamilyName =
@@ -36,6 +38,8 @@ export type PrimitiveFamilyName =
   | "neutral-dark"
   | "surface-light"
   | "surface-dark"
+  | "chrome-light"
+  | "chrome-dark"
   | UsageFamilyName
   | SeedPrimitiveFamilyName;
 
@@ -44,7 +48,9 @@ export type NeutralSemanticTokenName =
   | "text-secondary"
   | "text-muted"
   | "border-subtle"
+  | "border-default"
   | "border-strong"
+  | "control-border"
   | "control-bg"
   | "control-bg-hover"
   | "control-text";
@@ -129,6 +135,8 @@ export interface PrimitiveSurfaceOutput {
   readonly "neutral-dark": readonly ColorToken[];
   readonly "surface-light": readonly ColorToken[];
   readonly "surface-dark": readonly ColorToken[];
+  readonly "chrome-light": readonly ColorToken[];
+  readonly "chrome-dark": readonly ColorToken[];
   readonly "primary-seed": readonly ColorToken[];
   readonly "primary-light-soft": readonly ColorToken[];
   readonly "primary-light-solid": readonly ColorToken[];
@@ -257,6 +265,8 @@ export const SURFACE_LEVELS = [1, 2, 3, 4] as const satisfies readonly SurfaceLe
 
 export const SURFACE_STATES = ["hover", "selected", "pressed"] as const satisfies readonly SurfaceState[];
 
+export const CHROME_LEVELS = ["subtle", "default", "strong"] as const satisfies readonly ChromeLevel[];
+
 export const STATUS_INTENTS = ["danger", "warning", "success", "info"] as const satisfies readonly StatusIntent[];
 
 export const SEED_POLICY_NAMES = ["balanced", "anchored"] as const satisfies readonly SeedPolicy[];
@@ -266,7 +276,9 @@ export const NEUTRAL_SEMANTIC_TOKEN_NAMES = [
   "text-secondary",
   "text-muted",
   "border-subtle",
+  "border-default",
   "border-strong",
+  "control-border",
   "control-bg",
   "control-bg-hover",
   "control-text",
@@ -419,6 +431,20 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     maxLightness: 0.32,
     chromaScale: preset.chromaScale,
   });
+  const chromeLight = createChromeRamp({
+    family: "chrome-light",
+    surfaceSeed: surfaceLightSeed,
+    neutralSeed,
+    theme: "light",
+    preset,
+  });
+  const chromeDark = createChromeRamp({
+    family: "chrome-dark",
+    surfaceSeed: surfaceDarkSeed,
+    neutralSeed,
+    theme: "dark",
+    preset,
+  });
   const primary = createPrimaryUsageFamilies(primarySeed, seedPolicies.primary);
   const status = createStatusUsageFamilies(statusSeeds, seedPolicies.status);
   const primitives: PrimitiveSurfaceOutput = {
@@ -426,6 +452,8 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     "neutral-dark": neutralDark,
     "surface-light": surfaceLight,
     "surface-dark": surfaceDark,
+    "chrome-light": chromeLight,
+    "chrome-dark": chromeDark,
     "primary-seed": createSeedPrimitiveFamily("primary-seed", primarySeed),
     ...primary,
     "danger-seed": createSeedPrimitiveFamily("danger-seed", statusSeeds.danger),
@@ -573,6 +601,49 @@ function toneSeed(surfaceSeed: OklchValue, neutralSeed: OklchValue, chromaScale:
     c: Math.min(surfaceSeed.c, neutralSeed.c) * chromaScale,
     h: neutralSeed.h,
   };
+}
+
+function createChromeRamp(options: {
+  readonly family: "chrome-light" | "chrome-dark";
+  readonly surfaceSeed: OklchValue;
+  readonly neutralSeed: OklchValue;
+  readonly theme: SurfaceTheme;
+  readonly preset: SurfacePreset;
+}): readonly ColorToken[] {
+  const baseChroma = clampNumber(
+    Math.min(options.surfaceSeed.c, options.neutralSeed.c) * options.preset.chromaScale * 0.9,
+    0,
+    0.028,
+  );
+  const hue = roundChannel(normalizeHue(options.neutralSeed.h));
+  const lightnessOffsets: readonly [number, number, number] =
+    options.theme === "light"
+      ? [
+          -Math.max(0.035, options.preset.lightStepDelta * 3),
+          -Math.max(0.055, options.preset.lightStepDelta * 4.8),
+          -Math.max(0.085, options.preset.lightStepDelta * 6.4),
+        ]
+      : [
+          Math.max(0.045, options.preset.darkStepDelta * 2),
+          Math.max(0.075, options.preset.darkStepDelta * 3.5),
+          Math.max(0.11, options.preset.darkStepDelta * 5),
+        ];
+
+  return CHROME_LEVELS.map((level, index) => {
+    const lightnessOffset = lightnessOffsets[index] ?? lightnessOffsets[2];
+    const oklch = {
+      l: roundChannel(clampNumber(options.surfaceSeed.l + lightnessOffset, 0.02, 0.998)),
+      c: roundChannel(baseChroma),
+      h: hue,
+    };
+
+    return {
+      name: `${options.family}-${level}`,
+      value: formatOklch(oklch),
+      oklch,
+      description: `${options.family} ${level}`,
+    };
+  });
 }
 
 function createPrimaryUsageFamilies(
@@ -822,8 +893,10 @@ function createNeutralSemantics(
       "text-primary": cssVar(namespace, "neutral-dark-1"),
       "text-secondary": cssVar(namespace, "neutral-dark-3"),
       "text-muted": cssVar(namespace, "neutral-dark-4"),
-      "border-subtle": cssVar(namespace, "surface-light-1-hover"),
-      "border-strong": cssVar(namespace, "surface-light-1-pressed"),
+      "border-subtle": cssVar(namespace, "chrome-light-subtle"),
+      "border-default": cssVar(namespace, "chrome-light-default"),
+      "border-strong": cssVar(namespace, "chrome-light-strong"),
+      "control-border": cssVar(namespace, "chrome-light-default"),
       "control-bg": cssVar(namespace, "surface-light-1"),
       "control-bg-hover": cssVar(namespace, "surface-light-2-hover"),
       "control-text": cssVar(namespace, "neutral-dark-1"),
@@ -834,8 +907,10 @@ function createNeutralSemantics(
     "text-primary": cssVar(namespace, "neutral-light-4"),
     "text-secondary": cssVar(namespace, "neutral-light-2"),
     "text-muted": cssVar(namespace, "neutral-light-1"),
-    "border-subtle": cssVar(namespace, "surface-dark-1-hover"),
-    "border-strong": cssVar(namespace, "surface-dark-1-pressed"),
+    "border-subtle": cssVar(namespace, "chrome-dark-subtle"),
+    "border-default": cssVar(namespace, "chrome-dark-default"),
+    "border-strong": cssVar(namespace, "chrome-dark-strong"),
+    "control-border": cssVar(namespace, "chrome-dark-default"),
     "control-bg": cssVar(namespace, "surface-dark-2"),
     "control-bg-hover": cssVar(namespace, "surface-dark-3-hover"),
     "control-text": cssVar(namespace, "neutral-light-4"),

@@ -83,12 +83,14 @@ CE2-06 is implemented. Primary and status usage families now support per-family 
 
 Soft ramps remain derived/tamed for usable containers regardless of policy. Existing semantic alias names were preserved; in anchored mode, aliases such as `primary-action-bg` and `<intent>-solid-bg` already point to solid level 2, so they resolve to the anchored seed. Kitchen-sink now has policy controls beside primary/status seeds and marks seed primitives and anchored solid steps in the primitive view.
 
-Independent sub-agent review was not performed for CE2-01 through CE2-06 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
+CE2-07 is implemented. Chrome/border generation is now separate from surface fills and surface interaction states. The package emits compact `chrome-light` and `chrome-dark` primitive families with `subtle`, `default`, and `strong` tokens derived from existing surface/neutral inputs and the active surface preset. Semantic aliases now map `border-subtle`, `border-default`, `border-strong`, and `control-border` to chrome primitives rather than recycled surface hover/pressed tokens. Kitchen-sink displays chrome primitive ramps and uses `border-default`/`control-border` for structural panel and field borders, so quiet surface fills can remain subtle without making panel structure disappear.
+
+Independent sub-agent review was not performed for CE2-01 through CE2-07 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
 
 ## Next Actions
 
-- Review CE2-06 visuals in kitchen-sink, especially anchored primary and warning with bright/high-chroma seeds.
-- If CE2-06 visuals are acceptable, plan the next slice for APCA/assertion reporting over stable semantic text/background pairs.
+- Review CE2-07 visuals in kitchen-sink, especially quiet and layered presets where panel structure previously blurred together.
+- If CE2-07 visuals are acceptable, plan the next slice for APCA/assertion reporting over stable semantic text/background pairs.
 - Do not move to APCA/assertion enforcement until semantic aliases and CSS output are stable enough to evaluate actual text/background pairs.
 
 ## Seed Policy Plan
@@ -120,6 +122,7 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-04` | Status usage ramps | Add danger/warning/success/info light-soft, light-solid, dark-soft, and dark-solid usage sets with visual review. | APCA enforcement, broad semantic aliasing |
 | `CE2-05` | Semantic aliases and CSS output | Map generated usage families to stable semantic custom properties and update CSS output once visual families are credible. | Component-library implementation |
 | `CE2-06` | Per-family seed policy | Add `balanced` and `anchored` seed policies for primary and status families, preserve exact seeds when anchored, and show policy/seed anchors in kitchen-sink. | APCA enforcement, token package expansion, component-library implementation |
+| `CE2-07` | Chrome and border ramp | Add compact `chrome-light` and `chrome-dark` primitive families for borders, dividers, and control edges; remap border semantics to chrome output while preserving surface ramps. | Chrome seeds/sliders, APCA enforcement, token package expansion, component-library implementation |
 
 ## Completion Shape
 
@@ -127,6 +130,7 @@ This workstream is substantially complete when:
 
 - Neutral and surface v2 output renders credible light and dark UI surfaces in kitchen-sink.
 - Surface generation supports separate neutral, light-surface, and dark-surface seeds.
+- Chrome/border generation is separate from surface fills and surface interaction states.
 - Presets produce repeatable useful visual differences without requiring manual sliders.
 - Primary and status families are compact usage sets, not long universal ramps.
 - Primary and status seed handling is explicit: either balanced/adapted or anchored/preserved.
@@ -149,6 +153,7 @@ This workstream is substantially complete when:
 - **Presets over sliders:** Normal controls should be named presets. Sliders may exist only as internal/debug tooling if later justified.
 - **Semantics later:** Generation families use neutral names such as surface, primary, and status usage sets. Brand/accent aliases happen after generation.
 - **Seed policy is per family:** Surfaces can use seeds as tonal guides; primary and status families need future `balanced` versus `anchored` behavior so approved colors can be preserved when required.
+- **Chrome is separate from surface states:** Borders and control edges should use a compact chrome family rather than recycled surface hover/pressed tokens.
 - **V1 status:** V1 is reference material, not the implementation path.
 
 ## Key Files

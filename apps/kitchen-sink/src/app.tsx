@@ -34,11 +34,13 @@ const navItems = [
 const primitiveFamilies = [
   "neutral-light",
   "surface-light",
+  "chrome-light",
   "primary-seed",
   "primary-light-soft",
   "primary-light-solid",
   "neutral-dark",
   "surface-dark",
+  "chrome-dark",
   "primary-dark-soft",
   "primary-dark-solid",
   "danger-seed",

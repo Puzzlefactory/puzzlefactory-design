@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  CHROME_LEVELS,
   ColorEngineValidationError,
   NEUTRAL_SEMANTIC_TOKEN_NAMES,
   PRIMARY_SEMANTIC_TOKEN_NAMES,
@@ -19,6 +20,8 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
   const output = createColorEngineTheme();
 
   assert.deepEqual(Object.keys(output.primitives).sort(), [
+    "chrome-dark",
+    "chrome-light",
     "danger-dark-soft",
     "danger-dark-solid",
     "danger-light-soft",
@@ -50,26 +53,32 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
     "warning-seed",
   ]);
   assert.deepEqual(SEED_POLICY_NAMES, ["balanced", "anchored"]);
+  assert.deepEqual(CHROME_LEVELS, ["subtle", "default", "strong"]);
   assert.equal(output.seedPolicies.primary, "balanced");
   assert.equal(output.seedPolicies.status.danger, "balanced");
   assert.equal(output.primitives["surface-light"].length, 4);
   assert.equal(output.primitives["surface-dark"].length, 4);
+  assert.equal(output.primitives["chrome-light"].length, 3);
+  assert.equal(output.primitives["chrome-dark"].length, 3);
   assert.equal(output.primitives["primary-seed"].length, 1);
   assert.equal(output.primitives["primary-light-soft"].length, 4);
   assert.equal(output.primitives["primary-dark-solid"].length, 4);
   assert.equal(output.primitives["warning-seed"].length, 1);
   assert.equal(output.primitives["danger-light-soft"].length, 4);
   assert.equal(output.primitives["warning-dark-solid"].length, 4);
-  assert.equal(NEUTRAL_SEMANTIC_TOKEN_NAMES.length, 8);
+  assert.equal(NEUTRAL_SEMANTIC_TOKEN_NAMES.length, 10);
   assert.equal(SURFACE_SEMANTIC_TOKEN_NAMES.length, 16);
   assert.equal(PRIMARY_SEMANTIC_TOKEN_NAMES.length, 11);
   assert.equal(STATUS_SEMANTIC_TOKEN_NAMES.length, 32);
-  assert.equal(SEMANTIC_TOKEN_NAMES.length, 67);
+  assert.equal(SEMANTIC_TOKEN_NAMES.length, 69);
   assert.equal(Object.keys(output.semantics.light).length, SEMANTIC_TOKEN_NAMES.length);
   assert.equal(Object.keys(output.semantics.dark).length, SEMANTIC_TOKEN_NAMES.length);
   assert.equal(output.semantics.light["text-primary"], "var(--ds-neutral-dark-1)");
   assert.equal(output.semantics.dark["text-primary"], "var(--ds-neutral-light-4)");
-  assert.equal(output.semantics.light["border-subtle"], "var(--ds-surface-light-1-hover)");
+  assert.equal(output.semantics.light["border-subtle"], "var(--ds-chrome-light-subtle)");
+  assert.equal(output.semantics.light["border-default"], "var(--ds-chrome-light-default)");
+  assert.equal(output.semantics.light["border-strong"], "var(--ds-chrome-light-strong)");
+  assert.equal(output.semantics.light["control-border"], "var(--ds-chrome-light-default)");
   assert.equal(output.semantics.dark["control-bg"], "var(--ds-surface-dark-2)");
   assert.equal(output.semantics.light["surface-1"], "var(--ds-surface-light-1)");
   assert.equal(output.semantics.dark["surface-1"], "var(--ds-surface-dark-1)");
@@ -82,12 +91,30 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
   assert.match(output.cssOutput.themes.dark, /^\[data-theme-v2="dark"\] \{/);
   assert.equal(output.css, output.cssOutput.all);
   assert.match(output.css, /\[data-theme-v2="light"\]/);
+  assert.match(output.css, /--ds-chrome-light-default: oklch\(/);
+  assert.match(output.css, /--ds-border-default: var\(--ds-chrome-light-default\);/);
   assert.match(output.css, /--ds-primary-seed: oklch\(/);
   assert.doesNotMatch(output.css, /--ds-primary-seed-hover:/);
   assert.match(output.css, /--ds-text-primary: var\(--ds-neutral-dark-1\);/);
   assert.match(output.css, /--ds-surface-1-hover: var\(--ds-surface-light-1-hover\);/);
   assert.match(output.css, /--ds-primary-action-bg: var\(--ds-primary-light-solid-2\);/);
   assert.match(output.css, /--ds-success-soft-border: var\(--ds-success-light-soft-4\);/);
+});
+
+test("chrome ramps separate structural borders from surface states", () => {
+  const quiet = createColorEngineTheme({ preset: "quiet" });
+  const separated = createColorEngineTheme({ preset: "high-separation" });
+  const quietLight = quiet.primitives["chrome-light"];
+  const quietDark = quiet.primitives["chrome-dark"];
+  const separatedLight = separated.primitives["chrome-light"];
+
+  assert.ok((quietLight[0]?.oklch.l ?? 0) > (quietLight[1]?.oklch.l ?? 1));
+  assert.ok((quietLight[1]?.oklch.l ?? 0) > (quietLight[2]?.oklch.l ?? 1));
+  assert.ok((quietDark[0]?.oklch.l ?? 1) < (quietDark[1]?.oklch.l ?? 0));
+  assert.ok((quietDark[1]?.oklch.l ?? 1) < (quietDark[2]?.oklch.l ?? 0));
+  assert.ok(chromeSpan(separated, "chrome-light") > chromeSpan(quiet, "chrome-light"));
+  assert.equal(quiet.semantics.light["border-default"], "var(--ds-chrome-light-default)");
+  assert.equal(quiet.semantics.dark["border-default"], "var(--ds-chrome-dark-default)");
 });
 
 test("anchored seed policy preserves exact parsed seeds as solid rest steps", () => {
@@ -298,6 +325,12 @@ function rampSpan(output, family) {
   const ramp = output.primitives[family];
 
   return (ramp[3]?.oklch.l ?? 0) - (ramp[0]?.oklch.l ?? 0);
+}
+
+function chromeSpan(output, family) {
+  const ramp = output.primitives[family];
+
+  return Math.abs((ramp[2]?.oklch.l ?? 0) - (ramp[0]?.oklch.l ?? 0));
 }
 
 function extractCssLightness(css, propertyName) {

@@ -42,9 +42,10 @@ p {
 .semantic-panel {
   --app-text-primary: var(--ds-text-primary, #101820);
   --app-text-secondary: var(--ds-text-secondary, #536170);
-  --app-border: var(--ds-border-subtle, color-mix(in oklch, var(--ds-surface-1, #eef2f7), #111827 18%));
+  --app-border: var(--ds-border-default, color-mix(in oklch, var(--ds-surface-1, #eef2f7), #111827 18%));
   --app-border-strong: var(--ds-border-strong, color-mix(in oklch, var(--ds-surface-1, #eef2f7), #111827 34%));
   --app-focus: var(--ds-primary-focus-ring, #0f6f3d);
+  --app-control-border: var(--ds-control-border, var(--app-border-strong));
   --app-control-bg: var(--ds-control-bg, #ffffff);
   --app-control-bg-hover: var(--ds-control-bg-hover, #f2f5f9);
   --app-control-text: var(--ds-control-text, #101820);
@@ -57,9 +58,10 @@ p {
 .semantic-panel[data-theme-v2="dark"] {
   --app-text-primary: var(--ds-text-primary, #f6f8fb);
   --app-text-secondary: var(--ds-text-secondary, #b7c0cc);
-  --app-border: var(--ds-border-subtle, color-mix(in oklch, var(--ds-surface-1, #111827), #ffffff 18%));
+  --app-border: var(--ds-border-default, color-mix(in oklch, var(--ds-surface-1, #111827), #ffffff 18%));
   --app-border-strong: var(--ds-border-strong, color-mix(in oklch, var(--ds-surface-1, #111827), #ffffff 34%));
   --app-focus: var(--ds-primary-focus-ring, #75d39c);
+  --app-control-border: var(--ds-control-border, var(--app-border-strong));
   --app-control-bg: var(--ds-control-bg, #0b1018);
   --app-control-bg-hover: var(--ds-control-bg-hover, #111827);
   --app-control-text: var(--ds-control-text, #f6f8fb);
@@ -233,7 +235,7 @@ h3 {
   width: 100%;
   min-width: 0;
   min-height: 40px;
-  border: 1px solid var(--app-border-strong);
+  border: 1px solid var(--app-control-border);
   border-radius: 6px;
   padding: 0 10px;
   color: var(--app-control-text);

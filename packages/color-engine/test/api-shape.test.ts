@@ -1,4 +1,5 @@
 import type {
+  ChromeLevel,
   ColorEngineCssOutput,
   ColorEngineInput,
   ColorEngineOutput,
@@ -14,6 +15,7 @@ import type {
   StatusSemanticTokenName,
 } from "../src/index.js";
 import {
+  CHROME_LEVELS,
   NEUTRAL_SEMANTIC_TOKEN_NAMES,
   PRIMARY_SEMANTIC_TOKEN_NAMES,
   SEED_POLICY_NAMES,
@@ -47,10 +49,12 @@ const input: ColorEngineInput = {
 };
 const output: ColorEngineOutput = createColorEngineTheme(input);
 const seedPolicy: SeedPolicy = "anchored";
+const chromeLevel: ChromeLevel = "default";
 const token: ColorToken | undefined = output.primitives["primary-light-solid"][0];
+const chromeToken: ColorToken | undefined = output.primitives["chrome-light"][0];
 const seedToken: ColorToken | undefined = output.primitives["primary-seed"][0];
 const statusToken: ColorToken | undefined = output.primitives["danger-light-soft"][0];
-const neutralSemanticName: NeutralSemanticTokenName = "text-primary";
+const neutralSemanticName: NeutralSemanticTokenName = "border-default";
 const surfaceSemanticName: SemanticTokenName = "surface-1-hover";
 const primarySemanticName: PrimarySemanticTokenName = "primary-action-bg";
 const statusSemanticName: StatusSemanticTokenName = "danger-soft-bg";
@@ -66,7 +70,9 @@ void preset;
 void lightStepDelta;
 void darkStepDelta;
 void seedPolicy;
+void chromeLevel;
 void token;
+void chromeToken;
 void seedToken;
 void statusToken;
 void neutralSemanticName;
@@ -85,3 +91,4 @@ void SURFACE_SEMANTIC_TOKEN_NAMES;
 void PRIMARY_SEMANTIC_TOKEN_NAMES;
 void STATUS_SEMANTIC_TOKEN_NAMES;
 void SEED_POLICY_NAMES;
+void CHROME_LEVELS;
