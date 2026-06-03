@@ -9,6 +9,8 @@ import {
   type PrimarySemanticTokenName,
   type PrimitiveFamilyName,
   type SemanticTokenName,
+  type StatusIntent,
+  type StatusSemanticTokenName,
   type SurfacePresetName,
   type SurfaceTheme,
 } from "@puzzlefactory/color-engine";
@@ -33,7 +35,30 @@ const primitiveFamilies = [
   "surface-dark",
   "primary-dark-soft",
   "primary-dark-solid",
+  "danger-light-soft",
+  "danger-light-solid",
+  "danger-dark-soft",
+  "danger-dark-solid",
+  "warning-light-soft",
+  "warning-light-solid",
+  "warning-dark-soft",
+  "warning-dark-solid",
+  "success-light-soft",
+  "success-light-solid",
+  "success-dark-soft",
+  "success-dark-solid",
+  "info-light-soft",
+  "info-light-solid",
+  "info-dark-soft",
+  "info-dark-solid",
 ] as const satisfies readonly PrimitiveFamilyName[];
+
+const statusIntents = [
+  { key: "danger", label: "Danger" },
+  { key: "warning", label: "Warning" },
+  { key: "success", label: "Success" },
+  { key: "info", label: "Info" },
+] as const satisfies readonly { readonly key: StatusIntent; readonly label: string }[];
 
 const surfaceSemanticTokens = [
   "surface-1",
@@ -68,9 +93,45 @@ const primarySemanticTokens = [
   "primary-soft-text",
 ] as const satisfies readonly PrimarySemanticTokenName[];
 
+const statusSemanticTokens = [
+  "danger-soft-bg",
+  "danger-soft-bg-hover",
+  "danger-soft-border",
+  "danger-soft-text",
+  "danger-solid-bg",
+  "danger-solid-bg-hover",
+  "danger-solid-bg-pressed",
+  "danger-solid-text",
+  "warning-soft-bg",
+  "warning-soft-bg-hover",
+  "warning-soft-border",
+  "warning-soft-text",
+  "warning-solid-bg",
+  "warning-solid-bg-hover",
+  "warning-solid-bg-pressed",
+  "warning-solid-text",
+  "success-soft-bg",
+  "success-soft-bg-hover",
+  "success-soft-border",
+  "success-soft-text",
+  "success-solid-bg",
+  "success-solid-bg-hover",
+  "success-solid-bg-pressed",
+  "success-solid-text",
+  "info-soft-bg",
+  "info-soft-bg-hover",
+  "info-soft-border",
+  "info-soft-text",
+  "info-solid-bg",
+  "info-solid-bg-hover",
+  "info-solid-bg-pressed",
+  "info-solid-text",
+] as const satisfies readonly StatusSemanticTokenName[];
+
 const semanticTokens = [
   ...surfaceSemanticTokens,
   ...primarySemanticTokens,
+  ...statusSemanticTokens,
 ] as const satisfies readonly SemanticTokenName[];
 
 const themeOptions = [
@@ -83,6 +144,10 @@ const defaultInput = {
   primarySeed: "#0f6f3d",
   surfaceLightSeed: "#edf2f7",
   surfaceDarkSeed: "#111827",
+  dangerSeed: "#c62828",
+  warningSeed: "#b26a00",
+  successSeed: "#16823a",
+  infoSeed: "#0b6ea8",
   preset: "standard",
   namespace: "ds",
 } as const satisfies Required<ColorEngineInput>;
@@ -92,6 +157,10 @@ export function App() {
   const [primarySeed, setPrimarySeed] = useState<string>(defaultInput.primarySeed);
   const [surfaceLightSeed, setSurfaceLightSeed] = useState<string>(defaultInput.surfaceLightSeed);
   const [surfaceDarkSeed, setSurfaceDarkSeed] = useState<string>(defaultInput.surfaceDarkSeed);
+  const [dangerSeed, setDangerSeed] = useState<string>(defaultInput.dangerSeed);
+  const [warningSeed, setWarningSeed] = useState<string>(defaultInput.warningSeed);
+  const [successSeed, setSuccessSeed] = useState<string>(defaultInput.successSeed);
+  const [infoSeed, setInfoSeed] = useState<string>(defaultInput.infoSeed);
   const [preset, setPreset] = useState<SurfacePresetName>(defaultInput.preset);
   const [activeTheme, setActiveTheme] = useState<SurfaceTheme>("light");
 
@@ -102,10 +171,24 @@ export function App() {
         primarySeed,
         surfaceLightSeed,
         surfaceDarkSeed,
+        dangerSeed,
+        warningSeed,
+        successSeed,
+        infoSeed,
         preset,
         namespace: defaultInput.namespace,
       }),
-    [neutralSeed, preset, primarySeed, surfaceDarkSeed, surfaceLightSeed],
+    [
+      dangerSeed,
+      infoSeed,
+      neutralSeed,
+      preset,
+      primarySeed,
+      successSeed,
+      surfaceDarkSeed,
+      surfaceLightSeed,
+      warningSeed,
+    ],
   );
 
   return (
@@ -143,18 +226,26 @@ export function App() {
             element={
               <Controls
                 activeTheme={activeTheme}
+                dangerSeed={dangerSeed}
                 engine={engine}
+                infoSeed={infoSeed}
                 neutralSeed={neutralSeed}
                 primarySeed={primarySeed}
                 preset={preset}
+                successSeed={successSeed}
                 surfaceDarkSeed={surfaceDarkSeed}
                 surfaceLightSeed={surfaceLightSeed}
+                warningSeed={warningSeed}
                 onActiveThemeChange={setActiveTheme}
+                onDangerSeedChange={setDangerSeed}
+                onInfoSeedChange={setInfoSeed}
                 onNeutralSeedChange={setNeutralSeed}
                 onPrimarySeedChange={setPrimarySeed}
                 onPresetChange={setPreset}
+                onSuccessSeedChange={setSuccessSeed}
                 onSurfaceDarkSeedChange={setSurfaceDarkSeed}
                 onSurfaceLightSeedChange={setSurfaceLightSeed}
+                onWarningSeedChange={setWarningSeed}
               />
             }
           />
@@ -207,37 +298,53 @@ function Overview({
 
 function Controls({
   activeTheme,
+  dangerSeed,
   engine,
+  infoSeed,
   neutralSeed,
   primarySeed,
   preset,
+  successSeed,
   surfaceDarkSeed,
   surfaceLightSeed,
+  warningSeed,
   onActiveThemeChange,
+  onDangerSeedChange,
+  onInfoSeedChange,
   onNeutralSeedChange,
   onPrimarySeedChange,
   onPresetChange,
+  onSuccessSeedChange,
   onSurfaceDarkSeedChange,
   onSurfaceLightSeedChange,
+  onWarningSeedChange,
 }: {
   activeTheme: SurfaceTheme;
+  dangerSeed: string;
   engine: EngineState;
+  infoSeed: string;
   neutralSeed: string;
   primarySeed: string;
   preset: SurfacePresetName;
+  successSeed: string;
   surfaceDarkSeed: string;
   surfaceLightSeed: string;
+  warningSeed: string;
   onActiveThemeChange: (value: SurfaceTheme) => void;
+  onDangerSeedChange: (value: string) => void;
+  onInfoSeedChange: (value: string) => void;
   onNeutralSeedChange: (value: string) => void;
   onPrimarySeedChange: (value: string) => void;
   onPresetChange: (value: SurfacePresetName) => void;
+  onSuccessSeedChange: (value: string) => void;
   onSurfaceDarkSeedChange: (value: string) => void;
   onSurfaceLightSeedChange: (value: string) => void;
+  onWarningSeedChange: (value: string) => void;
 }) {
   return (
     <ViewFrame
       title="Controls"
-      subtitle="Tune neutral, surface, and primary seeds with a named surface separation preset."
+      subtitle="Tune neutral, surface, primary, and status seeds with a named surface separation preset."
     >
       <section className="control-grid" aria-label="Engine controls">
         <SeedField
@@ -259,6 +366,26 @@ function Controls({
           label="Dark surface seed"
           value={surfaceDarkSeed}
           onChange={onSurfaceDarkSeedChange}
+        />
+        <SeedField
+          label="Danger seed"
+          value={dangerSeed}
+          onChange={onDangerSeedChange}
+        />
+        <SeedField
+          label="Warning seed"
+          value={warningSeed}
+          onChange={onWarningSeedChange}
+        />
+        <SeedField
+          label="Success seed"
+          value={successSeed}
+          onChange={onSuccessSeedChange}
+        />
+        <SeedField
+          label="Info seed"
+          value={infoSeed}
+          onChange={onInfoSeedChange}
         />
         <label className="field">
           <span>Preview theme</span>
@@ -352,6 +479,19 @@ function SemanticPreview({ engine }: { engine: EngineState }) {
             </div>
           </article>
         ))}
+        {themeOptions.map((theme) => (
+          <article className="semantic-panel" data-theme-v2={theme.key} key={`${theme.key}-status`}>
+            <header className="panel-header">
+              <h3>{theme.label} Status</h3>
+              <span>{statusSemanticTokens.length} roles</span>
+            </header>
+            <div className="semantic-grid">
+              {statusSemanticTokens.map((token) => (
+                <SemanticSwatch key={token} token={token} />
+              ))}
+            </div>
+          </article>
+        ))}
       </section>
     </ViewFrame>
   );
@@ -365,7 +505,7 @@ function ThemePreview({ engine }: { engine: EngineState }) {
   return (
     <ViewFrame
       title="Theme Preview"
-      subtitle="Light and dark surfaces and primary actions are rendered from separate explicit seeds."
+      subtitle="Light and dark surfaces, primary actions, and status treatments are rendered from separate explicit seeds."
     >
       <section className="theme-grid" aria-label="Theme surface previews">
         {themeOptions.map((theme) => (
@@ -417,7 +557,30 @@ function ThemeSample({ label, theme }: { label: string; theme: SurfaceTheme }) {
           <span className="focus-sample">Focus</span>
         </div>
       </div>
+      <div className="status-demo" aria-label={`${label} status usage preview`}>
+        {statusIntents.map((intent) => (
+          <StatusCard key={intent.key} intent={intent.key} label={intent.label} />
+        ))}
+      </div>
     </article>
+  );
+}
+
+function StatusCard({
+  intent,
+  label,
+}: {
+  intent: StatusIntent;
+  label: string;
+}) {
+  return (
+    <div className={`status-card status-card-${intent}`}>
+      <div className="status-soft">
+        <strong>{label} soft</strong>
+        <p>Soft status surface, border, and text.</p>
+      </div>
+      <button type="button">{label} solid</button>
+    </div>
   );
 }
 
@@ -486,6 +649,10 @@ function EngineMetadata({ output }: { output: ColorEngineOutput }) {
       <Metric label="Namespace" value={output.namespace} />
       <Metric label="Neutral LCH" value={formatOklchSummary(output.seeds.neutral)} />
       <Metric label="Primary LCH" value={formatOklchSummary(output.seeds.primary)} />
+      <Metric label="Danger LCH" value={formatOklchSummary(output.seeds.status.danger)} />
+      <Metric label="Warning LCH" value={formatOklchSummary(output.seeds.status.warning)} />
+      <Metric label="Success LCH" value={formatOklchSummary(output.seeds.status.success)} />
+      <Metric label="Info LCH" value={formatOklchSummary(output.seeds.status.info)} />
       <Metric label="Light surface LCH" value={formatOklchSummary(output.seeds.surfaceLight)} />
       <Metric label="Dark surface LCH" value={formatOklchSummary(output.seeds.surfaceDark)} />
     </section>

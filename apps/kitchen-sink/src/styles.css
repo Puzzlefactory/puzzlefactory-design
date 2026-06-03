@@ -493,6 +493,91 @@ h3 {
   outline-offset: 2px;
 }
 
+.status-demo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.status-card {
+  --status-soft-bg: var(--ds-info-soft-bg);
+  --status-soft-border: var(--ds-info-soft-border);
+  --status-soft-text: var(--ds-info-soft-text);
+  --status-solid-bg: var(--ds-info-solid-bg);
+  --status-solid-bg-hover: var(--ds-info-solid-bg-hover);
+  --status-solid-bg-pressed: var(--ds-info-solid-bg-pressed);
+  --status-solid-text: var(--ds-info-solid-text);
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.status-card-danger {
+  --status-soft-bg: var(--ds-danger-soft-bg);
+  --status-soft-border: var(--ds-danger-soft-border);
+  --status-soft-text: var(--ds-danger-soft-text);
+  --status-solid-bg: var(--ds-danger-solid-bg);
+  --status-solid-bg-hover: var(--ds-danger-solid-bg-hover);
+  --status-solid-bg-pressed: var(--ds-danger-solid-bg-pressed);
+  --status-solid-text: var(--ds-danger-solid-text);
+}
+
+.status-card-warning {
+  --status-soft-bg: var(--ds-warning-soft-bg);
+  --status-soft-border: var(--ds-warning-soft-border);
+  --status-soft-text: var(--ds-warning-soft-text);
+  --status-solid-bg: var(--ds-warning-solid-bg);
+  --status-solid-bg-hover: var(--ds-warning-solid-bg-hover);
+  --status-solid-bg-pressed: var(--ds-warning-solid-bg-pressed);
+  --status-solid-text: var(--ds-warning-solid-text);
+}
+
+.status-card-success {
+  --status-soft-bg: var(--ds-success-soft-bg);
+  --status-soft-border: var(--ds-success-soft-border);
+  --status-soft-text: var(--ds-success-soft-text);
+  --status-solid-bg: var(--ds-success-solid-bg);
+  --status-solid-bg-hover: var(--ds-success-solid-bg-hover);
+  --status-solid-bg-pressed: var(--ds-success-solid-bg-pressed);
+  --status-solid-text: var(--ds-success-solid-text);
+}
+
+.status-soft {
+  display: grid;
+  gap: 6px;
+  min-height: 92px;
+  padding: 12px;
+  border: 1px solid var(--status-soft-border);
+  border-radius: 7px;
+  background: var(--status-soft-bg);
+  color: var(--status-soft-text);
+}
+
+.status-soft p {
+  color: var(--status-soft-text);
+  line-height: 1.35;
+}
+
+.status-card button {
+  min-height: 40px;
+  border: 1px solid var(--status-solid-bg);
+  border-radius: 6px;
+  padding: 0 12px;
+  background: var(--status-solid-bg);
+  color: var(--status-solid-text);
+  font-weight: 800;
+}
+
+.status-card button:hover {
+  border-color: var(--status-solid-bg-hover);
+  background: var(--status-solid-bg-hover);
+}
+
+.status-card button:active {
+  border-color: var(--status-solid-bg-pressed);
+  background: var(--status-solid-bg-pressed);
+}
+
 .notice {
   display: grid;
   gap: 5px;
@@ -569,7 +654,8 @@ h3 {
   .theme-grid,
   .semantic-layout,
   .semantic-grid,
-  .state-row {
+  .state-row,
+  .status-demo {
     grid-template-columns: 1fr;
   }
 }

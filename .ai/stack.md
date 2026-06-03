@@ -14,7 +14,7 @@
 
 ### `@puzzlefactory/color-engine`
 
-Status: v2 neutral/surface foundation with calibrated surface presets and primary usage ramps. Target runtime is a TypeScript library. Current exports define the public API type surface for `createColorEngineTheme(input): ColorEngineOutput`, `parseColorSeed`, `ColorEngineValidationError`, surface preset constants, and neutral/surface/primary output types. Surface presets use separate light/dark step deltas and separate light/dark state deltas. Primary generation uses an explicit `primarySeed` and emits compact light/dark soft and solid usage families.
+Status: v2 neutral/surface foundation with calibrated surface presets, primary usage ramps, and status usage ramps. Target runtime is a TypeScript library. Current exports define the public API type surface for `createColorEngineTheme(input): ColorEngineOutput`, `parseColorSeed`, `ColorEngineValidationError`, surface preset constants, and neutral/surface/primary/status output types. Surface presets use separate light/dark step deltas and separate light/dark state deltas. Primary generation uses an explicit `primarySeed` and emits compact light/dark soft and solid usage families. Status generation uses explicit `dangerSeed`, `warningSeed`, `successSeed`, and `infoSeed` values and emits compact light/dark soft and solid usage families per status intent.
 
 Runtime dependencies must remain zero.
 
@@ -22,7 +22,7 @@ Build/test scripts:
 
 - `build`: `tsc -p tsconfig.json`
 - `typecheck`: `tsc -p tsconfig.json --noEmit`
-- `test`: builds `dist`, then runs TypeScript API-shape checks plus Node test runner package-boundary and surface/primary generation checks
+- `test`: builds `dist`, then runs TypeScript API-shape checks plus Node test runner package-boundary and surface/primary/status generation checks
 
 #### Color Space
 
@@ -71,12 +71,12 @@ Not yet decided. Deferred until the color engine layer is complete. Web Componen
 
 ### `apps/kitchen-sink`
 
-Status: React + Vite + React Router 7 verification shell wired to v2 neutral/surface/primary color-engine output.
+Status: React + Vite + React Router 7 verification shell wired to v2 neutral/surface/primary/status color-engine output.
 
 - Package name: `@puzzlefactory/kitchen-sink`
 - Runtime stack: React 19, Vite 8, React Router 7
 - Purpose: visual verification surface for the color engine and later token/theme/component states
-- Current behavior: routed verification tool that consumes v2 `@puzzlefactory/color-engine`, injects generated CSS directly, switches `data-theme-v2`, and displays neutral/surface/primary seed controls, compact primitive ramps, semantic surface and primary roles, light/dark nested surface previews, and primary action/link/focus previews
+- Current behavior: routed verification tool that consumes v2 `@puzzlefactory/color-engine`, injects generated CSS directly, switches `data-theme-v2`, and displays neutral/surface/primary/status seed controls, compact primitive ramps, semantic surface, primary, and status roles, light/dark nested surface previews, primary action/link/focus previews, and status soft/solid cards
 
 ### `apps/docs`
 

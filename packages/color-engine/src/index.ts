@@ -18,12 +18,19 @@ export type PrimaryUsageFamilyName =
   | "primary-dark-soft"
   | "primary-dark-solid";
 
+export type StatusIntent = "danger" | "warning" | "success" | "info";
+
+export type StatusUsageFamilyName =
+  `${StatusIntent}-${"light" | "dark"}-${"soft" | "solid"}`;
+
+export type UsageFamilyName = PrimaryUsageFamilyName | StatusUsageFamilyName;
+
 export type PrimitiveFamilyName =
   | "neutral-light"
   | "neutral-dark"
   | "surface-light"
   | "surface-dark"
-  | PrimaryUsageFamilyName;
+  | UsageFamilyName;
 
 export type SurfaceSemanticTokenName =
   | `surface-${SurfaceLevel}`
@@ -42,7 +49,20 @@ export type PrimarySemanticTokenName =
   | "primary-soft-border"
   | "primary-soft-text";
 
-export type SemanticTokenName = SurfaceSemanticTokenName | PrimarySemanticTokenName;
+export type StatusSemanticTokenName =
+  | `${StatusIntent}-soft-bg`
+  | `${StatusIntent}-soft-bg-hover`
+  | `${StatusIntent}-soft-border`
+  | `${StatusIntent}-soft-text`
+  | `${StatusIntent}-solid-bg`
+  | `${StatusIntent}-solid-bg-hover`
+  | `${StatusIntent}-solid-bg-pressed`
+  | `${StatusIntent}-solid-text`;
+
+export type SemanticTokenName =
+  | SurfaceSemanticTokenName
+  | PrimarySemanticTokenName
+  | StatusSemanticTokenName;
 
 export interface OklchValue {
   readonly l: number;
@@ -66,6 +86,10 @@ export interface ColorEngineInput {
   readonly surfaceLightSeed?: ColorSeed | string;
   readonly surfaceDarkSeed?: ColorSeed | string;
   readonly primarySeed?: ColorSeed | string;
+  readonly dangerSeed?: ColorSeed | string;
+  readonly warningSeed?: ColorSeed | string;
+  readonly successSeed?: ColorSeed | string;
+  readonly infoSeed?: ColorSeed | string;
   readonly preset?: SurfacePresetName;
   readonly namespace?: string;
 }
@@ -86,6 +110,22 @@ export interface PrimitiveSurfaceOutput {
   readonly "primary-light-solid": readonly ColorToken[];
   readonly "primary-dark-soft": readonly ColorToken[];
   readonly "primary-dark-solid": readonly ColorToken[];
+  readonly "danger-light-soft": readonly ColorToken[];
+  readonly "danger-light-solid": readonly ColorToken[];
+  readonly "danger-dark-soft": readonly ColorToken[];
+  readonly "danger-dark-solid": readonly ColorToken[];
+  readonly "warning-light-soft": readonly ColorToken[];
+  readonly "warning-light-solid": readonly ColorToken[];
+  readonly "warning-dark-soft": readonly ColorToken[];
+  readonly "warning-dark-solid": readonly ColorToken[];
+  readonly "success-light-soft": readonly ColorToken[];
+  readonly "success-light-solid": readonly ColorToken[];
+  readonly "success-dark-soft": readonly ColorToken[];
+  readonly "success-dark-solid": readonly ColorToken[];
+  readonly "info-light-soft": readonly ColorToken[];
+  readonly "info-light-solid": readonly ColorToken[];
+  readonly "info-dark-soft": readonly ColorToken[];
+  readonly "info-dark-solid": readonly ColorToken[];
 }
 
 export interface ColorEngineOutput {
@@ -97,6 +137,7 @@ export interface ColorEngineOutput {
     readonly surfaceLight: OklchValue;
     readonly surfaceDark: OklchValue;
     readonly primary: OklchValue;
+    readonly status: Readonly<Record<StatusIntent, OklchValue>>;
   };
   readonly primitives: PrimitiveSurfaceOutput;
   readonly semantics: Readonly<Record<SurfaceTheme, Readonly<Record<SemanticTokenName, `var(--${string})`>>>>;
@@ -177,12 +218,17 @@ const DEFAULT_INPUT = {
   surfaceLightSeed: "oklch(0.94 0.01 255)",
   surfaceDarkSeed: "oklch(0.12 0.012 255)",
   primarySeed: "#0f6f3d",
+  dangerSeed: "#c62828",
+  warningSeed: "#b26a00",
+  successSeed: "#16823a",
+  infoSeed: "#0b6ea8",
   preset: "standard",
   namespace: "ds",
 } as const satisfies Required<ColorEngineInput>;
 
 const SURFACE_LEVELS = [1, 2, 3, 4] as const satisfies readonly SurfaceLevel[];
 const SURFACE_STATES = ["hover", "selected", "pressed"] as const satisfies readonly SurfaceState[];
+const STATUS_INTENTS = ["danger", "warning", "success", "info"] as const satisfies readonly StatusIntent[];
 
 export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngineOutput {
   const resolvedInput = resolveInput(input);
@@ -191,6 +237,12 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
   const surfaceLightSeed = parseColorSeed(resolvedInput.surfaceLightSeed, "surfaceLightSeed");
   const surfaceDarkSeed = parseColorSeed(resolvedInput.surfaceDarkSeed, "surfaceDarkSeed");
   const primarySeed = parseColorSeed(resolvedInput.primarySeed, "primarySeed");
+  const statusSeeds = {
+    danger: parseColorSeed(resolvedInput.dangerSeed, "dangerSeed"),
+    warning: parseColorSeed(resolvedInput.warningSeed, "warningSeed"),
+    success: parseColorSeed(resolvedInput.successSeed, "successSeed"),
+    info: parseColorSeed(resolvedInput.infoSeed, "infoSeed"),
+  } as const satisfies Readonly<Record<StatusIntent, OklchValue>>;
   const neutralLight = createLevelRamp({
     family: "neutral-light",
     seed: toneSeed(surfaceLightSeed, neutralSeed, 0.75),
@@ -224,12 +276,14 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     chromaScale: preset.chromaScale,
   });
   const primary = createPrimaryUsageFamilies(primarySeed);
+  const status = createStatusUsageFamilies(statusSeeds);
   const primitives: PrimitiveSurfaceOutput = {
     "neutral-light": neutralLight,
     "neutral-dark": neutralDark,
     "surface-light": surfaceLight,
     "surface-dark": surfaceDark,
     ...primary,
+    ...status,
   };
   const semantics = createSemantics(resolvedInput.namespace);
 
@@ -242,6 +296,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
       surfaceLight: surfaceLightSeed,
       surfaceDark: surfaceDarkSeed,
       primary: primarySeed,
+      status: statusSeeds,
     },
     primitives,
     semantics,
@@ -301,6 +356,10 @@ function resolveInput(input: ColorEngineInput): Required<ColorEngineInput> {
     surfaceLightSeed: input.surfaceLightSeed ?? DEFAULT_INPUT.surfaceLightSeed,
     surfaceDarkSeed: input.surfaceDarkSeed ?? DEFAULT_INPUT.surfaceDarkSeed,
     primarySeed: input.primarySeed ?? DEFAULT_INPUT.primarySeed,
+    dangerSeed: input.dangerSeed ?? DEFAULT_INPUT.dangerSeed,
+    warningSeed: input.warningSeed ?? DEFAULT_INPUT.warningSeed,
+    successSeed: input.successSeed ?? DEFAULT_INPUT.successSeed,
+    infoSeed: input.infoSeed ?? DEFAULT_INPUT.infoSeed,
     preset,
     namespace,
   };
@@ -391,8 +450,80 @@ function createPrimaryUsageFamilies(
   };
 }
 
+function createStatusUsageFamilies(
+  seeds: Readonly<Record<StatusIntent, OklchValue>>,
+): Pick<
+  PrimitiveSurfaceOutput,
+  | StatusUsageFamilyName
+> {
+  return {
+    ...createStatusIntentFamilies("danger", seeds.danger),
+    ...createStatusIntentFamilies("warning", seeds.warning),
+    ...createStatusIntentFamilies("success", seeds.success),
+    ...createStatusIntentFamilies("info", seeds.info),
+  };
+}
+
+function createStatusIntentFamilies(
+  intent: StatusIntent,
+  seed: OklchValue,
+): Record<StatusUsageFamilyName, readonly ColorToken[]> {
+  const hue = normalizeHue(seed.h);
+  const isWarning = intent === "warning";
+  const chroma = clampNumber(seed.c, isWarning ? 0.045 : 0.06, isWarning ? 0.145 : 0.18);
+  const lightSolidBase = clampNumber(seed.l + (isWarning ? 0.02 : 0), isWarning ? 0.5 : 0.42, isWarning ? 0.68 : 0.6);
+  const darkSolidBase = clampNumber(seed.l + (isWarning ? 0.22 : 0.2), isWarning ? 0.7 : 0.66, isWarning ? 0.82 : 0.78);
+  const lightSoftChroma: readonly [number, number, number, number] = isWarning
+    ? [chroma * 0.12, chroma * 0.17, chroma * 0.24, chroma * 0.34]
+    : [chroma * 0.15, chroma * 0.22, chroma * 0.3, chroma * 0.42];
+  const darkSoftChroma: readonly [number, number, number, number] = isWarning
+    ? [chroma * 0.18, chroma * 0.24, chroma * 0.31, chroma * 0.4]
+    : [chroma * 0.26, chroma * 0.33, chroma * 0.41, chroma * 0.5];
+
+  return {
+    [`${intent}-light-soft`]: createUsageRamp({
+      family: `${intent}-light-soft`,
+      hue,
+      lightness: isWarning ? [0.972, 0.952, 0.928, 0.898] : [0.968, 0.944, 0.916, 0.882],
+      chroma: lightSoftChroma,
+      description: `${intent} light soft`,
+    }),
+    [`${intent}-light-solid`]: createUsageRamp({
+      family: `${intent}-light-solid`,
+      hue,
+      lightness: [
+        lightSolidBase + 0.055,
+        lightSolidBase,
+        lightSolidBase - 0.045,
+        lightSolidBase - 0.085,
+      ],
+      chroma: [chroma * 0.86, chroma, chroma * 1.02, chroma * 1.04],
+      description: `${intent} light solid`,
+    }),
+    [`${intent}-dark-soft`]: createUsageRamp({
+      family: `${intent}-dark-soft`,
+      hue,
+      lightness: isWarning ? [0.17, 0.21, 0.252, 0.296] : [0.16, 0.2, 0.242, 0.288],
+      chroma: darkSoftChroma,
+      description: `${intent} dark soft`,
+    }),
+    [`${intent}-dark-solid`]: createUsageRamp({
+      family: `${intent}-dark-solid`,
+      hue,
+      lightness: [
+        darkSolidBase + 0.045,
+        darkSolidBase,
+        darkSolidBase - 0.055,
+        darkSolidBase - 0.105,
+      ],
+      chroma: [chroma * 0.72, chroma * 0.82, chroma * 0.92, chroma],
+      description: `${intent} dark solid`,
+    }),
+  } as Record<StatusUsageFamilyName, readonly ColorToken[]>;
+}
+
 function createUsageRamp(options: {
-  readonly family: PrimaryUsageFamilyName;
+  readonly family: UsageFamilyName;
   readonly hue: number;
   readonly lightness: readonly [number, number, number, number];
   readonly chroma: readonly [number, number, number, number];
@@ -423,10 +554,12 @@ function createSemantics(
     light: {
       ...createSurfaceSemantics(namespace, "surface-light"),
       ...createPrimarySemantics(namespace, "light"),
+      ...createStatusSemantics(namespace, "light"),
     },
     dark: {
       ...createSurfaceSemantics(namespace, "surface-dark"),
       ...createPrimarySemantics(namespace, "dark"),
+      ...createStatusSemantics(namespace, "dark"),
     },
   };
 }
@@ -483,6 +616,30 @@ function createPrimarySemantics(
     "primary-soft-border": cssVar(namespace, "primary-dark-soft-4"),
     "primary-soft-text": cssVar(namespace, "primary-dark-solid-1"),
   };
+}
+
+function createStatusSemantics(
+  namespace: string,
+  theme: SurfaceTheme,
+): Readonly<Record<StatusSemanticTokenName, `var(--${string})`>> {
+  const entries: [StatusSemanticTokenName, `var(--${string})`][] = [];
+  const themePrefix = theme === "light" ? "light" : "dark";
+
+  for (const intent of STATUS_INTENTS) {
+    const softFamily = `${intent}-${themePrefix}-soft`;
+    const solidFamily = `${intent}-${themePrefix}-solid`;
+
+    entries.push([`${intent}-soft-bg`, cssVar(namespace, `${softFamily}-1`)]);
+    entries.push([`${intent}-soft-bg-hover`, cssVar(namespace, `${softFamily}-2`)]);
+    entries.push([`${intent}-soft-border`, cssVar(namespace, `${softFamily}-4`)]);
+    entries.push([`${intent}-soft-text`, cssVar(namespace, `${solidFamily}-${theme === "light" ? 4 : 1}`)]);
+    entries.push([`${intent}-solid-bg`, cssVar(namespace, `${solidFamily}-2`)]);
+    entries.push([`${intent}-solid-bg-hover`, cssVar(namespace, `${solidFamily}-${theme === "light" ? 3 : 1}`)]);
+    entries.push([`${intent}-solid-bg-pressed`, cssVar(namespace, `${solidFamily}-${theme === "light" ? 4 : 3}`)]);
+    entries.push([`${intent}-solid-text`, cssVar(namespace, theme === "light" ? "surface-light-1" : "surface-dark-1")]);
+  }
+
+  return Object.fromEntries(entries) as Record<StatusSemanticTokenName, `var(--${string})`>;
 }
 
 function createCss(

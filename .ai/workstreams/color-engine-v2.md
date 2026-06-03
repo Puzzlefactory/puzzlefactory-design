@@ -56,14 +56,23 @@ CE2-03 is implemented. Primary generation uses an explicit `primarySeed` and pro
 
 Primary semantic roles now cover action background states, action text, link states, focus ring, and soft container roles. Kitchen-sink renders primary seed controls, primary primitive ramps, primary semantic roles, and primary action/link/focus previews in light and dark themes.
 
-Independent sub-agent review was not performed for CE2-01, CE2-02, or CE2-03 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
+CE2-04 is implemented. Status generation uses explicit `dangerSeed`, `warningSeed`, `successSeed`, and `infoSeed` inputs and produces compact usage families for each status intent:
+
+- `<intent>-light-soft`: light-theme tinted status containers.
+- `<intent>-light-solid`: light-theme status emphasis/actions.
+- `<intent>-dark-soft`: dark-theme tinted status containers.
+- `<intent>-dark-solid`: dark-theme status emphasis/actions.
+
+Status semantic roles now cover soft backgrounds, hover backgrounds, borders, soft text, solid backgrounds, solid hover/pressed states, and solid text. Warning uses a slightly softer chroma recipe than danger/success/info because yellow/orange status colors are more visually sensitive. Kitchen-sink renders status seed controls, primitive ramps, semantic roles, and status soft/solid cards in light and dark themes.
+
+Independent sub-agent review was not performed for CE2-01, CE2-02, CE2-03, or CE2-04 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
 
 ## Next Actions
 
-- Review CE2-03 primary visuals in kitchen-sink and decide whether the primary usage model is visually credible enough to expand.
-- If primary output is acceptable, proceed to `CE2-04`: status usage ramps.
-- If primary output feels off, tune only primary soft/solid recipes before adding status.
-- Do not move to APCA or CSS package expansion until status output has also been visually reviewed.
+- Review CE2-04 status visuals in kitchen-sink and decide whether the status usage model is visually credible enough to stabilize.
+- If status output is acceptable, proceed to `CE2-05`: semantic aliases and CSS output.
+- If status output feels off, tune only status soft/solid recipes before expanding output packages.
+- Do not move to APCA/assertion enforcement until semantic aliases and CSS output are stable enough to evaluate actual text/background pairs.
 
 ## Slice Backlog
 

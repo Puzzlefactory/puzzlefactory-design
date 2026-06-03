@@ -7,6 +7,8 @@ import type {
   SurfacePreset,
   SurfacePresetName,
   SemanticTokenName,
+  StatusIntent,
+  StatusSemanticTokenName,
 } from "../src/index.js";
 import { SURFACE_PRESETS, createColorEngineTheme } from "../src/index.js";
 
@@ -17,6 +19,10 @@ const darkStepDelta: number = preset.darkStepDelta;
 const input: ColorEngineInput = {
   neutralSeed: "#d8dee8",
   primarySeed: "#0f6f3d",
+  dangerSeed: "#c62828",
+  warningSeed: "#b26a00",
+  successSeed: "#16823a",
+  infoSeed: "#0b6ea8",
   surfaceLightSeed: "oklch(0.94 0.01 255)",
   surfaceDarkSeed: "#111827",
   preset: presetName,
@@ -24,16 +30,24 @@ const input: ColorEngineInput = {
 };
 const output: ColorEngineOutput = createColorEngineTheme(input);
 const token: ColorToken | undefined = output.primitives["primary-light-solid"][0];
+const statusToken: ColorToken | undefined = output.primitives["danger-light-soft"][0];
 const surfaceSemanticName: SemanticTokenName = "surface-1-hover";
 const primarySemanticName: PrimarySemanticTokenName = "primary-action-bg";
+const statusSemanticName: StatusSemanticTokenName = "danger-soft-bg";
+const statusIntent: StatusIntent = "warning";
 const oklch: OklchValue = output.seeds.neutral;
 const primarySeed: OklchValue = output.seeds.primary;
+const warningSeed: OklchValue = output.seeds.status.warning;
 
 void preset;
 void lightStepDelta;
 void darkStepDelta;
 void token;
+void statusToken;
 void surfaceSemanticName;
 void primarySemanticName;
+void statusSemanticName;
+void statusIntent;
 void oklch;
 void primarySeed;
+void warningSeed;
