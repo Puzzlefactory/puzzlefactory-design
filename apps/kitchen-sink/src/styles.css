@@ -44,7 +44,7 @@ p {
   --app-text-secondary: #536170;
   --app-border: color-mix(in oklch, var(--ds-surface-1, #eef2f7), #111827 18%);
   --app-border-strong: color-mix(in oklch, var(--ds-surface-1, #eef2f7), #111827 34%);
-  --app-focus: #0f6f3d;
+  --app-focus: var(--ds-primary-focus-ring, #0f6f3d);
   --app-control-bg: #ffffff;
   --app-control-text: #101820;
   background: var(--ds-surface-1, #eef2f7);
@@ -58,7 +58,7 @@ p {
   --app-text-secondary: #b7c0cc;
   --app-border: color-mix(in oklch, var(--ds-surface-1, #111827), #ffffff 18%);
   --app-border-strong: color-mix(in oklch, var(--ds-surface-1, #111827), #ffffff 34%);
-  --app-focus: #75d39c;
+  --app-focus: var(--ds-primary-focus-ring, #75d39c);
   --app-control-bg: #0b1018;
   --app-control-text: #f6f8fb;
 }
@@ -418,6 +418,79 @@ h3 {
 
 .state-pressed {
   background: var(--ds-surface-2-pressed);
+}
+
+.primary-demo {
+  display: grid;
+  gap: 12px;
+}
+
+.primary-soft {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--ds-primary-soft-border);
+  border-radius: 7px;
+  background: var(--ds-primary-soft-bg);
+  color: var(--ds-primary-soft-text);
+}
+
+.primary-soft p {
+  color: var(--ds-primary-soft-text);
+  line-height: 1.4;
+}
+
+.primary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.primary-actions button,
+.primary-actions a,
+.focus-sample {
+  min-height: 42px;
+  border-radius: 6px;
+  font-weight: 800;
+}
+
+.primary-actions button {
+  border: 1px solid var(--ds-primary-action-bg);
+  padding: 0 16px;
+  background: var(--ds-primary-action-bg);
+  color: var(--ds-primary-action-text);
+}
+
+.primary-actions button:hover {
+  border-color: var(--ds-primary-action-bg-hover);
+  background: var(--ds-primary-action-bg-hover);
+}
+
+.primary-actions button:active {
+  border-color: var(--ds-primary-action-bg-pressed);
+  background: var(--ds-primary-action-bg-pressed);
+}
+
+.primary-actions a {
+  display: inline-grid;
+  place-items: center;
+  color: var(--ds-primary-link);
+  text-decoration-color: var(--ds-primary-link);
+  text-underline-offset: 4px;
+}
+
+.primary-actions a:hover {
+  color: var(--ds-primary-link-hover);
+}
+
+.focus-sample {
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--app-border-strong);
+  padding: 0 14px;
+  outline: 3px solid color-mix(in oklch, var(--ds-primary-focus-ring), transparent 35%);
+  outline-offset: 2px;
 }
 
 .notice {

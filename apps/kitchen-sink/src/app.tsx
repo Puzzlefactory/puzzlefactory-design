@@ -6,9 +6,10 @@ import {
   type ColorEngineInput,
   type ColorEngineOutput,
   type ColorToken,
+  type PrimarySemanticTokenName,
   type PrimitiveFamilyName,
+  type SemanticTokenName,
   type SurfacePresetName,
-  type SurfaceSemanticTokenName,
   type SurfaceTheme,
 } from "@puzzlefactory/color-engine";
 import type { ReactNode } from "react";
@@ -26,11 +27,15 @@ const navItems = [
 const primitiveFamilies = [
   "neutral-light",
   "surface-light",
+  "primary-light-soft",
+  "primary-light-solid",
   "neutral-dark",
   "surface-dark",
+  "primary-dark-soft",
+  "primary-dark-solid",
 ] as const satisfies readonly PrimitiveFamilyName[];
 
-const semanticTokens = [
+const surfaceSemanticTokens = [
   "surface-1",
   "surface-2",
   "surface-3",
@@ -47,7 +52,26 @@ const semanticTokens = [
   "surface-2-pressed",
   "surface-3-pressed",
   "surface-4-pressed",
-] as const satisfies readonly SurfaceSemanticTokenName[];
+] as const satisfies readonly SemanticTokenName[];
+
+const primarySemanticTokens = [
+  "primary-action-bg",
+  "primary-action-bg-hover",
+  "primary-action-bg-pressed",
+  "primary-action-text",
+  "primary-link",
+  "primary-link-hover",
+  "primary-focus-ring",
+  "primary-soft-bg",
+  "primary-soft-bg-hover",
+  "primary-soft-border",
+  "primary-soft-text",
+] as const satisfies readonly PrimarySemanticTokenName[];
+
+const semanticTokens = [
+  ...surfaceSemanticTokens,
+  ...primarySemanticTokens,
+] as const satisfies readonly SemanticTokenName[];
 
 const themeOptions = [
   { key: "light", label: "Light" },
@@ -56,6 +80,7 @@ const themeOptions = [
 
 const defaultInput = {
   neutralSeed: "#d8dee8",
+  primarySeed: "#0f6f3d",
   surfaceLightSeed: "#edf2f7",
   surfaceDarkSeed: "#111827",
   preset: "standard",
@@ -64,6 +89,7 @@ const defaultInput = {
 
 export function App() {
   const [neutralSeed, setNeutralSeed] = useState<string>(defaultInput.neutralSeed);
+  const [primarySeed, setPrimarySeed] = useState<string>(defaultInput.primarySeed);
   const [surfaceLightSeed, setSurfaceLightSeed] = useState<string>(defaultInput.surfaceLightSeed);
   const [surfaceDarkSeed, setSurfaceDarkSeed] = useState<string>(defaultInput.surfaceDarkSeed);
   const [preset, setPreset] = useState<SurfacePresetName>(defaultInput.preset);
@@ -73,12 +99,13 @@ export function App() {
     () =>
       createEngineState({
         neutralSeed,
+        primarySeed,
         surfaceLightSeed,
         surfaceDarkSeed,
         preset,
         namespace: defaultInput.namespace,
       }),
-    [neutralSeed, preset, surfaceDarkSeed, surfaceLightSeed],
+    [neutralSeed, preset, primarySeed, surfaceDarkSeed, surfaceLightSeed],
   );
 
   return (
@@ -118,11 +145,13 @@ export function App() {
                 activeTheme={activeTheme}
                 engine={engine}
                 neutralSeed={neutralSeed}
+                primarySeed={primarySeed}
                 preset={preset}
                 surfaceDarkSeed={surfaceDarkSeed}
                 surfaceLightSeed={surfaceLightSeed}
                 onActiveThemeChange={setActiveTheme}
                 onNeutralSeedChange={setNeutralSeed}
+                onPrimarySeedChange={setPrimarySeed}
                 onPresetChange={setPreset}
                 onSurfaceDarkSeedChange={setSurfaceDarkSeed}
                 onSurfaceLightSeedChange={setSurfaceLightSeed}
@@ -180,11 +209,13 @@ function Controls({
   activeTheme,
   engine,
   neutralSeed,
+  primarySeed,
   preset,
   surfaceDarkSeed,
   surfaceLightSeed,
   onActiveThemeChange,
   onNeutralSeedChange,
+  onPrimarySeedChange,
   onPresetChange,
   onSurfaceDarkSeedChange,
   onSurfaceLightSeedChange,
@@ -192,11 +223,13 @@ function Controls({
   activeTheme: SurfaceTheme;
   engine: EngineState;
   neutralSeed: string;
+  primarySeed: string;
   preset: SurfacePresetName;
   surfaceDarkSeed: string;
   surfaceLightSeed: string;
   onActiveThemeChange: (value: SurfaceTheme) => void;
   onNeutralSeedChange: (value: string) => void;
+  onPrimarySeedChange: (value: string) => void;
   onPresetChange: (value: SurfacePresetName) => void;
   onSurfaceDarkSeedChange: (value: string) => void;
   onSurfaceLightSeedChange: (value: string) => void;
@@ -204,13 +237,18 @@ function Controls({
   return (
     <ViewFrame
       title="Controls"
-      subtitle="Tune the neutral seed, independent surface seeds, and separation preset."
+      subtitle="Tune neutral, surface, and primary seeds with a named surface separation preset."
     >
       <section className="control-grid" aria-label="Engine controls">
         <SeedField
           label="Neutral seed"
           value={neutralSeed}
           onChange={onNeutralSeedChange}
+        />
+        <SeedField
+          label="Primary seed"
+          value={primarySeed}
+          onChange={onPrimarySeedChange}
         />
         <SeedField
           label="Light surface seed"
@@ -266,7 +304,7 @@ function Primitives({ engine }: { engine: EngineState }) {
   return (
     <ViewFrame
       title="Primitive Ramps"
-      subtitle="Four-step ramps keep neutral and surface concerns split instead of forcing one long scale."
+      subtitle="Four-step ramps keep neutral, surface, and primary usage concerns split by UI job."
     >
       <section className="ramp-stack" aria-label="Primitive ramps">
         {primitiveFamilies.map((family) => (
@@ -284,18 +322,31 @@ function SemanticPreview({ engine }: { engine: EngineState }) {
 
   return (
     <ViewFrame
-      title="Semantic Surface Roles"
-      subtitle="Semantic roles point at surface ramps for each theme instead of remapping broad generic ramps."
+      title="Semantic Roles"
+      subtitle="Semantic roles point at surface and primary usage families for each theme."
     >
       <section className="semantic-layout">
         {themeOptions.map((theme) => (
-          <article className="semantic-panel" data-theme-v2={theme.key} key={theme.key}>
+          <article className="semantic-panel" data-theme-v2={theme.key} key={`${theme.key}-surface`}>
             <header className="panel-header">
-              <h3>{theme.label}</h3>
-              <span>{semanticTokens.length} roles</span>
+              <h3>{theme.label} Surface</h3>
+              <span>{surfaceSemanticTokens.length} roles</span>
             </header>
             <div className="semantic-grid">
-              {semanticTokens.map((token) => (
+              {surfaceSemanticTokens.map((token) => (
+                <SemanticSwatch key={token} token={token} />
+              ))}
+            </div>
+          </article>
+        ))}
+        {themeOptions.map((theme) => (
+          <article className="semantic-panel" data-theme-v2={theme.key} key={`${theme.key}-primary`}>
+            <header className="panel-header">
+              <h3>{theme.label} Primary</h3>
+              <span>{primarySemanticTokens.length} roles</span>
+            </header>
+            <div className="semantic-grid">
+              {primarySemanticTokens.map((token) => (
                 <SemanticSwatch key={token} token={token} />
               ))}
             </div>
@@ -314,7 +365,7 @@ function ThemePreview({ engine }: { engine: EngineState }) {
   return (
     <ViewFrame
       title="Theme Preview"
-      subtitle="Light and dark surfaces are rendered from separate seeds and separate surface ramps."
+      subtitle="Light and dark surfaces and primary actions are rendered from separate explicit seeds."
     >
       <section className="theme-grid" aria-label="Theme surface previews">
         {themeOptions.map((theme) => (
@@ -353,6 +404,19 @@ function ThemeSample({ label, theme }: { label: string; theme: SurfaceTheme }) {
         <span className="state-chip state-selected">Selected</span>
         <span className="state-chip state-pressed">Pressed</span>
       </div>
+      <div className="primary-demo" aria-label={`${label} primary usage preview`}>
+        <div className="primary-soft">
+          <strong>Primary soft</strong>
+          <p>Container, border, and text roles are separate from solid actions.</p>
+        </div>
+        <div className="primary-actions">
+          <button type="button">Primary action</button>
+          <a href="/themes" onClick={(event) => event.preventDefault()}>
+            Primary link
+          </a>
+          <span className="focus-sample">Focus</span>
+        </div>
+      </div>
     </article>
   );
 }
@@ -387,7 +451,7 @@ function RampPanel({
   );
 }
 
-function SemanticSwatch({ token }: { token: SurfaceSemanticTokenName }) {
+function SemanticSwatch({ token }: { token: SemanticTokenName }) {
   return (
     <div className="semantic-swatch">
       <span className="semantic-chip" style={{ background: cssVar(token) }} aria-hidden="true" />
@@ -421,6 +485,7 @@ function EngineMetadata({ output }: { output: ColorEngineOutput }) {
     <section className="metric-grid" aria-label="Generated output metadata">
       <Metric label="Namespace" value={output.namespace} />
       <Metric label="Neutral LCH" value={formatOklchSummary(output.seeds.neutral)} />
+      <Metric label="Primary LCH" value={formatOklchSummary(output.seeds.primary)} />
       <Metric label="Light surface LCH" value={formatOklchSummary(output.seeds.surfaceLight)} />
       <Metric label="Dark surface LCH" value={formatOklchSummary(output.seeds.surfaceDark)} />
     </section>

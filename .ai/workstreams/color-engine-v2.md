@@ -47,14 +47,23 @@ CE2-02 is implemented. Surface presets are calibrated with separate light/dark s
 - `layered`: clearer nested panel hierarchy.
 - `high-separation`: stronger hierarchy review and edge-case checking.
 
-Independent sub-agent review was not performed for CE2-01 or CE2-02 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
+CE2-03 is implemented. Primary generation uses an explicit `primarySeed` and produces four compact usage families:
+
+- `primary-light-soft`: light-theme tinted containers.
+- `primary-light-solid`: light-theme actions, links, and focus emphasis.
+- `primary-dark-soft`: dark-theme tinted containers.
+- `primary-dark-solid`: dark-theme actions, links, and focus emphasis.
+
+Primary semantic roles now cover action background states, action text, link states, focus ring, and soft container roles. Kitchen-sink renders primary seed controls, primary primitive ramps, primary semantic roles, and primary action/link/focus previews in light and dark themes.
+
+Independent sub-agent review was not performed for CE2-01, CE2-02, or CE2-03 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
 
 ## Next Actions
 
-- Review CE2-02 visuals in kitchen-sink and decide whether the surface foundation is visually credible enough to expand.
-- If surface presets are acceptable, proceed to `CE2-03`: primary usage ramps.
-- If surface presets still feel off, tune only neutral/surface before adding new families.
-- Do not move to status, APCA, or CSS package expansion until primary/action output has also been visually reviewed.
+- Review CE2-03 primary visuals in kitchen-sink and decide whether the primary usage model is visually credible enough to expand.
+- If primary output is acceptable, proceed to `CE2-04`: status usage ramps.
+- If primary output feels off, tune only primary soft/solid recipes before adding status.
+- Do not move to APCA or CSS package expansion until status output has also been visually reviewed.
 
 ## Slice Backlog
 

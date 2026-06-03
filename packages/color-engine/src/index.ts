@@ -12,15 +12,37 @@ export type SurfaceLevel = 1 | 2 | 3 | 4;
 
 export type SurfaceState = "hover" | "selected" | "pressed";
 
+export type PrimaryUsageFamilyName =
+  | "primary-light-soft"
+  | "primary-light-solid"
+  | "primary-dark-soft"
+  | "primary-dark-solid";
+
 export type PrimitiveFamilyName =
   | "neutral-light"
   | "neutral-dark"
   | "surface-light"
-  | "surface-dark";
+  | "surface-dark"
+  | PrimaryUsageFamilyName;
 
 export type SurfaceSemanticTokenName =
   | `surface-${SurfaceLevel}`
   | `surface-${SurfaceLevel}-${SurfaceState}`;
+
+export type PrimarySemanticTokenName =
+  | "primary-action-bg"
+  | "primary-action-bg-hover"
+  | "primary-action-bg-pressed"
+  | "primary-action-text"
+  | "primary-link"
+  | "primary-link-hover"
+  | "primary-focus-ring"
+  | "primary-soft-bg"
+  | "primary-soft-bg-hover"
+  | "primary-soft-border"
+  | "primary-soft-text";
+
+export type SemanticTokenName = SurfaceSemanticTokenName | PrimarySemanticTokenName;
 
 export interface OklchValue {
   readonly l: number;
@@ -43,6 +65,7 @@ export interface ColorEngineInput {
   readonly neutralSeed?: ColorSeed | string;
   readonly surfaceLightSeed?: ColorSeed | string;
   readonly surfaceDarkSeed?: ColorSeed | string;
+  readonly primarySeed?: ColorSeed | string;
   readonly preset?: SurfacePresetName;
   readonly namespace?: string;
 }
@@ -59,6 +82,10 @@ export interface PrimitiveSurfaceOutput {
   readonly "neutral-dark": readonly ColorToken[];
   readonly "surface-light": readonly ColorToken[];
   readonly "surface-dark": readonly ColorToken[];
+  readonly "primary-light-soft": readonly ColorToken[];
+  readonly "primary-light-solid": readonly ColorToken[];
+  readonly "primary-dark-soft": readonly ColorToken[];
+  readonly "primary-dark-solid": readonly ColorToken[];
 }
 
 export interface ColorEngineOutput {
@@ -69,9 +96,10 @@ export interface ColorEngineOutput {
     readonly neutral: OklchValue;
     readonly surfaceLight: OklchValue;
     readonly surfaceDark: OklchValue;
+    readonly primary: OklchValue;
   };
   readonly primitives: PrimitiveSurfaceOutput;
-  readonly semantics: Readonly<Record<SurfaceTheme, Readonly<Record<SurfaceSemanticTokenName, `var(--${string})`>>>>;
+  readonly semantics: Readonly<Record<SurfaceTheme, Readonly<Record<SemanticTokenName, `var(--${string})`>>>>;
   readonly css: string;
 }
 
@@ -148,6 +176,7 @@ const DEFAULT_INPUT = {
   neutralSeed: "oklch(0.86 0.012 255)",
   surfaceLightSeed: "oklch(0.94 0.01 255)",
   surfaceDarkSeed: "oklch(0.12 0.012 255)",
+  primarySeed: "#0f6f3d",
   preset: "standard",
   namespace: "ds",
 } as const satisfies Required<ColorEngineInput>;
@@ -161,6 +190,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
   const neutralSeed = parseColorSeed(resolvedInput.neutralSeed, "neutralSeed");
   const surfaceLightSeed = parseColorSeed(resolvedInput.surfaceLightSeed, "surfaceLightSeed");
   const surfaceDarkSeed = parseColorSeed(resolvedInput.surfaceDarkSeed, "surfaceDarkSeed");
+  const primarySeed = parseColorSeed(resolvedInput.primarySeed, "primarySeed");
   const neutralLight = createLevelRamp({
     family: "neutral-light",
     seed: toneSeed(surfaceLightSeed, neutralSeed, 0.75),
@@ -193,13 +223,15 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     maxLightness: 0.32,
     chromaScale: preset.chromaScale,
   });
+  const primary = createPrimaryUsageFamilies(primarySeed);
   const primitives: PrimitiveSurfaceOutput = {
     "neutral-light": neutralLight,
     "neutral-dark": neutralDark,
     "surface-light": surfaceLight,
     "surface-dark": surfaceDark,
+    ...primary,
   };
-  const semantics = createSurfaceSemantics(resolvedInput.namespace);
+  const semantics = createSemantics(resolvedInput.namespace);
 
   return {
     namespace: resolvedInput.namespace,
@@ -209,6 +241,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
       neutral: neutralSeed,
       surfaceLight: surfaceLightSeed,
       surfaceDark: surfaceDarkSeed,
+      primary: primarySeed,
     },
     primitives,
     semantics,
@@ -267,6 +300,7 @@ function resolveInput(input: ColorEngineInput): Required<ColorEngineInput> {
     neutralSeed: input.neutralSeed ?? DEFAULT_INPUT.neutralSeed,
     surfaceLightSeed: input.surfaceLightSeed ?? DEFAULT_INPUT.surfaceLightSeed,
     surfaceDarkSeed: input.surfaceDarkSeed ?? DEFAULT_INPUT.surfaceDarkSeed,
+    primarySeed: input.primarySeed ?? DEFAULT_INPUT.primarySeed,
     preset,
     namespace,
   };
@@ -304,16 +338,100 @@ function toneSeed(surfaceSeed: OklchValue, neutralSeed: OklchValue, chromaScale:
   };
 }
 
-function createSurfaceSemantics(
-  namespace: string,
-): ColorEngineOutput["semantics"] {
+function createPrimaryUsageFamilies(
+  seed: OklchValue,
+): Pick<
+  PrimitiveSurfaceOutput,
+  "primary-light-soft" | "primary-light-solid" | "primary-dark-soft" | "primary-dark-solid"
+> {
+  const chroma = clampNumber(seed.c, 0.055, 0.18);
+  const hue = normalizeHue(seed.h);
+  const lightSolidBase = clampNumber(seed.l, 0.42, 0.62);
+  const darkSolidBase = clampNumber(seed.l + 0.2, 0.66, 0.78);
+
   return {
-    light: createThemeSemantics(namespace, "surface-light"),
-    dark: createThemeSemantics(namespace, "surface-dark"),
+    "primary-light-soft": createUsageRamp({
+      family: "primary-light-soft",
+      hue,
+      lightness: [0.968, 0.942, 0.912, 0.878],
+      chroma: [chroma * 0.16, chroma * 0.23, chroma * 0.31, chroma * 0.42],
+      description: "primary light soft",
+    }),
+    "primary-light-solid": createUsageRamp({
+      family: "primary-light-solid",
+      hue,
+      lightness: [
+        lightSolidBase + 0.055,
+        lightSolidBase,
+        lightSolidBase - 0.045,
+        lightSolidBase - 0.085,
+      ],
+      chroma: [chroma * 0.88, chroma, chroma * 1.03, chroma * 1.05],
+      description: "primary light solid",
+    }),
+    "primary-dark-soft": createUsageRamp({
+      family: "primary-dark-soft",
+      hue,
+      lightness: [0.18, 0.218, 0.258, 0.302],
+      chroma: [chroma * 0.28, chroma * 0.34, chroma * 0.41, chroma * 0.48],
+      description: "primary dark soft",
+    }),
+    "primary-dark-solid": createUsageRamp({
+      family: "primary-dark-solid",
+      hue,
+      lightness: [
+        darkSolidBase + 0.045,
+        darkSolidBase,
+        darkSolidBase - 0.055,
+        darkSolidBase - 0.105,
+      ],
+      chroma: [chroma * 0.75, chroma * 0.82, chroma * 0.9, chroma],
+      description: "primary dark solid",
+    }),
   };
 }
 
-function createThemeSemantics(
+function createUsageRamp(options: {
+  readonly family: PrimaryUsageFamilyName;
+  readonly hue: number;
+  readonly lightness: readonly [number, number, number, number];
+  readonly chroma: readonly [number, number, number, number];
+  readonly description: string;
+}): readonly ColorToken[] {
+  return options.lightness.map((lightness, index) => {
+    const level = (index + 1) as SurfaceLevel;
+    const chroma = options.chroma[index] ?? options.chroma[3];
+    const oklch = {
+      l: roundChannel(clampNumber(lightness, 0.02, 0.998)),
+      c: roundChannel(clampNumber(chroma, 0, 0.22)),
+      h: roundChannel(options.hue),
+    };
+
+    return {
+      name: `${options.family}-${level}`,
+      value: formatOklch(oklch),
+      oklch,
+      description: `${options.description} level ${level}`,
+    };
+  });
+}
+
+function createSemantics(
+  namespace: string,
+): ColorEngineOutput["semantics"] {
+  return {
+    light: {
+      ...createSurfaceSemantics(namespace, "surface-light"),
+      ...createPrimarySemantics(namespace, "light"),
+    },
+    dark: {
+      ...createSurfaceSemantics(namespace, "surface-dark"),
+      ...createPrimarySemantics(namespace, "dark"),
+    },
+  };
+}
+
+function createSurfaceSemantics(
   namespace: string,
   family: "surface-light" | "surface-dark",
 ): Readonly<Record<SurfaceSemanticTokenName, `var(--${string})`>> {
@@ -330,6 +448,41 @@ function createThemeSemantics(
   }
 
   return Object.fromEntries(entries) as Record<SurfaceSemanticTokenName, `var(--${string})`>;
+}
+
+function createPrimarySemantics(
+  namespace: string,
+  theme: SurfaceTheme,
+): Readonly<Record<PrimarySemanticTokenName, `var(--${string})`>> {
+  if (theme === "light") {
+    return {
+      "primary-action-bg": cssVar(namespace, "primary-light-solid-2"),
+      "primary-action-bg-hover": cssVar(namespace, "primary-light-solid-3"),
+      "primary-action-bg-pressed": cssVar(namespace, "primary-light-solid-4"),
+      "primary-action-text": cssVar(namespace, "surface-light-1"),
+      "primary-link": cssVar(namespace, "primary-light-solid-2"),
+      "primary-link-hover": cssVar(namespace, "primary-light-solid-3"),
+      "primary-focus-ring": cssVar(namespace, "primary-light-solid-1"),
+      "primary-soft-bg": cssVar(namespace, "primary-light-soft-1"),
+      "primary-soft-bg-hover": cssVar(namespace, "primary-light-soft-2"),
+      "primary-soft-border": cssVar(namespace, "primary-light-soft-4"),
+      "primary-soft-text": cssVar(namespace, "primary-light-solid-4"),
+    };
+  }
+
+  return {
+    "primary-action-bg": cssVar(namespace, "primary-dark-solid-2"),
+    "primary-action-bg-hover": cssVar(namespace, "primary-dark-solid-1"),
+    "primary-action-bg-pressed": cssVar(namespace, "primary-dark-solid-3"),
+    "primary-action-text": cssVar(namespace, "surface-dark-1"),
+    "primary-link": cssVar(namespace, "primary-dark-solid-2"),
+    "primary-link-hover": cssVar(namespace, "primary-dark-solid-1"),
+    "primary-focus-ring": cssVar(namespace, "primary-dark-solid-1"),
+    "primary-soft-bg": cssVar(namespace, "primary-dark-soft-1"),
+    "primary-soft-bg-hover": cssVar(namespace, "primary-dark-soft-2"),
+    "primary-soft-border": cssVar(namespace, "primary-dark-soft-4"),
+    "primary-soft-text": cssVar(namespace, "primary-dark-solid-1"),
+  };
 }
 
 function createCss(
@@ -370,7 +523,7 @@ function createPrimitiveCss(
 function createThemeCss(
   namespace: string,
   theme: SurfaceTheme,
-  semantics: Readonly<Record<SurfaceSemanticTokenName, `var(--${string})`>>,
+  semantics: Readonly<Record<SemanticTokenName, `var(--${string})`>>,
 ): string {
   return createCssRule(
     `[data-theme-v2="${theme}"]`,
