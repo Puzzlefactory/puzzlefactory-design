@@ -90,8 +90,8 @@ Independent sub-agent review was not performed for CE2-01 through CE2-07 because
 ## Next Actions
 
 - Review CE2-07 visuals in kitchen-sink, especially quiet and layered presets where panel structure previously blurred together.
-- If CE2-07 visuals are acceptable, plan the next slice for APCA/assertion reporting over stable semantic text/background pairs.
-- Do not move to APCA/assertion enforcement until semantic aliases and CSS output are stable enough to evaluate actual text/background pairs.
+- If CE2-07 visuals are acceptable, proceed to `CE2-08`: APCA assertion report over stable semantic text/background pairs.
+- Treat `CE2-09` and later as strategic placeholders. Reorder or revise them if CE2-08 visual/assertion feedback exposes a more important issue.
 
 ## Seed Policy Plan
 
@@ -110,6 +110,44 @@ Potential policies:
 
 Kitchen-sink should make seed policy visible when implemented. Primitive ramps should clearly show whether the seed was adapted or anchored, so the generator feels honest during visual review.
 
+## Strategic Roadmap
+
+This roadmap is intentionally provisional. Kitchen-sink visual review and assertion output can change the order.
+
+1. `CE2-08`: Add APCA assertion report.
+   - Port or adapt the v1 APCA calculation into v2.
+   - Define assertion pairs over existing semantic roles, such as text on surfaces, primary action text on action backgrounds, status soft text on status soft backgrounds, and status solid text on solid backgrounds.
+   - Return diagnostic assertion output from `createColorEngineTheme`.
+   - Render assertion results in kitchen-sink.
+   - Stop before assertion enforcement, auto-tuning, token package expansion, and component packages.
+
+2. `CE2-09`: Tune from assertion and visual feedback.
+   - Use CE2-08 report plus kitchen-sink review to tune only the generation recipes or semantic pair mappings that fail or feel visibly weak.
+   - Keep changes targeted; do not add new color families unless a specific assertion/visual gap proves a missing UI job.
+   - Stop before hard enforcement and downstream token packages.
+
+3. `CE2-10`: CSS/token output stabilization for v2.
+   - Decide whether v2 CSS output remains in `@puzzlefactory/color-engine`, moves into `@puzzlefactory/tokens`, or is exposed through a thin adapter.
+   - Define load-order-ready CSS outputs for primitives and themes.
+   - Keep the root/workspace package boundaries clean.
+   - Stop before component implementation.
+
+4. `CE2-11`: Presets and example themes.
+   - Add a small set of credible theme presets using OKLCH seeds and current policy controls.
+   - Render preset switching in kitchen-sink so designers can compare starting points quickly.
+   - Avoid turning presets into a broad theme marketplace or adding slider-heavy controls.
+
+5. `CE2-12`: Consumer integration contract.
+   - Define how an application consumes generated CSS and theme attributes.
+   - Document runtime generation versus build-once usage.
+   - Include expected use for Azure Static Web Apps/blob-hosted tenant CSS if still relevant.
+   - Stop before full docs app or component package work.
+
+6. `CE2-13`: First component proof.
+   - Build the smallest useful Web Component proof only after color, semantic aliases, CSS output, and assertion diagnostics are credible.
+   - Candidate proof: button plus alert/status panel, because those exercise primary, status, surface, chrome, and APCA pairs.
+   - Stop before a broad component library.
+
 ## Slice Backlog
 
 Use these IDs as shorthand for future work authorization prompts.
@@ -123,6 +161,12 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-05` | Semantic aliases and CSS output | Map generated usage families to stable semantic custom properties and update CSS output once visual families are credible. | Component-library implementation |
 | `CE2-06` | Per-family seed policy | Add `balanced` and `anchored` seed policies for primary and status families, preserve exact seeds when anchored, and show policy/seed anchors in kitchen-sink. | APCA enforcement, token package expansion, component-library implementation |
 | `CE2-07` | Chrome and border ramp | Add compact `chrome-light` and `chrome-dark` primitive families for borders, dividers, and control edges; remap border semantics to chrome output while preserving surface ramps. | Chrome seeds/sliders, APCA enforcement, token package expansion, component-library implementation |
+| `CE2-08` | APCA assertion report | Add APCA calculation and diagnostic assertion output for stable semantic text/background pairs, then render the report in kitchen-sink. | Assertion enforcement, auto-tuning, token package expansion, component-library implementation |
+| `CE2-09` | Assertion-driven tuning | Tune recipes or semantic pair mappings based on CE2-08 report and kitchen-sink visual review. | New color families without proven UI job, hard enforcement, token package expansion |
+| `CE2-10` | V2 CSS/token output stabilization | Stabilize v2 CSS output boundaries and decide how `@puzzlefactory/tokens` should consume or wrap v2 output. | Component-library implementation |
+| `CE2-11` | Presets and example themes | Add a small set of credible OKLCH theme presets and kitchen-sink preset comparison. | Slider-heavy controls, broad theme marketplace |
+| `CE2-12` | Consumer integration contract | Define app consumption, generated CSS loading, theme attributes, and build-once/runtime usage patterns. | Full docs app, component-library implementation |
+| `CE2-13` | First component proof | Build the smallest Web Component proof that exercises color semantics, likely button plus alert/status panel. | Broad component library |
 
 ## Completion Shape
 
