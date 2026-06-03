@@ -40,13 +40,14 @@ p {
 .app-shell,
 .theme-sample,
 .semantic-panel {
-  --app-text-primary: #101820;
-  --app-text-secondary: #536170;
-  --app-border: color-mix(in oklch, var(--ds-surface-1, #eef2f7), #111827 18%);
-  --app-border-strong: color-mix(in oklch, var(--ds-surface-1, #eef2f7), #111827 34%);
+  --app-text-primary: var(--ds-text-primary, #101820);
+  --app-text-secondary: var(--ds-text-secondary, #536170);
+  --app-border: var(--ds-border-subtle, color-mix(in oklch, var(--ds-surface-1, #eef2f7), #111827 18%));
+  --app-border-strong: var(--ds-border-strong, color-mix(in oklch, var(--ds-surface-1, #eef2f7), #111827 34%));
   --app-focus: var(--ds-primary-focus-ring, #0f6f3d);
-  --app-control-bg: #ffffff;
-  --app-control-text: #101820;
+  --app-control-bg: var(--ds-control-bg, #ffffff);
+  --app-control-bg-hover: var(--ds-control-bg-hover, #f2f5f9);
+  --app-control-text: var(--ds-control-text, #101820);
   background: var(--ds-surface-1, #eef2f7);
   color: var(--app-text-primary);
 }
@@ -54,13 +55,14 @@ p {
 .app-shell[data-theme-v2="dark"],
 .theme-sample[data-theme-v2="dark"],
 .semantic-panel[data-theme-v2="dark"] {
-  --app-text-primary: #f6f8fb;
-  --app-text-secondary: #b7c0cc;
-  --app-border: color-mix(in oklch, var(--ds-surface-1, #111827), #ffffff 18%);
-  --app-border-strong: color-mix(in oklch, var(--ds-surface-1, #111827), #ffffff 34%);
+  --app-text-primary: var(--ds-text-primary, #f6f8fb);
+  --app-text-secondary: var(--ds-text-secondary, #b7c0cc);
+  --app-border: var(--ds-border-subtle, color-mix(in oklch, var(--ds-surface-1, #111827), #ffffff 18%));
+  --app-border-strong: var(--ds-border-strong, color-mix(in oklch, var(--ds-surface-1, #111827), #ffffff 34%));
   --app-focus: var(--ds-primary-focus-ring, #75d39c);
-  --app-control-bg: #0b1018;
-  --app-control-text: #f6f8fb;
+  --app-control-bg: var(--ds-control-bg, #0b1018);
+  --app-control-bg-hover: var(--ds-control-bg-hover, #111827);
+  --app-control-text: var(--ds-control-text, #f6f8fb);
 }
 
 .app-shell {
@@ -238,6 +240,11 @@ h3 {
   background: var(--app-control-bg);
 }
 
+.field input:hover,
+.field select:hover {
+  background: var(--app-control-bg-hover);
+}
+
 .field input:focus-visible,
 .field select:focus-visible,
 .preset-button:focus-visible,
@@ -282,10 +289,17 @@ h3 {
 
 .ramp-panel,
 .semantic-panel,
-.theme-sample {
+.theme-sample,
+.css-output {
   display: grid;
   gap: 16px;
   padding: 16px;
+}
+
+.css-output {
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--ds-surface-2, #f2f5f9);
 }
 
 .panel-header,
@@ -325,6 +339,39 @@ h3 {
   color: var(--app-text-secondary);
   font-size: 0.72rem;
   overflow-wrap: anywhere;
+}
+
+.css-output-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.css-output-card {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  background: var(--ds-surface-1, #eef2f7);
+}
+
+.css-output-card span {
+  color: var(--app-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.css-output-card code {
+  color: var(--app-text-primary);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.css-output-card strong {
+  font-size: 0.9rem;
 }
 
 .semantic-grid {
@@ -600,7 +647,8 @@ h3 {
   .preset-grid,
   .metric-grid,
   .theme-grid,
-  .semantic-layout {
+  .semantic-layout,
+  .css-output-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -654,6 +702,7 @@ h3 {
   .theme-grid,
   .semantic-layout,
   .semantic-grid,
+  .css-output-grid,
   .state-row,
   .status-demo {
     grid-template-columns: 1fr;

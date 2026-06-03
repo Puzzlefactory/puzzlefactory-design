@@ -1,16 +1,19 @@
 import {
   ColorEngineValidationError,
+  NEUTRAL_SEMANTIC_TOKEN_NAMES,
+  PRIMARY_SEMANTIC_TOKEN_NAMES,
+  SEMANTIC_TOKEN_NAMES,
   SURFACE_PRESETS,
   SURFACE_PRESET_NAMES,
+  SURFACE_SEMANTIC_TOKEN_NAMES,
+  STATUS_INTENTS,
+  STATUS_SEMANTIC_TOKEN_NAMES,
   createColorEngineTheme,
   type ColorEngineInput,
   type ColorEngineOutput,
   type ColorToken,
-  type PrimarySemanticTokenName,
   type PrimitiveFamilyName,
   type SemanticTokenName,
-  type StatusIntent,
-  type StatusSemanticTokenName,
   type SurfacePresetName,
   type SurfaceTheme,
 } from "@puzzlefactory/color-engine";
@@ -58,81 +61,7 @@ const statusIntents = [
   { key: "warning", label: "Warning" },
   { key: "success", label: "Success" },
   { key: "info", label: "Info" },
-] as const satisfies readonly { readonly key: StatusIntent; readonly label: string }[];
-
-const surfaceSemanticTokens = [
-  "surface-1",
-  "surface-2",
-  "surface-3",
-  "surface-4",
-  "surface-1-hover",
-  "surface-2-hover",
-  "surface-3-hover",
-  "surface-4-hover",
-  "surface-1-selected",
-  "surface-2-selected",
-  "surface-3-selected",
-  "surface-4-selected",
-  "surface-1-pressed",
-  "surface-2-pressed",
-  "surface-3-pressed",
-  "surface-4-pressed",
-] as const satisfies readonly SemanticTokenName[];
-
-const primarySemanticTokens = [
-  "primary-action-bg",
-  "primary-action-bg-hover",
-  "primary-action-bg-pressed",
-  "primary-action-text",
-  "primary-link",
-  "primary-link-hover",
-  "primary-focus-ring",
-  "primary-soft-bg",
-  "primary-soft-bg-hover",
-  "primary-soft-border",
-  "primary-soft-text",
-] as const satisfies readonly PrimarySemanticTokenName[];
-
-const statusSemanticTokens = [
-  "danger-soft-bg",
-  "danger-soft-bg-hover",
-  "danger-soft-border",
-  "danger-soft-text",
-  "danger-solid-bg",
-  "danger-solid-bg-hover",
-  "danger-solid-bg-pressed",
-  "danger-solid-text",
-  "warning-soft-bg",
-  "warning-soft-bg-hover",
-  "warning-soft-border",
-  "warning-soft-text",
-  "warning-solid-bg",
-  "warning-solid-bg-hover",
-  "warning-solid-bg-pressed",
-  "warning-solid-text",
-  "success-soft-bg",
-  "success-soft-bg-hover",
-  "success-soft-border",
-  "success-soft-text",
-  "success-solid-bg",
-  "success-solid-bg-hover",
-  "success-solid-bg-pressed",
-  "success-solid-text",
-  "info-soft-bg",
-  "info-soft-bg-hover",
-  "info-soft-border",
-  "info-soft-text",
-  "info-solid-bg",
-  "info-solid-bg-hover",
-  "info-solid-bg-pressed",
-  "info-solid-text",
-] as const satisfies readonly StatusSemanticTokenName[];
-
-const semanticTokens = [
-  ...surfaceSemanticTokens,
-  ...primarySemanticTokens,
-  ...statusSemanticTokens,
-] as const satisfies readonly SemanticTokenName[];
+] as const satisfies readonly { readonly key: (typeof STATUS_INTENTS)[number]; readonly label: string }[];
 
 const themeOptions = [
   { key: "light", label: "Light" },
@@ -281,7 +210,7 @@ function Overview({
               label="Primitive families"
               value={Object.keys(engine.output.primitives).length.toString()}
             />
-            <Metric label="Surface roles" value={semanticTokens.length.toString()} />
+            <Metric label="Semantic roles" value={SEMANTIC_TOKEN_NAMES.length.toString()} />
           </section>
           <section className="overview-grid" aria-label="Verification areas">
             {navItems.slice(1).map((item) => (
@@ -431,7 +360,7 @@ function Primitives({ engine }: { engine: EngineState }) {
   return (
     <ViewFrame
       title="Primitive Ramps"
-      subtitle="Four-step ramps keep neutral, surface, and primary usage concerns split by UI job."
+      subtitle="Four-step ramps keep neutral, surface, primary, and status concerns split by UI job."
     >
       <section className="ramp-stack" aria-label="Primitive ramps">
         {primitiveFamilies.map((family) => (
@@ -450,17 +379,30 @@ function SemanticPreview({ engine }: { engine: EngineState }) {
   return (
     <ViewFrame
       title="Semantic Roles"
-      subtitle="Semantic roles point at surface and primary usage families for each theme."
+      subtitle="Stable semantic aliases point at generated primitive families for each theme."
     >
       <section className="semantic-layout">
+        {themeOptions.map((theme) => (
+          <article className="semantic-panel" data-theme-v2={theme.key} key={`${theme.key}-neutral`}>
+            <header className="panel-header">
+              <h3>{theme.label} Text and Chrome</h3>
+              <span>{NEUTRAL_SEMANTIC_TOKEN_NAMES.length} roles</span>
+            </header>
+            <div className="semantic-grid">
+              {NEUTRAL_SEMANTIC_TOKEN_NAMES.map((token) => (
+                <SemanticSwatch key={token} token={token} />
+              ))}
+            </div>
+          </article>
+        ))}
         {themeOptions.map((theme) => (
           <article className="semantic-panel" data-theme-v2={theme.key} key={`${theme.key}-surface`}>
             <header className="panel-header">
               <h3>{theme.label} Surface</h3>
-              <span>{surfaceSemanticTokens.length} roles</span>
+              <span>{SURFACE_SEMANTIC_TOKEN_NAMES.length} roles</span>
             </header>
             <div className="semantic-grid">
-              {surfaceSemanticTokens.map((token) => (
+              {SURFACE_SEMANTIC_TOKEN_NAMES.map((token) => (
                 <SemanticSwatch key={token} token={token} />
               ))}
             </div>
@@ -470,10 +412,10 @@ function SemanticPreview({ engine }: { engine: EngineState }) {
           <article className="semantic-panel" data-theme-v2={theme.key} key={`${theme.key}-primary`}>
             <header className="panel-header">
               <h3>{theme.label} Primary</h3>
-              <span>{primarySemanticTokens.length} roles</span>
+              <span>{PRIMARY_SEMANTIC_TOKEN_NAMES.length} roles</span>
             </header>
             <div className="semantic-grid">
-              {primarySemanticTokens.map((token) => (
+              {PRIMARY_SEMANTIC_TOKEN_NAMES.map((token) => (
                 <SemanticSwatch key={token} token={token} />
               ))}
             </div>
@@ -483,16 +425,17 @@ function SemanticPreview({ engine }: { engine: EngineState }) {
           <article className="semantic-panel" data-theme-v2={theme.key} key={`${theme.key}-status`}>
             <header className="panel-header">
               <h3>{theme.label} Status</h3>
-              <span>{statusSemanticTokens.length} roles</span>
+              <span>{STATUS_SEMANTIC_TOKEN_NAMES.length} roles</span>
             </header>
             <div className="semantic-grid">
-              {statusSemanticTokens.map((token) => (
+              {STATUS_SEMANTIC_TOKEN_NAMES.map((token) => (
                 <SemanticSwatch key={token} token={token} />
               ))}
             </div>
           </article>
         ))}
       </section>
+      <CssOutputSummary output={engine.output} />
     </ViewFrame>
   );
 }
@@ -570,7 +513,7 @@ function StatusCard({
   intent,
   label,
 }: {
-  intent: StatusIntent;
+  intent: (typeof STATUS_INTENTS)[number];
   label: string;
 }) {
   return (
@@ -580,6 +523,50 @@ function StatusCard({
         <p>Soft status surface, border, and text.</p>
       </div>
       <button type="button">{label} solid</button>
+    </div>
+  );
+}
+
+function CssOutputSummary({ output }: { output: ColorEngineOutput }) {
+  return (
+    <section className="css-output" aria-label="Generated CSS output">
+      <header className="panel-header">
+        <h3>CSS Output</h3>
+        <span>{declarationCount(output.cssOutput.all)} declarations</span>
+      </header>
+      <div className="css-output-grid">
+        <CssOutputCard
+          label="Primitive rule"
+          selector=":root"
+          declarations={declarationCount(output.cssOutput.primitives)}
+        />
+        {themeOptions.map((theme) => (
+          <CssOutputCard
+            key={theme.key}
+            label={`${theme.label} aliases`}
+            selector={`[data-theme-v2="${theme.key}"]`}
+            declarations={declarationCount(output.cssOutput.themes[theme.key])}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CssOutputCard({
+  declarations,
+  label,
+  selector,
+}: {
+  declarations: number;
+  label: string;
+  selector: string;
+}) {
+  return (
+    <div className="css-output-card">
+      <span>{label}</span>
+      <code>{selector}</code>
+      <strong>{declarations} custom properties</strong>
     </div>
   );
 }
@@ -732,6 +719,12 @@ function createEngineState(input: ColorEngineInput): EngineState {
 
 function cssVar(token: string): `var(--${string})` {
   return `var(--${defaultInput.namespace}-${token})`;
+}
+
+function declarationCount(css: string): number {
+  return css
+    .split("\n")
+    .filter((line) => line.trim().startsWith("--")).length;
 }
 
 function labelize(value: string): string {

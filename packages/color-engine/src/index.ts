@@ -32,6 +32,16 @@ export type PrimitiveFamilyName =
   | "surface-dark"
   | UsageFamilyName;
 
+export type NeutralSemanticTokenName =
+  | "text-primary"
+  | "text-secondary"
+  | "text-muted"
+  | "border-subtle"
+  | "border-strong"
+  | "control-bg"
+  | "control-bg-hover"
+  | "control-text";
+
 export type SurfaceSemanticTokenName =
   | `surface-${SurfaceLevel}`
   | `surface-${SurfaceLevel}-${SurfaceState}`;
@@ -60,6 +70,7 @@ export type StatusSemanticTokenName =
   | `${StatusIntent}-solid-text`;
 
 export type SemanticTokenName =
+  | NeutralSemanticTokenName
   | SurfaceSemanticTokenName
   | PrimarySemanticTokenName
   | StatusSemanticTokenName;
@@ -141,7 +152,14 @@ export interface ColorEngineOutput {
   };
   readonly primitives: PrimitiveSurfaceOutput;
   readonly semantics: Readonly<Record<SurfaceTheme, Readonly<Record<SemanticTokenName, `var(--${string})`>>>>;
+  readonly cssOutput: ColorEngineCssOutput;
   readonly css: string;
+}
+
+export interface ColorEngineCssOutput {
+  readonly primitives: string;
+  readonly themes: Readonly<Record<SurfaceTheme, string>>;
+  readonly all: string;
 }
 
 export type ValidationErrorCode =
@@ -213,6 +231,98 @@ export const SURFACE_PRESETS = {
 
 export const SURFACE_PRESET_NAMES = Object.keys(SURFACE_PRESETS) as readonly SurfacePresetName[];
 
+export const SURFACE_LEVELS = [1, 2, 3, 4] as const satisfies readonly SurfaceLevel[];
+
+export const SURFACE_STATES = ["hover", "selected", "pressed"] as const satisfies readonly SurfaceState[];
+
+export const STATUS_INTENTS = ["danger", "warning", "success", "info"] as const satisfies readonly StatusIntent[];
+
+export const NEUTRAL_SEMANTIC_TOKEN_NAMES = [
+  "text-primary",
+  "text-secondary",
+  "text-muted",
+  "border-subtle",
+  "border-strong",
+  "control-bg",
+  "control-bg-hover",
+  "control-text",
+] as const satisfies readonly NeutralSemanticTokenName[];
+
+export const SURFACE_SEMANTIC_TOKEN_NAMES = [
+  "surface-1",
+  "surface-2",
+  "surface-3",
+  "surface-4",
+  "surface-1-hover",
+  "surface-2-hover",
+  "surface-3-hover",
+  "surface-4-hover",
+  "surface-1-selected",
+  "surface-2-selected",
+  "surface-3-selected",
+  "surface-4-selected",
+  "surface-1-pressed",
+  "surface-2-pressed",
+  "surface-3-pressed",
+  "surface-4-pressed",
+] as const satisfies readonly SurfaceSemanticTokenName[];
+
+export const PRIMARY_SEMANTIC_TOKEN_NAMES = [
+  "primary-action-bg",
+  "primary-action-bg-hover",
+  "primary-action-bg-pressed",
+  "primary-action-text",
+  "primary-link",
+  "primary-link-hover",
+  "primary-focus-ring",
+  "primary-soft-bg",
+  "primary-soft-bg-hover",
+  "primary-soft-border",
+  "primary-soft-text",
+] as const satisfies readonly PrimarySemanticTokenName[];
+
+export const STATUS_SEMANTIC_TOKEN_NAMES = [
+  "danger-soft-bg",
+  "danger-soft-bg-hover",
+  "danger-soft-border",
+  "danger-soft-text",
+  "danger-solid-bg",
+  "danger-solid-bg-hover",
+  "danger-solid-bg-pressed",
+  "danger-solid-text",
+  "warning-soft-bg",
+  "warning-soft-bg-hover",
+  "warning-soft-border",
+  "warning-soft-text",
+  "warning-solid-bg",
+  "warning-solid-bg-hover",
+  "warning-solid-bg-pressed",
+  "warning-solid-text",
+  "success-soft-bg",
+  "success-soft-bg-hover",
+  "success-soft-border",
+  "success-soft-text",
+  "success-solid-bg",
+  "success-solid-bg-hover",
+  "success-solid-bg-pressed",
+  "success-solid-text",
+  "info-soft-bg",
+  "info-soft-bg-hover",
+  "info-soft-border",
+  "info-soft-text",
+  "info-solid-bg",
+  "info-solid-bg-hover",
+  "info-solid-bg-pressed",
+  "info-solid-text",
+] as const satisfies readonly StatusSemanticTokenName[];
+
+export const SEMANTIC_TOKEN_NAMES = [
+  ...NEUTRAL_SEMANTIC_TOKEN_NAMES,
+  ...SURFACE_SEMANTIC_TOKEN_NAMES,
+  ...PRIMARY_SEMANTIC_TOKEN_NAMES,
+  ...STATUS_SEMANTIC_TOKEN_NAMES,
+] as const satisfies readonly SemanticTokenName[];
+
 const DEFAULT_INPUT = {
   neutralSeed: "oklch(0.86 0.012 255)",
   surfaceLightSeed: "oklch(0.94 0.01 255)",
@@ -225,10 +335,6 @@ const DEFAULT_INPUT = {
   preset: "standard",
   namespace: "ds",
 } as const satisfies Required<ColorEngineInput>;
-
-const SURFACE_LEVELS = [1, 2, 3, 4] as const satisfies readonly SurfaceLevel[];
-const SURFACE_STATES = ["hover", "selected", "pressed"] as const satisfies readonly SurfaceState[];
-const STATUS_INTENTS = ["danger", "warning", "success", "info"] as const satisfies readonly StatusIntent[];
 
 export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngineOutput {
   const resolvedInput = resolveInput(input);
@@ -286,6 +392,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     ...status,
   };
   const semantics = createSemantics(resolvedInput.namespace);
+  const cssOutput = createCssOutput(resolvedInput.namespace, primitives, semantics, preset);
 
   return {
     namespace: resolvedInput.namespace,
@@ -300,7 +407,8 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     },
     primitives,
     semantics,
-    css: createCss(resolvedInput.namespace, primitives, semantics, preset),
+    cssOutput,
+    css: cssOutput.all,
   };
 }
 
@@ -552,15 +660,46 @@ function createSemantics(
 ): ColorEngineOutput["semantics"] {
   return {
     light: {
+      ...createNeutralSemantics(namespace, "light"),
       ...createSurfaceSemantics(namespace, "surface-light"),
       ...createPrimarySemantics(namespace, "light"),
       ...createStatusSemantics(namespace, "light"),
     },
     dark: {
+      ...createNeutralSemantics(namespace, "dark"),
       ...createSurfaceSemantics(namespace, "surface-dark"),
       ...createPrimarySemantics(namespace, "dark"),
       ...createStatusSemantics(namespace, "dark"),
     },
+  };
+}
+
+function createNeutralSemantics(
+  namespace: string,
+  theme: SurfaceTheme,
+): Readonly<Record<NeutralSemanticTokenName, `var(--${string})`>> {
+  if (theme === "light") {
+    return {
+      "text-primary": cssVar(namespace, "neutral-dark-1"),
+      "text-secondary": cssVar(namespace, "neutral-dark-3"),
+      "text-muted": cssVar(namespace, "neutral-dark-4"),
+      "border-subtle": cssVar(namespace, "surface-light-1-hover"),
+      "border-strong": cssVar(namespace, "surface-light-1-pressed"),
+      "control-bg": cssVar(namespace, "surface-light-1"),
+      "control-bg-hover": cssVar(namespace, "surface-light-2-hover"),
+      "control-text": cssVar(namespace, "neutral-dark-1"),
+    };
+  }
+
+  return {
+    "text-primary": cssVar(namespace, "neutral-light-4"),
+    "text-secondary": cssVar(namespace, "neutral-light-2"),
+    "text-muted": cssVar(namespace, "neutral-light-1"),
+    "border-subtle": cssVar(namespace, "surface-dark-1-hover"),
+    "border-strong": cssVar(namespace, "surface-dark-1-pressed"),
+    "control-bg": cssVar(namespace, "surface-dark-2"),
+    "control-bg-hover": cssVar(namespace, "surface-dark-3-hover"),
+    "control-text": cssVar(namespace, "neutral-light-4"),
   };
 }
 
@@ -642,17 +781,23 @@ function createStatusSemantics(
   return Object.fromEntries(entries) as Record<StatusSemanticTokenName, `var(--${string})`>;
 }
 
-function createCss(
+function createCssOutput(
   namespace: string,
   primitives: PrimitiveSurfaceOutput,
   semantics: ColorEngineOutput["semantics"],
   preset: SurfacePreset,
-): string {
-  return [
-    createPrimitiveCss(namespace, primitives, preset),
-    createThemeCss(namespace, "light", semantics.light),
-    createThemeCss(namespace, "dark", semantics.dark),
-  ].join("\n\n");
+): ColorEngineCssOutput {
+  const primitiveCss = createPrimitiveCss(namespace, primitives, preset);
+  const themeCss = {
+    light: createThemeCss(namespace, "light", semantics.light),
+    dark: createThemeCss(namespace, "dark", semantics.dark),
+  } as const satisfies Readonly<Record<SurfaceTheme, string>>;
+
+  return {
+    primitives: primitiveCss,
+    themes: themeCss,
+    all: [primitiveCss, themeCss.light, themeCss.dark].join("\n\n"),
+  };
 }
 
 function createPrimitiveCss(

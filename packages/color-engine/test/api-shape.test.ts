@@ -1,7 +1,9 @@
 import type {
+  ColorEngineCssOutput,
   ColorEngineInput,
   ColorEngineOutput,
   ColorToken,
+  NeutralSemanticTokenName,
   OklchValue,
   PrimarySemanticTokenName,
   SurfacePreset,
@@ -10,7 +12,15 @@ import type {
   StatusIntent,
   StatusSemanticTokenName,
 } from "../src/index.js";
-import { SURFACE_PRESETS, createColorEngineTheme } from "../src/index.js";
+import {
+  NEUTRAL_SEMANTIC_TOKEN_NAMES,
+  PRIMARY_SEMANTIC_TOKEN_NAMES,
+  SEMANTIC_TOKEN_NAMES,
+  SURFACE_PRESETS,
+  SURFACE_SEMANTIC_TOKEN_NAMES,
+  STATUS_SEMANTIC_TOKEN_NAMES,
+  createColorEngineTheme,
+} from "../src/index.js";
 
 const presetName: SurfacePresetName = "standard";
 const preset: SurfacePreset = SURFACE_PRESETS[presetName];
@@ -31,6 +41,7 @@ const input: ColorEngineInput = {
 const output: ColorEngineOutput = createColorEngineTheme(input);
 const token: ColorToken | undefined = output.primitives["primary-light-solid"][0];
 const statusToken: ColorToken | undefined = output.primitives["danger-light-soft"][0];
+const neutralSemanticName: NeutralSemanticTokenName = "text-primary";
 const surfaceSemanticName: SemanticTokenName = "surface-1-hover";
 const primarySemanticName: PrimarySemanticTokenName = "primary-action-bg";
 const statusSemanticName: StatusSemanticTokenName = "danger-soft-bg";
@@ -38,12 +49,15 @@ const statusIntent: StatusIntent = "warning";
 const oklch: OklchValue = output.seeds.neutral;
 const primarySeed: OklchValue = output.seeds.primary;
 const warningSeed: OklchValue = output.seeds.status.warning;
+const cssOutput: ColorEngineCssOutput = output.cssOutput;
+const semanticTokenNames: readonly SemanticTokenName[] = SEMANTIC_TOKEN_NAMES;
 
 void preset;
 void lightStepDelta;
 void darkStepDelta;
 void token;
 void statusToken;
+void neutralSemanticName;
 void surfaceSemanticName;
 void primarySemanticName;
 void statusSemanticName;
@@ -51,3 +65,9 @@ void statusIntent;
 void oklch;
 void primarySeed;
 void warningSeed;
+void cssOutput;
+void semanticTokenNames;
+void NEUTRAL_SEMANTIC_TOKEN_NAMES;
+void SURFACE_SEMANTIC_TOKEN_NAMES;
+void PRIMARY_SEMANTIC_TOKEN_NAMES;
+void STATUS_SEMANTIC_TOKEN_NAMES;

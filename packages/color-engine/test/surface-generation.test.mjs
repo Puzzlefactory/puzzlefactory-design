@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   ColorEngineValidationError,
+  NEUTRAL_SEMANTIC_TOKEN_NAMES,
+  PRIMARY_SEMANTIC_TOKEN_NAMES,
+  SEMANTIC_TOKEN_NAMES,
   SURFACE_PRESET_NAMES,
+  SURFACE_SEMANTIC_TOKEN_NAMES,
+  STATUS_SEMANTIC_TOKEN_NAMES,
   createColorEngineTheme,
   parseColorSeed,
 } from "../dist/index.js";
@@ -44,13 +49,29 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
   assert.equal(output.primitives["primary-dark-solid"].length, 4);
   assert.equal(output.primitives["danger-light-soft"].length, 4);
   assert.equal(output.primitives["warning-dark-solid"].length, 4);
+  assert.equal(NEUTRAL_SEMANTIC_TOKEN_NAMES.length, 8);
+  assert.equal(SURFACE_SEMANTIC_TOKEN_NAMES.length, 16);
+  assert.equal(PRIMARY_SEMANTIC_TOKEN_NAMES.length, 11);
+  assert.equal(STATUS_SEMANTIC_TOKEN_NAMES.length, 32);
+  assert.equal(SEMANTIC_TOKEN_NAMES.length, 67);
+  assert.equal(Object.keys(output.semantics.light).length, SEMANTIC_TOKEN_NAMES.length);
+  assert.equal(Object.keys(output.semantics.dark).length, SEMANTIC_TOKEN_NAMES.length);
+  assert.equal(output.semantics.light["text-primary"], "var(--ds-neutral-dark-1)");
+  assert.equal(output.semantics.dark["text-primary"], "var(--ds-neutral-light-4)");
+  assert.equal(output.semantics.light["border-subtle"], "var(--ds-surface-light-1-hover)");
+  assert.equal(output.semantics.dark["control-bg"], "var(--ds-surface-dark-2)");
   assert.equal(output.semantics.light["surface-1"], "var(--ds-surface-light-1)");
   assert.equal(output.semantics.dark["surface-1"], "var(--ds-surface-dark-1)");
   assert.equal(output.semantics.light["primary-action-bg"], "var(--ds-primary-light-solid-2)");
   assert.equal(output.semantics.dark["primary-action-bg"], "var(--ds-primary-dark-solid-2)");
   assert.equal(output.semantics.light["danger-soft-bg"], "var(--ds-danger-light-soft-1)");
   assert.equal(output.semantics.dark["warning-solid-bg"], "var(--ds-warning-dark-solid-2)");
+  assert.match(output.cssOutput.primitives, /^:root \{/);
+  assert.match(output.cssOutput.themes.light, /^\[data-theme-v2="light"\] \{/);
+  assert.match(output.cssOutput.themes.dark, /^\[data-theme-v2="dark"\] \{/);
+  assert.equal(output.css, output.cssOutput.all);
   assert.match(output.css, /\[data-theme-v2="light"\]/);
+  assert.match(output.css, /--ds-text-primary: var\(--ds-neutral-dark-1\);/);
   assert.match(output.css, /--ds-surface-1-hover: var\(--ds-surface-light-1-hover\);/);
   assert.match(output.css, /--ds-primary-action-bg: var\(--ds-primary-light-solid-2\);/);
   assert.match(output.css, /--ds-success-soft-border: var\(--ds-success-light-soft-4\);/);

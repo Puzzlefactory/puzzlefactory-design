@@ -67,13 +67,22 @@ Status semantic roles now cover soft backgrounds, hover backgrounds, borders, so
 
 Seed preservation is now an explicit design concern for future work. Surface generation may treat seeds as tonal guides because the visual system result matters more than preserving the exact input color. Primary and status generation may need stricter behavior because those seeds can represent approved palette colors or intentional design choices. The current primary/status behavior is a `balanced` style: it preserves hue and creates comfortable UI usage colors, but it does not guarantee the exact seed appears in the primitive ramp.
 
-Independent sub-agent review was not performed for CE2-01, CE2-02, CE2-03, or CE2-04 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
+CE2-05 is implemented. The v2 package now exports semantic token name constants, adds text/chrome aliases for neutral-driven roles, keeps surface/primary/status aliases theme-scoped, and returns structured CSS output:
+
+- `cssOutput.primitives`: root primitive custom property rule.
+- `cssOutput.themes.light`: light semantic alias rule.
+- `cssOutput.themes.dark`: dark semantic alias rule.
+- `cssOutput.all`: full concatenated CSS; `output.css` remains this same full string for current app compatibility.
+
+Kitchen-sink now consumes the exported semantic token lists, renders text/chrome semantic groups, shows a CSS output summary, and uses generated text, border, and control aliases for its own chrome.
+
+Independent sub-agent review was not performed for CE2-01 through CE2-05 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
 
 ## Next Actions
 
-- Proceed to `CE2-05`: semantic aliases and CSS output, using the current `balanced` primary/status generation as the working model.
-- During CE2-05, do not implement seed policy, but do not design semantic aliases or CSS output in a way that prevents future seed anchoring.
-- After CE2-05, evaluate `CE2-06`: per-family seed policy for primary and status usage families.
+- Evaluate `CE2-06`: per-family seed policy for primary and status usage families.
+- During CE2-06, preserve the current semantic alias names unless a specific alias cannot support anchored seeds.
+- If seed policy needs more than `balanced` and `anchored`, record the reason before implementation.
 - Do not move to APCA/assertion enforcement until semantic aliases and CSS output are stable enough to evaluate actual text/background pairs.
 
 ## Seed Policy Plan
