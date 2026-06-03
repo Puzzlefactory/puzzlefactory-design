@@ -40,14 +40,21 @@ CE2-01 is implemented. V1 is preserved as `packages/color-engine-1` with package
 
 The kitchen-sink app is now wired to v2 output directly. It renders controls, primitive ramps, semantic surface roles, and light/dark nested surface previews. The v1 token CSS package remains available through `@puzzlefactory/tokens`, which now consumes `@puzzlefactory/color-engine-1`.
 
-Independent sub-agent review was not performed for CE2-01 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
+CE2-02 is implemented. Surface presets are calibrated with separate light/dark surface step deltas and separate light/dark state deltas. The intended spans are:
+
+- `quiet`: very subtle light surfaces, modest dark separation.
+- `standard`: everyday product UI separation.
+- `layered`: clearer nested panel hierarchy.
+- `high-separation`: stronger hierarchy review and edge-case checking.
+
+Independent sub-agent review was not performed for CE2-01 or CE2-02 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
 
 ## Next Actions
 
-- Review the CE2-01 visuals in kitchen-sink before expanding the engine.
-- Run `CE2-02` only if the neutral/surface foundation is worth keeping visually. The likely scope is preset calibration and surface output refinement, not new color families.
-- Keep CE2-02 focused on neutral/surface preset quality: light surface separation, dark surface separation, state chips, and nested preview behavior.
-- Do not move to primary, status, APCA, or CSS package expansion until the neutral/surface output looks visually credible.
+- Review CE2-02 visuals in kitchen-sink and decide whether the surface foundation is visually credible enough to expand.
+- If surface presets are acceptable, proceed to `CE2-03`: primary usage ramps.
+- If surface presets still feel off, tune only neutral/surface before adding new families.
+- Do not move to status, APCA, or CSS package expansion until primary/action output has also been visually reviewed.
 
 ## Slice Backlog
 

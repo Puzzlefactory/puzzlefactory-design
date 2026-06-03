@@ -11,6 +11,8 @@ import { SURFACE_PRESETS, createColorEngineTheme } from "../src/index.js";
 
 const presetName: SurfacePresetName = "standard";
 const preset: SurfacePreset = SURFACE_PRESETS[presetName];
+const lightStepDelta: number = preset.lightStepDelta;
+const darkStepDelta: number = preset.darkStepDelta;
 const input: ColorEngineInput = {
   neutralSeed: "#d8dee8",
   surfaceLightSeed: "oklch(0.94 0.01 255)",
@@ -24,6 +26,8 @@ const semanticName: SurfaceSemanticTokenName = "surface-1-hover";
 const oklch: OklchValue = output.seeds.neutral;
 
 void preset;
+void lightStepDelta;
+void darkStepDelta;
 void token;
 void semanticName;
 void oklch;

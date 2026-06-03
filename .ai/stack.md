@@ -14,7 +14,7 @@
 
 ### `@puzzlefactory/color-engine`
 
-Status: v2 neutral/surface foundation. Target runtime is a TypeScript library. Current exports define the public API type surface for `createColorEngineTheme(input): ColorEngineOutput`, `parseColorSeed`, `ColorEngineValidationError`, surface preset constants, and neutral/surface output types.
+Status: v2 neutral/surface foundation with calibrated surface presets. Target runtime is a TypeScript library. Current exports define the public API type surface for `createColorEngineTheme(input): ColorEngineOutput`, `parseColorSeed`, `ColorEngineValidationError`, surface preset constants, and neutral/surface output types. Surface presets use separate light/dark step deltas and separate light/dark state deltas.
 
 Runtime dependencies must remain zero.
 

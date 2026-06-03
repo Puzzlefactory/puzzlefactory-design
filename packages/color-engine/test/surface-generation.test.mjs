@@ -39,15 +39,52 @@ test("surface seeds control light and dark surface families independently", () =
 test("presets change surface separation", () => {
   const quiet = createColorEngineTheme({ preset: "quiet" });
   const separated = createColorEngineTheme({ preset: "high-separation" });
-  const quietDelta =
-    (quiet.primitives["surface-light"][3]?.oklch.l ?? 0) -
-    (quiet.primitives["surface-light"][0]?.oklch.l ?? 0);
-  const separatedDelta =
-    (separated.primitives["surface-light"][3]?.oklch.l ?? 0) -
-    (separated.primitives["surface-light"][0]?.oklch.l ?? 0);
+  const quietDelta = rampSpan(quiet, "surface-light");
+  const separatedDelta = rampSpan(separated, "surface-light");
 
   assert.equal(SURFACE_PRESET_NAMES.includes("standard"), true);
   assert.ok(separatedDelta > quietDelta);
+});
+
+test("preset light and dark spans increase in calibrated order", () => {
+  const spans = SURFACE_PRESET_NAMES.map((preset) => {
+    const output = createColorEngineTheme({ preset });
+
+    return {
+      preset,
+      light: rampSpan(output, "surface-light"),
+      dark: rampSpan(output, "surface-dark"),
+    };
+  });
+
+  for (let index = 1; index < spans.length; index += 1) {
+    assert.ok(spans[index].light > spans[index - 1].light, `${spans[index].preset} light span should increase`);
+    assert.ok(spans[index].dark > spans[index - 1].dark, `${spans[index].preset} dark span should increase`);
+  }
+
+  for (const span of spans) {
+    assert.ok(span.dark > span.light, `${span.preset} should give dark surfaces more separation than light surfaces`);
+  }
+});
+
+test("surface states move toward interactive feedback without reversing theme direction", () => {
+  const output = createColorEngineTheme({ preset: "standard" });
+  const css = output.css;
+  const lightBase = output.primitives["surface-light"][1]?.oklch.l ?? 0;
+  const darkBase = output.primitives["surface-dark"][1]?.oklch.l ?? 0;
+  const lightHover = extractCssLightness(css, "--ds-surface-light-2-hover");
+  const lightSelected = extractCssLightness(css, "--ds-surface-light-2-selected");
+  const lightPressed = extractCssLightness(css, "--ds-surface-light-2-pressed");
+  const darkHover = extractCssLightness(css, "--ds-surface-dark-2-hover");
+  const darkSelected = extractCssLightness(css, "--ds-surface-dark-2-selected");
+  const darkPressed = extractCssLightness(css, "--ds-surface-dark-2-pressed");
+
+  assert.ok(lightHover < lightBase);
+  assert.ok(lightSelected < lightHover);
+  assert.ok(lightPressed < lightSelected);
+  assert.ok(darkHover > darkBase);
+  assert.ok(darkSelected > darkHover);
+  assert.ok(darkPressed > darkSelected);
 });
 
 test("parseColorSeed accepts hex and oklch seeds", () => {
@@ -68,3 +105,17 @@ test("createColorEngineTheme rejects invalid seeds", () => {
       error.field === "neutralSeed",
   );
 });
+
+function rampSpan(output, family) {
+  const ramp = output.primitives[family];
+
+  return (ramp[3]?.oklch.l ?? 0) - (ramp[0]?.oklch.l ?? 0);
+}
+
+function extractCssLightness(css, propertyName) {
+  const match = new RegExp(`${propertyName}: oklch\\(([^\\s]+) `).exec(css);
+
+  assert.ok(match, `${propertyName} should be present in generated CSS`);
+
+  return Number(match[1]);
+}

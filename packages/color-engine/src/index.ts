@@ -32,8 +32,10 @@ export interface SurfacePreset {
   readonly name: SurfacePresetName;
   readonly label: string;
   readonly description: string;
-  readonly surfaceStepDelta: number;
-  readonly stateDelta: number;
+  readonly lightStepDelta: number;
+  readonly darkStepDelta: number;
+  readonly lightStateDelta: number;
+  readonly darkStateDelta: number;
   readonly chromaScale: number;
 }
 
@@ -101,34 +103,42 @@ export const SURFACE_PRESETS = {
   quiet: {
     name: "quiet",
     label: "Quiet",
-    description: "Subtle surface separation for dense product UI.",
-    surfaceStepDelta: 0.012,
-    stateDelta: 0.014,
-    chromaScale: 0.7,
+    description: "Minimal separation for dense screens where surfaces should recede.",
+    lightStepDelta: 0.006,
+    darkStepDelta: 0.011,
+    lightStateDelta: 0.008,
+    darkStateDelta: 0.012,
+    chromaScale: 0.65,
   },
   standard: {
     name: "standard",
     label: "Standard",
-    description: "Balanced separation for ordinary app surfaces.",
-    surfaceStepDelta: 0.02,
-    stateDelta: 0.024,
-    chromaScale: 0.85,
+    description: "Balanced separation for everyday product UI.",
+    lightStepDelta: 0.01,
+    darkStepDelta: 0.017,
+    lightStateDelta: 0.012,
+    darkStateDelta: 0.018,
+    chromaScale: 0.78,
   },
   layered: {
     name: "layered",
     label: "Layered",
-    description: "Clearer surface hierarchy for nested panels.",
-    surfaceStepDelta: 0.03,
-    stateDelta: 0.034,
-    chromaScale: 0.9,
+    description: "Clearer hierarchy for nested panels and grouped controls.",
+    lightStepDelta: 0.014,
+    darkStepDelta: 0.024,
+    lightStateDelta: 0.016,
+    darkStateDelta: 0.024,
+    chromaScale: 0.82,
   },
   "high-separation": {
     name: "high-separation",
     label: "High Separation",
-    description: "Stronger steps for reviewing contrast and hierarchy.",
-    surfaceStepDelta: 0.042,
-    stateDelta: 0.048,
-    chromaScale: 0.75,
+    description: "Strong separation for reviewing hierarchy and edge cases.",
+    lightStepDelta: 0.019,
+    darkStepDelta: 0.033,
+    lightStateDelta: 0.022,
+    darkStateDelta: 0.032,
+    chromaScale: 0.74,
   },
 } as const satisfies Readonly<Record<SurfacePresetName, SurfacePreset>>;
 
@@ -154,7 +164,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
   const neutralLight = createLevelRamp({
     family: "neutral-light",
     seed: toneSeed(surfaceLightSeed, neutralSeed, 0.75),
-    delta: preset.surfaceStepDelta,
+    delta: preset.lightStepDelta,
     direction: 1,
     maxLightness: 0.995,
     chromaScale: preset.chromaScale * 0.75,
@@ -162,7 +172,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
   const neutralDark = createLevelRamp({
     family: "neutral-dark",
     seed: toneSeed(surfaceDarkSeed, neutralSeed, 0.8),
-    delta: preset.surfaceStepDelta,
+    delta: preset.darkStepDelta,
     direction: 1,
     maxLightness: 0.28,
     chromaScale: preset.chromaScale * 0.8,
@@ -170,7 +180,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
   const surfaceLight = createLevelRamp({
     family: "surface-light",
     seed: surfaceLightSeed,
-    delta: preset.surfaceStepDelta,
+    delta: preset.lightStepDelta,
     direction: 1,
     maxLightness: 0.998,
     chromaScale: preset.chromaScale,
@@ -178,7 +188,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
   const surfaceDark = createLevelRamp({
     family: "surface-dark",
     seed: surfaceDarkSeed,
-    delta: preset.surfaceStepDelta,
+    delta: preset.darkStepDelta,
     direction: 1,
     maxLightness: 0.32,
     chromaScale: preset.chromaScale,
@@ -376,8 +386,9 @@ function createStateValue(
 ): `oklch(${string})` {
   const multiplier = state === "hover" ? 1 : state === "selected" ? 1.65 : 2.2;
   const direction = isLightSurface ? -1 : 1;
+  const delta = isLightSurface ? preset.lightStateDelta : preset.darkStateDelta;
   const oklch = {
-    l: roundChannel(clampNumber(base.l + direction * preset.stateDelta * multiplier, 0.02, 0.998)),
+    l: roundChannel(clampNumber(base.l + direction * delta * multiplier, 0.02, 0.998)),
     c: roundChannel(clampNumber(base.c * (state === "hover" ? 0.98 : state === "selected" ? 0.96 : 0.94), 0, 0.08)),
     h: base.h,
   };
