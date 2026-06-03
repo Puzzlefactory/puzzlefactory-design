@@ -5,9 +5,15 @@ import type {
   ColorEngineInput,
   ColorEngineOutput,
   ColorToken,
+  ContrastAssertionPair,
+  ContrastAssertionReport,
+  ContrastAssertionRole,
+  ContrastAssertionSeverity,
+  ContrastAssertionSummary,
   NeutralSemanticTokenName,
   OklchValue,
   PrimarySemanticTokenName,
+  ResolvedContrastAssertion,
   SeedPolicy,
   SrgbColor,
   SurfacePreset,
@@ -20,6 +26,7 @@ import {
   APCA_ALGORITHM_VERSION,
   APCA_CONSTANTS,
   CHROME_LEVELS,
+  CONTRAST_ASSERTION_THRESHOLDS,
   NEUTRAL_SEMANTIC_TOKEN_NAMES,
   PRIMARY_SEMANTIC_TOKEN_NAMES,
   SEED_POLICY_NAMES,
@@ -30,6 +37,7 @@ import {
   calculateApcaLc,
   calculateApcaLcFromOklch,
   calculateApcaLcFromY,
+  createContrastAssertionReport,
   createColorEngineTheme,
   srgbToApcaY,
 } from "../src/index.js";
@@ -80,6 +88,18 @@ const apcaOklchLc: number = calculateApcaLcFromOklch(output.seeds.primary, outpu
 const apcaYLc: number = calculateApcaLcFromY(0, 1);
 const apcaY: number = srgbToApcaY(srgbColor);
 const apcaAlgorithmVersion: string = APCA_ALGORITHM_VERSION;
+const assertionRole: ContrastAssertionRole = "body";
+const assertionSeverity: ContrastAssertionSeverity = "required";
+const assertionReport: ContrastAssertionReport = output.assertions;
+const assertionPair: ContrastAssertionPair | undefined = assertionReport.pairs[0];
+const assertionResult: ResolvedContrastAssertion | undefined = assertionReport.results[0];
+const assertionSummary: ContrastAssertionSummary = assertionReport.summary;
+const assertionThreshold: number = CONTRAST_ASSERTION_THRESHOLDS["status-solid"];
+const assertionReportFromHelper: ContrastAssertionReport = createContrastAssertionReport({
+  namespace: output.namespace,
+  primitives: output.primitives,
+  semantics: output.semantics,
+});
 
 void preset;
 void lightStepDelta;
@@ -111,5 +131,13 @@ void apcaOklchLc;
 void apcaYLc;
 void apcaY;
 void apcaAlgorithmVersion;
+void assertionRole;
+void assertionSeverity;
+void assertionReport;
+void assertionPair;
+void assertionResult;
+void assertionSummary;
+void assertionThreshold;
+void assertionReportFromHelper;
 void SEED_POLICY_NAMES;
 void CHROME_LEVELS;

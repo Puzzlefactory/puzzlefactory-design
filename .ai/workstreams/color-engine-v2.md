@@ -87,13 +87,23 @@ CE2-07 is implemented. Chrome/border generation is now separate from surface fil
 
 CE2-08A is implemented. The active v2 package now exports APCA calculation helpers ported from v1: `APCA_ALGORITHM_VERSION`, `APCA_CONSTANTS`, `calculateApcaLc`, `calculateApcaLcFromOklch`, `calculateApcaLcFromY`, and `srgbToApcaY`, plus `ApcaConstants` and `SrgbColor` types. Direct sRGB fixtures match the v1 APCA/W3 expected values. The OKLCH integration test allows a small tolerance because v2's existing `parseColorSeed` path rounds parsed OKLCH channels. No assertion pair model, kitchen-sink assertion report, enforcement, or auto-tuning was added.
 
-Independent sub-agent review was not performed for CE2-01 through CE2-08A because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
+CE2-08B is implemented. The active v2 package now returns `output.assertions`, a diagnostic APCA report with role-based thresholds and resolved semantic text/background pairs. Current roles and thresholds are:
+
+- `body`: 60, required.
+- `secondary`: 45, required.
+- `muted`: 30, diagnostic.
+- `ui`: 45, required.
+- `status-soft`: 45, required.
+- `status-solid`: 60, required.
+
+The first assertion set covers 64 pairs across light and dark themes: primary/secondary/muted text on surfaces, primary action text on action states, control text on control background, status soft text on soft backgrounds, and status solid text on solid states. Border/chrome assertions remain excluded. The default report currently surfaces required failures, mostly around dark status solid states plus one dark primary pressed pair; those are evidence for CE2-08C review and later CE2-09 tuning, not changes made in CE2-08B. No kitchen-sink assertion report, enforcement, auto-tuning, token expansion, or component work was added.
+
+Independent sub-agent review was not performed for CE2-01 through CE2-08B because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
 
 ## Next Actions
 
-- Pause and review CE2-08A APCA math/fixture coverage before continuing.
-- If CE2-08A is acceptable, proceed to `CE2-08B`: assertion pair model.
-- After `CE2-08B`, pause to confirm assertion pairs and thresholds are the right design-system policy.
+- Pause and review CE2-08B assertion pairs and thresholds before continuing.
+- If CE2-08B is acceptable, proceed to `CE2-08C`: kitchen-sink assertion report rendering.
 - After `CE2-08C`, review kitchen-sink report output before planning tuning.
 - Treat `CE2-09` and later as strategic placeholders. Reorder or revise them if CE2-08 visual/assertion feedback exposes a more important issue.
 

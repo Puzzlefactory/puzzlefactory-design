@@ -1,3 +1,18 @@
+import { createContrastAssertionReport } from "./assertions.js";
+import type { ContrastAssertionReport as ContrastAssertionReportType } from "./assertions.js";
+
+export {
+  CONTRAST_ASSERTION_THRESHOLDS,
+  createContrastAssertionReport,
+} from "./assertions.js";
+export type {
+  ContrastAssertionPair,
+  ContrastAssertionReport,
+  ContrastAssertionRole,
+  ContrastAssertionSeverity,
+  ContrastAssertionSummary,
+  ResolvedContrastAssertion,
+} from "./assertions.js";
 export {
   APCA_ALGORITHM_VERSION,
   APCA_CONSTANTS,
@@ -191,6 +206,7 @@ export interface ColorEngineOutput {
   };
   readonly primitives: PrimitiveSurfaceOutput;
   readonly semantics: Readonly<Record<SurfaceTheme, Readonly<Record<SemanticTokenName, `var(--${string})`>>>>;
+  readonly assertions: ContrastAssertionReportType;
   readonly cssOutput: ColorEngineCssOutput;
   readonly css: string;
 }
@@ -473,6 +489,11 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     ...status,
   };
   const semantics = createSemantics(resolvedInput.namespace);
+  const assertions = createContrastAssertionReport({
+    namespace: resolvedInput.namespace,
+    primitives,
+    semantics,
+  });
   const cssOutput = createCssOutput(resolvedInput.namespace, primitives, semantics, preset);
 
   return {
@@ -489,6 +510,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     seedPolicies,
     primitives,
     semantics,
+    assertions,
     cssOutput,
     css: cssOutput.all,
   };
