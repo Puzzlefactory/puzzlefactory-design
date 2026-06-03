@@ -1,12 +1,16 @@
 import type {
+  ApcaConstants,
   AssertionResult,
+  ContrastAssertionRule,
   CreateColorEngineTheme,
   EngineInput,
   EngineOutput,
   EngineWarning,
   HarmonyStrategy,
+  PrimitiveTokenGamutMapping,
   PrimitiveTokenName,
   ResolveSemanticMappingsOptions,
+  RunContrastAssertionsOptions,
   SemanticMappingOverrides,
   SemanticMappingRecord,
   SemanticThemeMappings,
@@ -17,9 +21,29 @@ import type {
   ValidationError,
   WarningCode,
 } from "../src/index.js";
+import { createColorEngineTheme } from "../src/index.js";
 
 type Assert<T extends true> = T;
 type IsAssignable<T, U> = T extends U ? true : false;
+
+const apcaConstants: ApcaConstants = {
+  mainTRC: 2.4,
+  sRco: 0.2126729,
+  sGco: 0.7151522,
+  sBco: 0.072175,
+  normBG: 0.56,
+  normTXT: 0.57,
+  revTXT: 0.62,
+  revBG: 0.65,
+  blkThrs: 0.022,
+  blkClmp: 1.414,
+  scaleBoW: 1.14,
+  scaleWoB: 1.14,
+  loBoWoffset: 0.027,
+  loWoBoffset: 0.027,
+  deltaYmin: 0.0005,
+  loClip: 0.1,
+};
 
 const harmony: HarmonyStrategy = "split-complementary";
 const theme: ThemeVariant = "high-contrast-dark";
@@ -46,14 +70,14 @@ const statusHues: StatusHueAnchors = {
 };
 
 const semanticOverrides: SemanticMappingOverrides = {
-  "surface-base": "neutral-l-1",
+  "surface-base": "neutral-l-2",
   "status-danger-text": "neutral-l-1",
 };
 
 const semanticMapping: SemanticMappingRecord = {
-  "surface-base": "neutral-l-1",
-  "surface-raised": "neutral-l-2",
-  "surface-overlay": "neutral-l-1",
+  "surface-base": "neutral-l-2",
+  "surface-raised": "neutral-l-1",
+  "surface-overlay": "neutral-l-2",
   "surface-tinted": "palette-a-l-2",
   "text-primary": "neutral-d-11",
   "text-secondary": "neutral-d-8",
@@ -101,6 +125,26 @@ const resolveSemanticOptions: ResolveSemanticMappingsOptions = {
   overrides: semanticOverrides,
 };
 
+const contrastAssertionRule: ContrastAssertionRule = {
+  kind: "text-on-surface",
+  tokenA: "text-primary",
+  tokenB: "surface-base",
+  standardLc: 75,
+  highContrastLc: 90,
+  polarityByTheme: {
+    light: "positive",
+    dark: "negative",
+    highContrast: "positive",
+    highContrastDark: "negative",
+  },
+};
+
+const runContrastOptions: RunContrastAssertionsOptions = {
+  primitives: [],
+  mappings: semanticThemeMappings,
+  overrides: semanticOverrides,
+};
+
 const input: EngineInput = {
   seed: "#7c3aed",
   harmony,
@@ -117,6 +161,7 @@ const input: EngineInput = {
 };
 
 const assertion: AssertionResult = {
+  theme: "light",
   tokenA: "text-primary",
   tokenB: "surface-base",
   requiredLc: 75,
@@ -135,6 +180,12 @@ const engineWarning: EngineWarning = {
     minCReduction: 0.001,
     maxCReduction: 0.004,
   },
+};
+
+const primitiveGamutMapping: PrimitiveTokenGamutMapping = {
+  name: primitive,
+  slot: "status-warning",
+  chromaReduction: 0.002,
 };
 
 const output: EngineOutput = {
@@ -173,6 +224,7 @@ const output: EngineOutput = {
 };
 
 const createTheme: CreateColorEngineTheme = () => output;
+const createdOutput: EngineOutput = createColorEngineTheme(input);
 const validationError: ValidationError = {
   ...new Error("Invalid seed"),
   name: "ValidationError",
@@ -187,6 +239,11 @@ void theme;
 void validationError;
 void semanticThemeMappings;
 void resolveSemanticOptions;
+void apcaConstants;
+void contrastAssertionRule;
+void runContrastOptions;
+void primitiveGamutMapping;
+void createdOutput;
 
 type _PrimitiveNameIncludesSteps = Assert<
   IsAssignable<"palette-a-l-12", PrimitiveTokenName>

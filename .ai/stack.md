@@ -14,7 +14,7 @@
 
 ### `@puzzlefactory/color-engine`
 
-Status: early validation, normalization, gamut, ramp, harmony, primitive assembly, and semantic mapping implementation. Target runtime is a TypeScript library. Current exports define the public API type surface, behavior-free entry point function type, validation error class, input validation helpers, seed format detection, seed normalization to OKLCH, linear gamut conversion/checking utilities, chroma reduction at constant L/H, light/dark ramp generation, harmony palette descriptors, primitive token assembly helpers, and semantic mapping helpers. APCA assertions, engine output integration, CSS output, and theme generation are not implemented.
+Status: early validation, normalization, gamut, ramp, harmony, primitive assembly, semantic mapping, APCA implementation, assertion-suite policy, and EngineOutput integration. Target runtime is a TypeScript library. Current exports define the public API type surface, `createColorEngineTheme(input): EngineOutput`, validation error class, input validation helpers, seed format detection, seed normalization to OKLCH with mandatory adjusted-seed gamut mapping, linear gamut conversion/checking utilities, chroma reduction at constant L/H, light/dark ramp generation, harmony palette descriptors, primitive token assembly helpers, semantic mapping helpers, signed APCA Lc helpers, and semantic contrast assertion helpers. EngineOutput P3 primitive output is a sparse override map for `tokens-p3.css`.
 
 Runtime dependencies must remain zero except for the explicitly allowed seed-normalization boundary utility, if one is selected.
 
@@ -38,7 +38,12 @@ Strict configuration. Full type definitions required for all engine inputs, outp
 
 ### `@puzzlefactory/tokens`
 
-Status: placeholder folder only. Target runtime is a TypeScript library/generator that consumes `EngineOutput`.
+Status: implemented TypeScript library/generator that consumes `EngineOutput`.
+
+- Package name: `@puzzlefactory/tokens`
+- Runtime dependencies: none
+- Development type/test dependency: `@puzzlefactory/color-engine`
+- Current exports render six CSS file strings from EngineOutput: `tokens.css`, `tokens-p3.css`, `theme-light.css`, `theme-dark.css`, `theme-high-contrast.css`, and `theme-high-contrast-dark.css`
 
 #### Token Format
 
@@ -56,12 +61,12 @@ Not yet decided. Deferred until the color engine layer is complete. Web Componen
 
 ### `apps/kitchen-sink`
 
-Status: React + Vite + React Router 7 verification shell.
+Status: React + Vite + React Router 7 verification shell wired to live engine/token output.
 
 - Package name: `@puzzlefactory/kitchen-sink`
 - Runtime stack: React 19, Vite 8, React Router 7
 - Purpose: verification and visual regression surface for the color engine, tokens, themes, and component states
-- Current behavior: static routed shell with placeholder views only; does not implement or fake color-engine behavior
+- Current behavior: routed verification tool that consumes `@puzzlefactory/color-engine`, renders CSS through `@puzzlefactory/tokens`, injects generated custom properties, switches `data-theme`, and displays seed controls, primitive ramps, semantic preview, theme variants, and assertion/warning reports
 
 ### `apps/docs`
 

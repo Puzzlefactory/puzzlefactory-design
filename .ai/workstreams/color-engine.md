@@ -2,7 +2,7 @@
 
 Status: active
 Created: 2026-05-25
-Last Updated: 2026-06-01
+Last Updated: 2026-06-02
 
 This workstream covers the design and implementation of the generative color engine that is the foundation of the design system. The engine takes a seed color, harmony strategy, and mood argument and produces a complete set of primitive and semantic tokens for light, dark, high contrast light, and high contrast dark themes — with no designer intervention required. Everything downstream (components, layout, theming) depends on this layer being correct.
 
@@ -33,16 +33,16 @@ Out of scope:
 
 ## Current State
 
-Architecture is fully specified in the workstream document. Generation behavior has not been written yet. The specification has been through five review cycles addressing: APCA threshold corrections, smoothstep formula completeness, P3 generation logic, ramp dead zone resolution, signed Lc polarity handling, semantic-to-ramp-step reference mappings, high contrast dark mode, monochromatic harmony naming, full TypeScript type definitions, CSS output format, and error type hierarchy.
+Architecture is fully specified in the workstream document. Package-level generation behavior is now wired through `createColorEngineTheme(input): EngineOutput`; CSS output is implemented in `@puzzlefactory/tokens`; kitchen-sink wiring consumes live engine/token output. The specification has been through five review cycles addressing: APCA threshold corrections, smoothstep formula completeness, P3 generation logic, ramp dead zone resolution, signed Lc polarity handling, semantic-to-ramp-step reference mappings, high contrast dark mode, monochromatic harmony naming, full TypeScript type definitions, CSS output format, and error type hierarchy.
 
-The monorepo shell exists at `/design-system` with Turborepo root config and placeholder folders under `packages/*`. `apps/kitchen-sink` is a real React + Vite + React Router 7 workspace with a static verification shell for future engine output. `packages/color-engine` is now a real `@puzzlefactory/color-engine` workspace package with package manifest, strict TypeScript config, source/test structure, concrete public API/type-model exports, input validation utilities, seed normalization to OKLCH, gamut checking/reduction utilities, ramp generation, harmony derivation, primitive token assembly, semantic mapping, and package-boundary tests enforcing zero runtime dependencies. APCA, assertion policy, engine output integration, and CSS output have not been implemented yet.
+The monorepo shell exists at `/design-system` with Turborepo root config and placeholder folders under `packages/*`. `apps/kitchen-sink` is a real React + Vite + React Router 7 workspace wired to real engine output for seed controls, primitive ramps, semantic preview, theme variants, and assertion/warning reports. `packages/color-engine` is now a real `@puzzlefactory/color-engine` workspace package with package manifest, strict TypeScript config, source/test structure, concrete public API/type-model exports, input validation utilities, seed normalization to OKLCH with mandatory adjusted-seed gamut mapping, gamut checking/reduction utilities, ramp generation, harmony derivation, primitive token assembly, semantic mapping, signed APCA Lc calculation, semantic contrast assertion utilities, `createColorEngineTheme(input): EngineOutput`, and package-boundary tests enforcing zero runtime dependencies. `packages/tokens` is now a real `@puzzlefactory/tokens` workspace package that renders the six specified CSS custom property outputs from EngineOutput with no runtime dependencies.
 
 ## Next Actions
 
 - Use the Slice Backlog IDs below when generating work authorization prompts from `.ai/prompt-templates/work-authorization.md`.
 - Do not store generated one-off work authorization prompts in `.ai/`; keep reusable wording in `.ai/prompt-templates/` and durable sequencing here.
-- Completed slices: `CE-01`, `CE-02`, `CE-03`, `CE-04`, `CE-05`, `CE-06`.
-- Next recommended slice: `CE-07`.
+- Completed slices: `CE-01`, `CE-02`, `CE-03`, `CE-04`, `CE-05`, `CE-06`, `CE-07`, `CE-08`, `CE-09`, `CE-10`, `CE-11`.
+- Next recommended slice: no remaining color-engine backlog slice is defined. The kitchen-sink now exposes current assertion output, so the next decision should be whether to tune generation/assertion failures or open the next workstream for component/theming integration.
 
 ## Slice Backlog
 
@@ -91,6 +91,7 @@ This workstream is substantially complete when:
 - **Brand:** Not a primitive. At most a single semantic alias. No presence in the engine.
 - **Status hues:** Anchored regardless of seed and harmony strategy. Mood scale factor does not apply to status ramps (always 1.0).
 - **surface-overlay:** Intentionally maps to same primitive as surface-base. Differentiation comes from elevation shadow and border defined in the component layer.
+- **Light surface elevation:** In light and high-contrast light themes, `surface-raised` maps lighter than `surface-base`; raised surfaces should not get darker as they move closer to the viewer.
 - **surface-tinted:** Collapses to surface-base in all high contrast variants.
 - **High contrast:** Two variants — light (`data-theme="high-contrast"`) and dark (`data-theme="high-contrast-dark"`). Both fully specified with explicit per-role mappings and elevated assertion minimums (Lc 90 text, Lc 60 UI components, Lc 45 non-text indicators).
 - **Monochromatic harmony:** palette-a (scale 1.0), palette-a-mid (scale 0.5), palette-a-subtle (scale 0.2). No palette-b or palette-c.

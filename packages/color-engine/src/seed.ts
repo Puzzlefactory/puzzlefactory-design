@@ -1,5 +1,6 @@
 import type { EngineWarning, OklchValue, SrgbColor, WarningCode } from "./index.js";
 import { ColorEngineValidationError } from "./errors.js";
+import { reduceChromaToGamut } from "./gamut.js";
 
 export type SeedFormat = "hex" | "rgb" | "hsl" | "oklch";
 
@@ -231,11 +232,12 @@ export function validateOklchSeed(seed: OklchValue): OklchSeedValidationResult {
   }
 
   const adjustedL = clamp(seed.l, 0.25, 0.75);
-  const adjustedSeed = { ...seed, l: adjustedL };
-  const seedAdjusted = adjustedL !== seed.l;
+  const lightnessAdjustedSeed = { ...seed, l: adjustedL };
+  const adjustedSeed = reduceChromaToGamut(lightnessAdjustedSeed, "srgb").mapped;
+  const seedAdjusted = adjustedSeed.l !== seed.l || adjustedSeed.c !== seed.c;
   const warnings: EngineWarning[] = [];
 
-  if (seedAdjusted) {
+  if (adjustedL !== seed.l) {
     warnings.push(createSeedWarning("SEED_LIGHTNESS_CLAMPED", seed));
   }
 

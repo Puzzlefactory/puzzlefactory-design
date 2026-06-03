@@ -102,9 +102,9 @@ function expectedStatusMappings(config) {
 }
 
 const EXPECTED_LIGHT_MAPPING = {
-  "surface-base": "neutral-l-1",
-  "surface-raised": "neutral-l-2",
-  "surface-overlay": "neutral-l-1",
+  "surface-base": "neutral-l-2",
+  "surface-raised": "neutral-l-1",
+  "surface-overlay": "neutral-l-2",
   "surface-tinted": "palette-a-l-2",
   "text-primary": "neutral-d-11",
   "text-secondary": "neutral-d-8",
@@ -154,10 +154,10 @@ const EXPECTED_DARK_MAPPING = {
 };
 
 const EXPECTED_HIGH_CONTRAST_MAPPING = {
-  "surface-base": "neutral-l-1",
-  "surface-raised": "neutral-l-2",
-  "surface-overlay": "neutral-l-1",
-  "surface-tinted": "neutral-l-1",
+  "surface-base": "neutral-l-2",
+  "surface-raised": "neutral-l-1",
+  "surface-overlay": "neutral-l-2",
+  "surface-tinted": "neutral-l-2",
   "text-primary": "neutral-d-12",
   "text-secondary": "neutral-d-11",
   "text-disabled": "neutral-d-4",

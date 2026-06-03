@@ -71,9 +71,9 @@ const STATUS_NAMES = ["danger", "warning", "success", "info"] as const satisfies
 
 export const REFERENCE_SEMANTIC_MAPPINGS: SemanticThemeMappings = {
   light: {
-    "surface-base": "neutral-l-1",
-    "surface-raised": "neutral-l-2",
-    "surface-overlay": "neutral-l-1",
+    "surface-base": "neutral-l-2",
+    "surface-raised": "neutral-l-1",
+    "surface-overlay": "neutral-l-2",
     "surface-tinted": "palette-a-l-2",
     "text-primary": "neutral-d-11",
     "text-secondary": "neutral-d-8",
@@ -121,10 +121,10 @@ export const REFERENCE_SEMANTIC_MAPPINGS: SemanticThemeMappings = {
     }),
   },
   highContrast: {
-    "surface-base": "neutral-l-1",
-    "surface-raised": "neutral-l-2",
-    "surface-overlay": "neutral-l-1",
-    "surface-tinted": "neutral-l-1",
+    "surface-base": "neutral-l-2",
+    "surface-raised": "neutral-l-1",
+    "surface-overlay": "neutral-l-2",
+    "surface-tinted": "neutral-l-2",
     "text-primary": "neutral-d-12",
     "text-secondary": "neutral-d-11",
     "text-disabled": "neutral-d-4",

@@ -120,6 +120,15 @@ test("validateOklchSeed clamps lightness and emits edge warning", () => {
   );
 });
 
+test("validateOklchSeed gamut maps adjusted seeds before use", () => {
+  const result = validateOklchSeed({ l: 0.75, c: 0.5, h: 280 });
+
+  assert.deepEqual(result.normalizedSeed, { l: 0.75, c: 0.5, h: 280 });
+  assert.deepEqual(result.adjustedSeed, { l: 0.75, c: 0.13, h: 280 });
+  assert.equal(result.seedAdjusted, true);
+  assert.deepEqual(result.warnings, []);
+});
+
 test("validateEngineInput reports seed errors before harmony errors", () => {
   assertValidationError(
     () => validateEngineInput({ seed: "", harmony: "bad" }),

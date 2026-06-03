@@ -38,6 +38,18 @@ export interface AssemblePrimitiveTokensOptions {
 export interface PrimitiveTokenInventory {
   readonly tokens: readonly PrimitiveColorToken[];
   readonly byName: ReadonlyMap<PrimitiveTokenName, PrimitiveColorToken>;
+  readonly gamutMappings: readonly PrimitiveTokenGamutMapping[];
+}
+
+export interface PrimitiveTokenGamutMapping {
+  readonly name: PrimitiveTokenName;
+  readonly slot: PaletteSlot;
+  readonly chromaReduction: number;
+}
+
+interface PrimitiveTokenBuild {
+  readonly token: PrimitiveColorToken;
+  readonly gamutMapping?: PrimitiveTokenGamutMapping;
 }
 
 export const DEFAULT_STATUS_HUES: StatusHueAnchors = {
@@ -57,21 +69,31 @@ const STATUS_SLOT_BY_NAME: Readonly<Record<StatusName, StatusSlot>> = {
 export function assemblePrimitiveTokens(
   options: AssemblePrimitiveTokensOptions,
 ): PrimitiveTokenInventory {
-  const tokens = [
-    ...assemblePalettePrimitiveTokens(options),
-    ...assembleNeutralPrimitiveTokens(options.seed),
-    ...assembleStatusPrimitiveTokens(options),
+  const builds = [
+    ...assemblePalettePrimitiveTokenBuilds(options),
+    ...assembleNeutralPrimitiveTokenBuilds(options.seed),
+    ...assembleStatusPrimitiveTokenBuilds(options),
   ];
+  const tokens = builds.map((build) => build.token);
 
   return {
     tokens,
     byName: new Map(tokens.map((token) => [token.name, token])),
+    gamutMappings: builds.flatMap((build) =>
+      build.gamutMapping === undefined ? [] : [build.gamutMapping],
+    ),
   };
 }
 
 export function assemblePalettePrimitiveTokens(
   options: AssemblePrimitiveTokensOptions,
 ): readonly PrimitiveColorToken[] {
+  return assemblePalettePrimitiveTokenBuilds(options).map((build) => build.token);
+}
+
+function assemblePalettePrimitiveTokenBuilds(
+  options: AssemblePrimitiveTokensOptions,
+): readonly PrimitiveTokenBuild[] {
   const harmonyOptions = {
     hue: options.seed.h,
     strategy: options.harmony,
@@ -85,11 +107,15 @@ export function assemblePalettePrimitiveTokens(
       ...rampOptionOverrides(options.darkHueShift?.[descriptor.slot], options.taperParams),
     });
 
-    return rampToPrimitiveTokens(descriptor.slot, ramp.light, ramp.dark);
+    return rampToPrimitiveTokenBuilds(descriptor.slot, ramp.light, ramp.dark);
   });
 }
 
 export function assembleNeutralPrimitiveTokens(seed: OklchValue): readonly PrimitiveColorToken[] {
+  return assembleNeutralPrimitiveTokenBuilds(seed).map((build) => build.token);
+}
+
+function assembleNeutralPrimitiveTokenBuilds(seed: OklchValue): readonly PrimitiveTokenBuild[] {
   const light = RAMP_STEPS.map((step) =>
     createFixedChromaRampStep("l", step, {
       l: lightRampLightness(step),
@@ -105,12 +131,18 @@ export function assembleNeutralPrimitiveTokens(seed: OklchValue): readonly Primi
     }),
   );
 
-  return rampToPrimitiveTokens("neutral", light, dark);
+  return rampToPrimitiveTokenBuilds("neutral", light, dark);
 }
 
 export function assembleStatusPrimitiveTokens(
   options: Pick<AssemblePrimitiveTokensOptions, "statusHues" | "darkHueShift" | "taperParams">,
 ): readonly PrimitiveColorToken[] {
+  return assembleStatusPrimitiveTokenBuilds(options).map((build) => build.token);
+}
+
+function assembleStatusPrimitiveTokenBuilds(
+  options: Pick<AssemblePrimitiveTokensOptions, "statusHues" | "darkHueShift" | "taperParams">,
+): readonly PrimitiveTokenBuild[] {
   const statusHues = {
     ...DEFAULT_STATUS_HUES,
     ...options.statusHues,
@@ -124,7 +156,7 @@ export function assembleStatusPrimitiveTokens(
       ...rampOptionOverrides(options.darkHueShift?.[slot], options.taperParams),
     });
 
-    return rampToPrimitiveTokens(slot, ramp.light, ramp.dark);
+    return rampToPrimitiveTokenBuilds(slot, ramp.light, ramp.dark);
   });
 }
 
@@ -155,28 +187,28 @@ function createFixedChromaRampStep(
   };
 }
 
-function rampToPrimitiveTokens(
+function rampToPrimitiveTokenBuilds(
   slot: PaletteSlot,
   light: readonly RampStep[],
   dark: readonly RampStep[],
-): readonly PrimitiveColorToken[] {
+): readonly PrimitiveTokenBuild[] {
   return [
-    ...light.map((step) => rampStepToPrimitiveToken(slot, step)),
-    ...dark.map((step) => rampStepToPrimitiveToken(slot, step)),
+    ...light.map((step) => rampStepToPrimitiveTokenBuild(slot, step)),
+    ...dark.map((step) => rampStepToPrimitiveTokenBuild(slot, step)),
   ];
 }
 
-function rampStepToPrimitiveToken(
+function rampStepToPrimitiveTokenBuild(
   slot: PaletteSlot,
   step: RampStep,
-): PrimitiveColorToken {
+): PrimitiveTokenBuild {
   const originalTarget = {
     l: step.oklch.l,
     c: step.targetChroma,
     h: step.oklch.h,
   };
 
-  return {
+  const token: PrimitiveColorToken = {
     name: `${slot}-${step.tone}-${step.step}` as PrimitiveTokenName,
     slot,
     tone: step.tone,
@@ -184,6 +216,19 @@ function rampStepToPrimitiveToken(
     oklch: step.oklch,
     srgb: formatOklch(step.oklch),
     p3: formatDisplayP3(reduceChromaToGamut(originalTarget, "display-p3").mapped),
+  };
+
+  return {
+    token,
+    ...(step.gamutMapped
+      ? {
+          gamutMapping: {
+            name: token.name,
+            slot,
+            chromaReduction: step.chromaReduction,
+          },
+        }
+      : {}),
   };
 }
 

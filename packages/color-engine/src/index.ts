@@ -199,6 +199,7 @@ export interface SemanticTokenMapping {
 }
 
 export interface AssertionResult {
+  readonly theme: SemanticThemeKey;
   readonly tokenA: SemanticTokenName;
   readonly tokenB: SemanticTokenName;
   readonly requiredLc: number;
@@ -257,7 +258,26 @@ export interface EngineOutput {
 
 export type CreateColorEngineTheme = (input: EngineInput) => EngineOutput;
 
+export { createColorEngineTheme } from "./engine.js";
 export { ColorEngineValidationError } from "./errors.js";
+export {
+  CONTRAST_ASSERTION_RULES,
+  isHighContrastTheme,
+  runContrastAssertions,
+  type ContrastAssertionKind,
+  type ContrastAssertionRule,
+  type ExpectedContrastPolarity,
+  type RunContrastAssertionsOptions,
+} from "./assertions.js";
+export {
+  APCA_ALGORITHM_VERSION,
+  APCA_CONSTANTS,
+  calculateApcaLc,
+  calculateApcaLcFromOklch,
+  calculateApcaLcFromY,
+  srgbToApcaY,
+  type ApcaConstants,
+} from "./apca.js";
 export {
   clampRgbToGamut,
   isInDisplayP3Gamut,
@@ -310,6 +330,7 @@ export {
   assemblePrimitiveTokens,
   assembleStatusPrimitiveTokens,
   type AssemblePrimitiveTokensOptions,
+  type PrimitiveTokenGamutMapping,
   type PrimitiveTokenInventory,
 } from "./primitives.js";
 export {

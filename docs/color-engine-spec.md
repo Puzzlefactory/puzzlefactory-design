@@ -383,9 +383,9 @@ The reference mapping is the default implementation and is not optional. An impl
 ### Light Theme Reference Mapping
 
 ```
-surface-base                → neutral-l-1
-surface-raised              → neutral-l-2
-surface-overlay             → neutral-l-1   // same as surface-base — see note above
+surface-base                → neutral-l-2
+surface-raised              → neutral-l-1
+surface-overlay             → neutral-l-2   // same as surface-base — see note above
 surface-tinted              → palette-a-l-2
 
 text-primary                → neutral-d-11
@@ -469,10 +469,10 @@ Two high contrast variants exist: light-background and dark-background. Both use
 ### High Contrast Light Mapping (`data-theme="high-contrast"`)
 
 ```
-surface-base                → neutral-l-1
-surface-raised              → neutral-l-2
-surface-overlay             → neutral-l-1
-surface-tinted              → neutral-l-1   // collapsed
+surface-base                → neutral-l-2
+surface-raised              → neutral-l-1
+surface-overlay             → neutral-l-2
+surface-tinted              → neutral-l-2   // collapsed
 
 text-primary                → neutral-d-12
 text-secondary              → neutral-d-11
@@ -547,7 +547,7 @@ A separate output layer in `@puzzlefactory/tokens` consumes EngineOutput and pro
 
 **Namespace:** Configurable via the `namespace` input argument. Default `ds`. All custom properties are prefixed: `--ds-surface-base`, `--ds-text-primary`, etc.
 
-**Four output files:**
+**Six output files:**
 
 ```
 tokens.css               // all primitive sRGB tokens as --{ns}-{name}: oklch(...) 
