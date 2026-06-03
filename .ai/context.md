@@ -13,7 +13,7 @@ Build a design system with a generative color engine as its foundation. The firs
 - Root workspace config exists with `packages/*` and `apps/*`
 - Placeholder folders exist for all planned packages and the docs app
 - `packages/color-engine-1` contains the preserved v1 implementation under package name `@puzzlefactory/color-engine-1`; keep it as reference until explicitly removed
-- `packages/color-engine` is now the v2 `@puzzlefactory/color-engine` workspace package; current v2 output includes neutral/surface generation, chrome/border generation, explicit-seed primary usage ramps, explicit-seed status usage ramps, per-family seed policy, stable semantic aliases, and structured CSS output
+- `packages/color-engine` is now the v2 `@puzzlefactory/color-engine` workspace package; current v2 output includes neutral/surface generation, chrome/border generation, explicit-seed primary usage ramps, explicit-seed status usage ramps, per-family seed policy, stable semantic aliases, structured CSS output, and APCA calculation exports
 - `packages/tokens` is now a real `@puzzlefactory/tokens` workspace package that consumes v1 `EngineOutput` from `@puzzlefactory/color-engine-1` and renders the six specified CSS custom property outputs
 - `apps/kitchen-sink` is now a React + Vite + React Router 7 verification shell wired to v2 `@puzzlefactory/color-engine` neutral/surface output for controls, primitive ramps, semantic surface roles, and light/dark previews
 
@@ -45,7 +45,7 @@ apps/
 
 ## Current Phase
 
-Color engine v1 is closed as reference. Its package boundaries, token CSS output, and prior kitchen-sink visualization are useful, but its broad generic ramp generation model is not the future path. Color engine v2 has neutral/surface/chrome, primary, and status usage generation: separate neutral, light-surface, dark-surface, primary, danger, warning, success, and info seeds; compact light/dark surface ramps; compact chrome/border ramps; compact primary and status soft/solid usage ramps; per-family `balanced` or `anchored` seed policy for primary/status families; named presets; stable text/chrome/surface/primary/status semantic aliases; structured primitive/theme CSS output; and immediate kitchen-sink visualization. Component layer work remains deferred.
+Color engine v1 is closed as reference. Its package boundaries, token CSS output, and prior kitchen-sink visualization are useful, but its broad generic ramp generation model is not the future path. Color engine v2 has neutral/surface/chrome, primary, and status usage generation: separate neutral, light-surface, dark-surface, primary, danger, warning, success, and info seeds; compact light/dark surface ramps; compact chrome/border ramps; compact primary and status soft/solid usage ramps; per-family `balanced` or `anchored` seed policy for primary/status families; named presets; stable text/chrome/surface/primary/status semantic aliases; structured primitive/theme CSS output; APCA calculation exports ported from v1; and immediate kitchen-sink visualization. APCA assertion pairs and reporting are not implemented yet. Component layer work remains deferred.
 
 ## Resume Guidance
 

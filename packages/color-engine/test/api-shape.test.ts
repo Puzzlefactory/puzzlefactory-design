@@ -1,4 +1,5 @@
 import type {
+  ApcaConstants,
   ChromeLevel,
   ColorEngineCssOutput,
   ColorEngineInput,
@@ -8,6 +9,7 @@ import type {
   OklchValue,
   PrimarySemanticTokenName,
   SeedPolicy,
+  SrgbColor,
   SurfacePreset,
   SurfacePresetName,
   SemanticTokenName,
@@ -15,6 +17,8 @@ import type {
   StatusSemanticTokenName,
 } from "../src/index.js";
 import {
+  APCA_ALGORITHM_VERSION,
+  APCA_CONSTANTS,
   CHROME_LEVELS,
   NEUTRAL_SEMANTIC_TOKEN_NAMES,
   PRIMARY_SEMANTIC_TOKEN_NAMES,
@@ -23,7 +27,11 @@ import {
   SURFACE_PRESETS,
   SURFACE_SEMANTIC_TOKEN_NAMES,
   STATUS_SEMANTIC_TOKEN_NAMES,
+  calculateApcaLc,
+  calculateApcaLcFromOklch,
+  calculateApcaLcFromY,
   createColorEngineTheme,
+  srgbToApcaY,
 } from "../src/index.js";
 
 const presetName: SurfacePresetName = "standard";
@@ -65,6 +73,13 @@ const warningSeed: OklchValue = output.seeds.status.warning;
 const warningSeedPolicy: SeedPolicy = output.seedPolicies.status.warning;
 const cssOutput: ColorEngineCssOutput = output.cssOutput;
 const semanticTokenNames: readonly SemanticTokenName[] = SEMANTIC_TOKEN_NAMES;
+const apcaConstants: ApcaConstants = APCA_CONSTANTS;
+const srgbColor: SrgbColor = { r: 0, g: 0, b: 0 };
+const apcaLc: number = calculateApcaLc(srgbColor, { r: 1, g: 1, b: 1 });
+const apcaOklchLc: number = calculateApcaLcFromOklch(output.seeds.primary, output.seeds.surfaceLight);
+const apcaYLc: number = calculateApcaLcFromY(0, 1);
+const apcaY: number = srgbToApcaY(srgbColor);
+const apcaAlgorithmVersion: string = APCA_ALGORITHM_VERSION;
 
 void preset;
 void lightStepDelta;
@@ -90,5 +105,11 @@ void NEUTRAL_SEMANTIC_TOKEN_NAMES;
 void SURFACE_SEMANTIC_TOKEN_NAMES;
 void PRIMARY_SEMANTIC_TOKEN_NAMES;
 void STATUS_SEMANTIC_TOKEN_NAMES;
+void apcaConstants;
+void apcaLc;
+void apcaOklchLc;
+void apcaYLc;
+void apcaY;
+void apcaAlgorithmVersion;
 void SEED_POLICY_NAMES;
 void CHROME_LEVELS;

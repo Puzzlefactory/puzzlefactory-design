@@ -1,3 +1,13 @@
+export {
+  APCA_ALGORITHM_VERSION,
+  APCA_CONSTANTS,
+  calculateApcaLc,
+  calculateApcaLcFromOklch,
+  calculateApcaLcFromY,
+  srgbToApcaY,
+} from "./apca.js";
+export type { ApcaConstants, SrgbColor } from "./apca.js";
+
 export type ColorSeed = `#${string}` | `oklch(${string})`;
 
 export type SurfacePresetName =

@@ -85,12 +85,16 @@ Soft ramps remain derived/tamed for usable containers regardless of policy. Exis
 
 CE2-07 is implemented. Chrome/border generation is now separate from surface fills and surface interaction states. The package emits compact `chrome-light` and `chrome-dark` primitive families with `subtle`, `default`, and `strong` tokens derived from existing surface/neutral inputs and the active surface preset. Semantic aliases now map `border-subtle`, `border-default`, `border-strong`, and `control-border` to chrome primitives rather than recycled surface hover/pressed tokens. Kitchen-sink displays chrome primitive ramps and uses `border-default`/`control-border` for structural panel and field borders, so quiet surface fills can remain subtle without making panel structure disappear.
 
-Independent sub-agent review was not performed for CE2-01 through CE2-07 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
+CE2-08A is implemented. The active v2 package now exports APCA calculation helpers ported from v1: `APCA_ALGORITHM_VERSION`, `APCA_CONSTANTS`, `calculateApcaLc`, `calculateApcaLcFromOklch`, `calculateApcaLcFromY`, and `srgbToApcaY`, plus `ApcaConstants` and `SrgbColor` types. Direct sRGB fixtures match the v1 APCA/W3 expected values. The OKLCH integration test allows a small tolerance because v2's existing `parseColorSeed` path rounds parsed OKLCH channels. No assertion pair model, kitchen-sink assertion report, enforcement, or auto-tuning was added.
+
+Independent sub-agent review was not performed for CE2-01 through CE2-08A because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
 
 ## Next Actions
 
-- Review CE2-07 visuals in kitchen-sink, especially quiet and layered presets where panel structure previously blurred together.
-- If CE2-07 visuals are acceptable, proceed to `CE2-08`: APCA assertion report over stable semantic text/background pairs.
+- Pause and review CE2-08A APCA math/fixture coverage before continuing.
+- If CE2-08A is acceptable, proceed to `CE2-08B`: assertion pair model.
+- After `CE2-08B`, pause to confirm assertion pairs and thresholds are the right design-system policy.
+- After `CE2-08C`, review kitchen-sink report output before planning tuning.
 - Treat `CE2-09` and later as strategic placeholders. Reorder or revise them if CE2-08 visual/assertion feedback exposes a more important issue.
 
 ## Seed Policy Plan
@@ -115,10 +119,9 @@ Kitchen-sink should make seed policy visible when implemented. Primitive ramps s
 This roadmap is intentionally provisional. Kitchen-sink visual review and assertion output can change the order.
 
 1. `CE2-08`: Add APCA assertion report.
-   - Port or adapt the v1 APCA calculation into v2.
-   - Define assertion pairs over existing semantic roles, such as text on surfaces, primary action text on action backgrounds, status soft text on status soft backgrounds, and status solid text on solid backgrounds.
-   - Return diagnostic assertion output from `createColorEngineTheme`.
-   - Render assertion results in kitchen-sink.
+   - `CE2-08A`: Port or adapt the v1 APCA calculation into v2 and verify it against fixtures.
+   - `CE2-08B`: Define assertion pairs over existing semantic roles, such as text on surfaces, primary action text on action backgrounds, status soft text on status soft backgrounds, and status solid text on solid backgrounds. Return diagnostic assertion output from `createColorEngineTheme`.
+   - `CE2-08C`: Render assertion results in kitchen-sink for visual review and design-system debugging.
    - Stop before assertion enforcement, auto-tuning, token package expansion, and component packages.
 
 2. `CE2-09`: Tune from assertion and visual feedback.
@@ -161,7 +164,10 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-05` | Semantic aliases and CSS output | Map generated usage families to stable semantic custom properties and update CSS output once visual families are credible. | Component-library implementation |
 | `CE2-06` | Per-family seed policy | Add `balanced` and `anchored` seed policies for primary and status families, preserve exact seeds when anchored, and show policy/seed anchors in kitchen-sink. | APCA enforcement, token package expansion, component-library implementation |
 | `CE2-07` | Chrome and border ramp | Add compact `chrome-light` and `chrome-dark` primitive families for borders, dividers, and control edges; remap border semantics to chrome output while preserving surface ramps. | Chrome seeds/sliders, APCA enforcement, token package expansion, component-library implementation |
-| `CE2-08` | APCA assertion report | Add APCA calculation and diagnostic assertion output for stable semantic text/background pairs, then render the report in kitchen-sink. | Assertion enforcement, auto-tuning, token package expansion, component-library implementation |
+| `CE2-08` | APCA assertion report milestone | Strategic milestone covering APCA calculation, semantic assertion pairs, and kitchen-sink report rendering. Execute as `CE2-08A` through `CE2-08C`. | Assertion enforcement, auto-tuning, token package expansion, component-library implementation |
+| `CE2-08A` | APCA calculation port | Port/adapt v1 APCA calculation into v2 and verify against known fixtures. No assertion model or UI yet. | Assertion pair model, kitchen-sink report, enforcement |
+| `CE2-08B` | Assertion pair model | Define semantic text/background assertion pairs, thresholds, and diagnostic report output from `createColorEngineTheme`. | Kitchen-sink report rendering, enforcement, auto-tuning |
+| `CE2-08C` | Kitchen-sink assertion report | Render CE2-08B assertion output in kitchen-sink for light/dark visual review. | Enforcement, auto-tuning, recipe tuning |
 | `CE2-09` | Assertion-driven tuning | Tune recipes or semantic pair mappings based on CE2-08 report and kitchen-sink visual review. | New color families without proven UI job, hard enforcement, token package expansion |
 | `CE2-10` | V2 CSS/token output stabilization | Stabilize v2 CSS output boundaries and decide how `@puzzlefactory/tokens` should consume or wrap v2 output. | Component-library implementation |
 | `CE2-11` | Presets and example themes | Add a small set of credible OKLCH theme presets and kitchen-sink preset comparison. | Slider-heavy controls, broad theme marketplace |
