@@ -65,14 +65,33 @@ CE2-04 is implemented. Status generation uses explicit `dangerSeed`, `warningSee
 
 Status semantic roles now cover soft backgrounds, hover backgrounds, borders, soft text, solid backgrounds, solid hover/pressed states, and solid text. Warning uses a slightly softer chroma recipe than danger/success/info because yellow/orange status colors are more visually sensitive. Kitchen-sink renders status seed controls, primitive ramps, semantic roles, and status soft/solid cards in light and dark themes.
 
+Seed preservation is now an explicit design concern for future work. Surface generation may treat seeds as tonal guides because the visual system result matters more than preserving the exact input color. Primary and status generation may need stricter behavior because those seeds can represent approved palette colors or intentional design choices. The current primary/status behavior is a `balanced` style: it preserves hue and creates comfortable UI usage colors, but it does not guarantee the exact seed appears in the primitive ramp.
+
 Independent sub-agent review was not performed for CE2-01, CE2-02, CE2-03, or CE2-04 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
 
 ## Next Actions
 
-- Review CE2-04 status visuals in kitchen-sink and decide whether the status usage model is visually credible enough to stabilize.
-- If status output is acceptable, proceed to `CE2-05`: semantic aliases and CSS output.
-- If status output feels off, tune only status soft/solid recipes before expanding output packages.
+- Proceed to `CE2-05`: semantic aliases and CSS output, using the current `balanced` primary/status generation as the working model.
+- During CE2-05, do not implement seed policy, but do not design semantic aliases or CSS output in a way that prevents future seed anchoring.
+- After CE2-05, evaluate `CE2-06`: per-family seed policy for primary and status usage families.
 - Do not move to APCA/assertion enforcement until semantic aliases and CSS output are stable enough to evaluate actual text/background pairs.
+
+## Seed Policy Plan
+
+Seed policy should be per family, not global.
+
+- Surfaces: no seed-preservation guarantee initially. Surface seeds are tonal controls for credible light and dark UI surfaces.
+- Primary: needs a future option to preserve the exact seed because it may represent an approved brand or product palette color.
+- Status: needs a future option to preserve the exact seed because warning/danger/success/info may come from a designed palette, even when the balanced recipe usually produces more comfortable UI output.
+- Secondary or future accent colors should follow the primary model if added.
+
+Potential policies:
+
+- `balanced`: current behavior. Preserve hue/intent, tune lightness/chroma into comfortable soft and solid usage ramps, and allow the exact seed to be absent from the output.
+- `anchored`: preserve the exact seed as an explicit primitive and likely as the main/rest solid token, then generate adjacent hover/pressed/supporting steps around it.
+- `strict`: possible future mode. Preserve the exact seed as a named semantic value and limit adjustment to explicitly derived states. Do not implement until a concrete need appears.
+
+Kitchen-sink should make seed policy visible when implemented. Primitive ramps should clearly show whether the seed was adapted or anchored, so the generator feels honest during visual review.
 
 ## Slice Backlog
 
@@ -85,6 +104,7 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-03` | Primary usage ramps | Add compact primary light/dark soft and solid usage ramps from explicit seeds and render action/link/focus previews. | Status ramps, component package work |
 | `CE2-04` | Status usage ramps | Add danger/warning/success/info light-soft, light-solid, dark-soft, and dark-solid usage sets with visual review. | APCA enforcement, broad semantic aliasing |
 | `CE2-05` | Semantic aliases and CSS output | Map generated usage families to stable semantic custom properties and update CSS output once visual families are credible. | Component-library implementation |
+| `CE2-06` | Per-family seed policy | Add `balanced` and `anchored` seed policies for primary and status families, preserve exact seeds when anchored, and show policy/seed anchors in kitchen-sink. | APCA enforcement, token package expansion, component-library implementation |
 
 ## Completion Shape
 
@@ -94,6 +114,7 @@ This workstream is substantially complete when:
 - Surface generation supports separate neutral, light-surface, and dark-surface seeds.
 - Presets produce repeatable useful visual differences without requiring manual sliders.
 - Primary and status families are compact usage sets, not long universal ramps.
+- Primary and status seed handling is explicit: either balanced/adapted or anchored/preserved.
 - Kitchen-sink shows primitives, semantic aliases, and real usage previews for each generated family.
 - Future agents can explain each generated token by the UI job it serves.
 
@@ -112,6 +133,7 @@ This workstream is substantially complete when:
 - **Separate surface seeds:** Neutral identity, light surfaces, and dark surfaces may have separate seeds.
 - **Presets over sliders:** Normal controls should be named presets. Sliders may exist only as internal/debug tooling if later justified.
 - **Semantics later:** Generation families use neutral names such as surface, primary, and status usage sets. Brand/accent aliases happen after generation.
+- **Seed policy is per family:** Surfaces can use seeds as tonal guides; primary and status families need future `balanced` versus `anchored` behavior so approved colors can be preserved when required.
 - **V1 status:** V1 is reference material, not the implementation path.
 
 ## Key Files
