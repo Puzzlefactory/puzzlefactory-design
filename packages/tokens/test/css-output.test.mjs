@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createColorEngineTheme } from "@puzzlefactory/color-engine";
+import { createColorEngineTheme } from "@puzzlefactory/color-engine-1";
 import {
   createThemeCss,
   createThemeCssFiles,

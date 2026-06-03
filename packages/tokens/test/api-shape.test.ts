@@ -1,4 +1,4 @@
-import type { EngineOutput } from "@puzzlefactory/color-engine";
+import type { EngineOutput } from "@puzzlefactory/color-engine-1";
 import type {
   ThemeCssFileName,
   ThemeCssSelector,

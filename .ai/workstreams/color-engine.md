@@ -1,10 +1,10 @@
 # Workstream: Color Engine & Token Architecture
 
-Status: active
+Status: closed/reference
 Created: 2026-05-25
 Last Updated: 2026-06-02
 
-This workstream covers the design and implementation of the generative color engine that is the foundation of the design system. The engine takes a seed color, harmony strategy, and mood argument and produces a complete set of primitive and semantic tokens for light, dark, high contrast light, and high contrast dark themes — with no designer intervention required. Everything downstream (components, layout, theming) depends on this layer being correct.
+This workstream records the first color-engine attempt. The v1 engine takes a seed color, harmony strategy, and mood argument and produces primitive and semantic tokens for light, dark, high contrast light, and high contrast dark themes. Its package boundaries, validation, CSS output, and kitchen-sink visualization are useful reference material, but the generation model is rejected for future work.
 
 ## Scope
 
@@ -33,16 +33,16 @@ Out of scope:
 
 ## Current State
 
-Architecture is fully specified in the workstream document. Package-level generation behavior is now wired through `createColorEngineTheme(input): EngineOutput`; CSS output is implemented in `@puzzlefactory/tokens`; kitchen-sink wiring consumes live engine/token output. The specification has been through five review cycles addressing: APCA threshold corrections, smoothstep formula completeness, P3 generation logic, ramp dead zone resolution, signed Lc polarity handling, semantic-to-ramp-step reference mappings, high contrast dark mode, monochromatic harmony naming, full TypeScript type definitions, CSS output format, and error type hierarchy.
+The v1 implementation reached package-level generation, token CSS output, and kitchen-sink visualization. Rendering exposed core flaws in the generation strategy: broad generic ramps produced visually incoherent palette and status scales, semantic roles were mapped too early without compact usage scales, and tests/assertions substituted for visual quality feedback until too late.
 
-The monorepo shell exists at `/design-system` with Turborepo root config and placeholder folders under `packages/*`. `apps/kitchen-sink` is a real React + Vite + React Router 7 workspace wired to real engine output for seed controls, primitive ramps, semantic preview, theme variants, and assertion/warning reports. `packages/color-engine` is now a real `@puzzlefactory/color-engine` workspace package with package manifest, strict TypeScript config, source/test structure, concrete public API/type-model exports, input validation utilities, seed normalization to OKLCH with mandatory adjusted-seed gamut mapping, gamut checking/reduction utilities, ramp generation, harmony derivation, primitive token assembly, semantic mapping, signed APCA Lc calculation, semantic contrast assertion utilities, `createColorEngineTheme(input): EngineOutput`, and package-boundary tests enforcing zero runtime dependencies. `packages/tokens` is now a real `@puzzlefactory/tokens` workspace package that renders the six specified CSS custom property outputs from EngineOutput with no runtime dependencies.
+This workstream is closed as a reference. Do not continue the `CE-*` slice backlog for new color work. Future color generation planning belongs in `.ai/workstreams/color-engine-v2.md`.
 
 ## Next Actions
 
-- Use the Slice Backlog IDs below when generating work authorization prompts from `.ai/prompt-templates/work-authorization.md`.
-- Do not store generated one-off work authorization prompts in `.ai/`; keep reusable wording in `.ai/prompt-templates/` and durable sequencing here.
-- Completed slices: `CE-01`, `CE-02`, `CE-03`, `CE-04`, `CE-05`, `CE-06`, `CE-07`, `CE-08`, `CE-09`, `CE-10`, `CE-11`.
-- Next recommended slice: no remaining color-engine backlog slice is defined. The kitchen-sink now exposes current assertion output, so the next decision should be whether to tune generation/assertion failures or open the next workstream for component/theming integration.
+- Treat this workstream as reference material only.
+- Use `.ai/workstreams/color-engine-v2.md` for the next color-engine attempt.
+- If preserving v1 code, rename or move it explicitly in an authorized implementation slice; do not rely on this workstream status alone to imply package changes.
+- Completed v1 slices: `CE-01`, `CE-02`, `CE-03`, `CE-04`, `CE-05`, `CE-06`, `CE-07`, `CE-08`, `CE-09`, `CE-10`, `CE-11`.
 
 ## Slice Backlog
 
@@ -75,6 +75,7 @@ This workstream is substantially complete when:
 
 ## Blockers / Constraints
 
+- V1 generation policy is rejected. It should not be tuned incrementally as the primary path.
 - APCA must be implemented from the published specification at git.apcacontrast.com — no npm dependency permitted
 - `@puzzlefactory/color-engine` must have zero runtime external dependencies — enforced at package level
 - The input normalization layer at the engine boundary is the sole permitted exception and must have no transitive dependencies of its own
@@ -82,6 +83,8 @@ This workstream is substantially complete when:
 
 ## Key Decisions
 
+- **V1 outcome:** Keep package/infrastructure lessons; reject the broad generic ramp generation model for product use.
+- **Visual feedback:** Future color work must render visually in the kitchen sink from the first implementation slice.
 - **Color space:** OKLCH throughout. HSL rejected — perceptually non-uniform.
 - **Ramp model:** Two ramps per hue (light and dark), shared boundary at L 0.55. Not one full-range ramp.
 - **State differentiation:** ΔL ≥ 0.035 enforced as a generation invariant, not a post-hoc assertion. APCA Lc deltas are not used for state differentiation — category error.

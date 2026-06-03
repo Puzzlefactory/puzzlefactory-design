@@ -3,7 +3,7 @@ import type {
   PrimitiveTokenName,
   SemanticThemeKey,
   SemanticTokenName,
-} from "@puzzlefactory/color-engine";
+} from "@puzzlefactory/color-engine-1";
 
 export type TokenCssFileName =
   | "tokens.css"

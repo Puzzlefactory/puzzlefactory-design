@@ -1,116 +1,26 @@
-export type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+export type ColorSeed = `#${string}` | `oklch(${string})`;
 
-export type RampTone = "l" | "d";
+export type SurfacePresetName =
+  | "quiet"
+  | "standard"
+  | "layered"
+  | "high-separation";
 
-export type HarmonyStrategy =
-  | "complementary"
-  | "analogous"
-  | "triadic"
-  | "split-complementary"
-  | "monochromatic";
+export type SurfaceTheme = "light" | "dark";
 
-export type Mood = "vibrant" | "muted" | "neutral";
+export type SurfaceLevel = 1 | 2 | 3 | 4;
 
-export type ThemeVariant =
-  | "light"
-  | "dark"
-  | "high-contrast"
-  | "high-contrast-dark";
+export type SurfaceState = "hover" | "selected" | "pressed";
 
-export type SemanticThemeKey =
-  | "light"
-  | "dark"
-  | "highContrast"
-  | "highContrastDark";
-
-export type PaletteSlot =
-  | "palette-a"
-  | "palette-b"
-  | "palette-c"
-  | "palette-a-mid"
-  | "palette-a-subtle"
-  | "neutral"
-  | "status-danger"
-  | "status-warning"
-  | "status-success"
-  | "status-info";
-
-export type PalettePrimitiveSlot = Exclude<PaletteSlot, "neutral">;
-
-export type StatusSlot =
-  | "status-danger"
-  | "status-warning"
-  | "status-success"
-  | "status-info";
-
-export type StatusName = "danger" | "warning" | "success" | "info";
-
-export type PrimitiveTokenName = `${PaletteSlot}-${RampTone}-${Step}`;
+export type PrimitiveFamilyName =
+  | "neutral-light"
+  | "neutral-dark"
+  | "surface-light"
+  | "surface-dark";
 
 export type SurfaceSemanticTokenName =
-  | "surface-base"
-  | "surface-raised"
-  | "surface-overlay"
-  | "surface-tinted";
-
-export type TextSemanticTokenName =
-  | "text-primary"
-  | "text-secondary"
-  | "text-disabled";
-
-export type InteractiveSemanticTokenName =
-  | "interactive-bg-rest"
-  | "interactive-bg-hover"
-  | "interactive-bg-active"
-  | "interactive-bg-disabled"
-  | "interactive-text"
-  | "interactive-border";
-
-export type FocusSemanticTokenName = "focus-ring";
-
-export type BorderSemanticTokenName = "border-strong" | "border-subtle";
-
-export type StatusSemanticTokenName =
-  `${StatusSlot extends `status-${infer Name}` ? `status-${Name}` : never}-${
-    | "bg"
-    | "text"
-    | "container"
-    | "on-container"
-    | "border"}`;
-
-export type SemanticTokenName =
-  | SurfaceSemanticTokenName
-  | TextSemanticTokenName
-  | InteractiveSemanticTokenName
-  | FocusSemanticTokenName
-  | BorderSemanticTokenName
-  | StatusSemanticTokenName;
-
-export type WarningCode =
-  | "SEED_LIGHTNESS_CLAMPED"
-  | "SEED_LIGHTNESS_EDGE"
-  | "GAMUT_MAPPED"
-  | "STATUS_CONTRAST_LIMIT"
-  | "HC_DIFFERENTIATION_LIMIT";
-
-export type ValidationErrorCode =
-  | "INVALID_SEED_FORMAT"
-  | "ACHROMATIC_SEED"
-  | "INVALID_HARMONY"
-  | "INVALID_TAPER_CONFIG"
-  | "INVALID_OVERRIDE_REFERENCE";
-
-export type AssertionStatus = "pass" | "fail" | "warning";
-
-export type AssertionFailureType = "CONTRAST" | "POLARITY_ERROR";
-
-export type AssertionPolarity = "CORRECT" | "WRONG";
-
-export type AssertionSource = "reference" | "override";
-
-export type OklchCssString = `oklch(${string})`;
-
-export type DisplayP3CssString = `color(display-p3 ${string})`;
+  | `surface-${SurfaceLevel}`
+  | `surface-${SurfaceLevel}-${SurfaceState}`;
 
 export interface OklchValue {
   readonly l: number;
@@ -118,235 +28,438 @@ export interface OklchValue {
   readonly h: number;
 }
 
-export type OklchColor = OklchValue;
-
-export interface SrgbColor {
-  readonly r: number;
-  readonly g: number;
-  readonly b: number;
+export interface SurfacePreset {
+  readonly name: SurfacePresetName;
+  readonly label: string;
+  readonly description: string;
+  readonly surfaceStepDelta: number;
+  readonly stateDelta: number;
+  readonly chromaScale: number;
 }
 
-export interface LinearSrgbColor {
-  readonly r: number;
-  readonly g: number;
-  readonly b: number;
-}
-
-export interface DisplayP3Color {
-  readonly r: number;
-  readonly g: number;
-  readonly b: number;
-}
-
-export interface LinearDisplayP3Color {
-  readonly r: number;
-  readonly g: number;
-  readonly b: number;
-}
-
-export interface TaperConfig {
-  readonly lightUpperFadeStart: number;
-  readonly lightUpperFadeEnd: number;
-  readonly lightLowerFadeStart: number;
-  readonly lightLowerFadeEnd: number;
-  readonly darkUpperFadeStart: number;
-  readonly darkUpperFadeEnd: number;
-  readonly darkLowerFadeStart: number;
-  readonly darkLowerFadeEnd: number;
-}
-
-export interface StatusHueAnchors {
-  readonly danger: number;
-  readonly warning: number;
-  readonly success: number;
-  readonly info: number;
-}
-
-export type SemanticMappingOverrides = Partial<
-  Record<SemanticTokenName, PrimitiveTokenName>
->;
-
-export interface EngineOverrides {
-  readonly statusHues?: Partial<StatusHueAnchors>;
-  readonly darkHueShift?: Partial<Record<PaletteSlot, number>>;
-  readonly taperParams?: Partial<TaperConfig>;
-  readonly semanticMapping?: SemanticMappingOverrides;
-}
-
-export interface EngineInput {
-  readonly seed: string;
-  readonly harmony: HarmonyStrategy;
-  readonly mood?: Mood;
+export interface ColorEngineInput {
+  readonly neutralSeed?: ColorSeed | string;
+  readonly surfaceLightSeed?: ColorSeed | string;
+  readonly surfaceDarkSeed?: ColorSeed | string;
+  readonly preset?: SurfacePresetName;
   readonly namespace?: string;
-  readonly overrides?: EngineOverrides;
 }
 
-export type ColorEngineInput = EngineInput;
-
-export interface PrimitiveColorToken {
-  readonly name: PrimitiveTokenName;
-  readonly slot: PaletteSlot;
-  readonly tone: RampTone;
-  readonly step: Step;
+export interface ColorToken {
+  readonly name: string;
+  readonly value: `oklch(${string})`;
   readonly oklch: OklchValue;
-  readonly srgb: OklchCssString;
-  readonly p3: DisplayP3CssString;
+  readonly description: string;
 }
 
-export interface SemanticTokenMapping {
-  readonly name: SemanticTokenName;
-  readonly primitive: PrimitiveTokenName;
+export interface PrimitiveSurfaceOutput {
+  readonly "neutral-light": readonly ColorToken[];
+  readonly "neutral-dark": readonly ColorToken[];
+  readonly "surface-light": readonly ColorToken[];
+  readonly "surface-dark": readonly ColorToken[];
 }
 
-export interface AssertionResult {
-  readonly theme: SemanticThemeKey;
-  readonly tokenA: SemanticTokenName;
-  readonly tokenB: SemanticTokenName;
-  readonly requiredLc: number;
-  readonly actualLc: number;
-  readonly polarity: AssertionPolarity;
-  readonly status: AssertionStatus;
-  readonly failureType?: AssertionFailureType;
-  readonly source: AssertionSource;
+export interface ColorEngineOutput {
+  readonly namespace: string;
+  readonly preset: SurfacePreset;
+  readonly input: Required<ColorEngineInput>;
+  readonly seeds: {
+    readonly neutral: OklchValue;
+    readonly surfaceLight: OklchValue;
+    readonly surfaceDark: OklchValue;
+  };
+  readonly primitives: PrimitiveSurfaceOutput;
+  readonly semantics: Readonly<Record<SurfaceTheme, Readonly<Record<SurfaceSemanticTokenName, `var(--${string})`>>>>;
+  readonly css: string;
 }
 
-export interface EngineWarningData {
-  readonly [key: string]: unknown;
-}
+export type ValidationErrorCode =
+  | "INVALID_SEED"
+  | "INVALID_PRESET"
+  | "INVALID_NAMESPACE";
 
-export interface GamutMappedWarningData extends EngineWarningData {
-  readonly count: number;
-  readonly minCReduction: number;
-  readonly maxCReduction: number;
-}
-
-export interface EngineWarning {
-  readonly code: WarningCode;
-  readonly message: string;
-  readonly affectedTokens?: readonly PrimitiveTokenName[];
-  readonly data?: EngineWarningData;
-}
-
-export interface ValidationError extends Error {
+export class ColorEngineValidationError extends Error {
   readonly code: ValidationErrorCode;
   readonly field: string;
   readonly value: unknown;
+
+  constructor(options: {
+    readonly code: ValidationErrorCode;
+    readonly field: string;
+    readonly value: unknown;
+    readonly message: string;
+  }) {
+    super(options.message);
+    this.name = "ColorEngineValidationError";
+    this.code = options.code;
+    this.field = options.field;
+    this.value = options.value;
+  }
 }
 
-export interface EngineMetadata {
-  readonly inputSeed: string;
-  readonly normalizedSeed: OklchValue;
-  readonly adjustedSeed: OklchValue;
-  readonly seedAdjusted: boolean;
-  readonly harmonyHues: readonly number[];
-  readonly gamutMappedCount: number;
-}
+export const SURFACE_PRESETS = {
+  quiet: {
+    name: "quiet",
+    label: "Quiet",
+    description: "Subtle surface separation for dense product UI.",
+    surfaceStepDelta: 0.012,
+    stateDelta: 0.014,
+    chromaScale: 0.7,
+  },
+  standard: {
+    name: "standard",
+    label: "Standard",
+    description: "Balanced separation for ordinary app surfaces.",
+    surfaceStepDelta: 0.02,
+    stateDelta: 0.024,
+    chromaScale: 0.85,
+  },
+  layered: {
+    name: "layered",
+    label: "Layered",
+    description: "Clearer surface hierarchy for nested panels.",
+    surfaceStepDelta: 0.03,
+    stateDelta: 0.034,
+    chromaScale: 0.9,
+  },
+  "high-separation": {
+    name: "high-separation",
+    label: "High Separation",
+    description: "Stronger steps for reviewing contrast and hierarchy.",
+    surfaceStepDelta: 0.042,
+    stateDelta: 0.048,
+    chromaScale: 0.75,
+  },
+} as const satisfies Readonly<Record<SurfacePresetName, SurfacePreset>>;
 
-export interface EngineOutput {
-  readonly primitives: {
-    readonly srgb: Partial<Record<PrimitiveTokenName, OklchCssString>>;
-    readonly p3: Partial<Record<PrimitiveTokenName, DisplayP3CssString>>;
+export const SURFACE_PRESET_NAMES = Object.keys(SURFACE_PRESETS) as readonly SurfacePresetName[];
+
+const DEFAULT_INPUT = {
+  neutralSeed: "oklch(0.86 0.012 255)",
+  surfaceLightSeed: "oklch(0.94 0.01 255)",
+  surfaceDarkSeed: "oklch(0.12 0.012 255)",
+  preset: "standard",
+  namespace: "ds",
+} as const satisfies Required<ColorEngineInput>;
+
+const SURFACE_LEVELS = [1, 2, 3, 4] as const satisfies readonly SurfaceLevel[];
+const SURFACE_STATES = ["hover", "selected", "pressed"] as const satisfies readonly SurfaceState[];
+
+export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngineOutput {
+  const resolvedInput = resolveInput(input);
+  const preset = SURFACE_PRESETS[resolvedInput.preset];
+  const neutralSeed = parseColorSeed(resolvedInput.neutralSeed, "neutralSeed");
+  const surfaceLightSeed = parseColorSeed(resolvedInput.surfaceLightSeed, "surfaceLightSeed");
+  const surfaceDarkSeed = parseColorSeed(resolvedInput.surfaceDarkSeed, "surfaceDarkSeed");
+  const neutralLight = createLevelRamp({
+    family: "neutral-light",
+    seed: toneSeed(surfaceLightSeed, neutralSeed, 0.75),
+    delta: preset.surfaceStepDelta,
+    direction: 1,
+    maxLightness: 0.995,
+    chromaScale: preset.chromaScale * 0.75,
+  });
+  const neutralDark = createLevelRamp({
+    family: "neutral-dark",
+    seed: toneSeed(surfaceDarkSeed, neutralSeed, 0.8),
+    delta: preset.surfaceStepDelta,
+    direction: 1,
+    maxLightness: 0.28,
+    chromaScale: preset.chromaScale * 0.8,
+  });
+  const surfaceLight = createLevelRamp({
+    family: "surface-light",
+    seed: surfaceLightSeed,
+    delta: preset.surfaceStepDelta,
+    direction: 1,
+    maxLightness: 0.998,
+    chromaScale: preset.chromaScale,
+  });
+  const surfaceDark = createLevelRamp({
+    family: "surface-dark",
+    seed: surfaceDarkSeed,
+    delta: preset.surfaceStepDelta,
+    direction: 1,
+    maxLightness: 0.32,
+    chromaScale: preset.chromaScale,
+  });
+  const primitives: PrimitiveSurfaceOutput = {
+    "neutral-light": neutralLight,
+    "neutral-dark": neutralDark,
+    "surface-light": surfaceLight,
+    "surface-dark": surfaceDark,
   };
-  readonly semantic: Record<
-    SemanticThemeKey,
-    Record<SemanticTokenName, `var(--${string})`>
-  >;
-  readonly assertions: readonly AssertionResult[];
-  readonly warnings: readonly EngineWarning[];
-  readonly metadata: EngineMetadata;
+  const semantics = createSurfaceSemantics(resolvedInput.namespace);
+
+  return {
+    namespace: resolvedInput.namespace,
+    preset,
+    input: resolvedInput,
+    seeds: {
+      neutral: neutralSeed,
+      surfaceLight: surfaceLightSeed,
+      surfaceDark: surfaceDarkSeed,
+    },
+    primitives,
+    semantics,
+    css: createCss(resolvedInput.namespace, primitives, semantics, preset),
+  };
 }
 
-export type CreateColorEngineTheme = (input: EngineInput) => EngineOutput;
+export function parseColorSeed(seed: string, field = "seed"): OklchValue {
+  const trimmed = seed.trim();
 
-export { createColorEngineTheme } from "./engine.js";
-export { ColorEngineValidationError } from "./errors.js";
-export {
-  CONTRAST_ASSERTION_RULES,
-  isHighContrastTheme,
-  runContrastAssertions,
-  type ContrastAssertionKind,
-  type ContrastAssertionRule,
-  type ExpectedContrastPolarity,
-  type RunContrastAssertionsOptions,
-} from "./assertions.js";
-export {
-  APCA_ALGORITHM_VERSION,
-  APCA_CONSTANTS,
-  calculateApcaLc,
-  calculateApcaLcFromOklch,
-  calculateApcaLcFromY,
-  srgbToApcaY,
-  type ApcaConstants,
-} from "./apca.js";
-export {
-  clampRgbToGamut,
-  isInDisplayP3Gamut,
-  isInSrgbGamut,
-  isRgbInGamut,
-  oklchToLinearDisplayP3,
-  oklchToLinearSrgb,
-  reduceChromaToGamut,
-  type GamutMappingResult,
-  type RgbGamut,
-} from "./gamut.js";
-export {
-  deriveHarmony,
-  isHarmonyPaletteSlot,
-  type DeriveHarmonyOptions,
-  type HarmonyPaletteDescriptor,
-  type HarmonyPaletteSlot,
-} from "./harmony.js";
-export {
-  detectSeedFormat,
-  normalizeParsedSeed,
-  normalizeSeed,
-  parseHexSeed,
-  parseHslSeed,
-  parseOklchSeed,
-  parseRgbSeed,
-  srgbToOklch,
-  validateOklchSeed,
-  type OklchSeedValidationResult,
-  type ParsedSeedFormat,
-  type SeedFormat,
-} from "./seed.js";
-export {
-  DEFAULT_TAPER_CONFIG,
-  applyDarkHueShift,
-  darkRampLightness,
-  generateRamp,
-  lightRampLightness,
-  moodScale,
-  resolveTaperConfig,
-  smoothstep,
-  type ColorRamp,
-  type GenerateRampOptions,
-  type RampStep,
-} from "./ramp.js";
-export {
-  DEFAULT_STATUS_HUES,
-  assembleNeutralPrimitiveTokens,
-  assemblePalettePrimitiveTokens,
-  assemblePrimitiveTokens,
-  assembleStatusPrimitiveTokens,
-  type AssemblePrimitiveTokensOptions,
-  type PrimitiveTokenGamutMapping,
-  type PrimitiveTokenInventory,
-} from "./primitives.js";
-export {
-  REFERENCE_SEMANTIC_MAPPINGS,
-  SEMANTIC_TOKEN_NAMES,
-  applySemanticMappingOverrides,
-  getReferenceSemanticMappings,
-  isSemanticTokenName,
-  primitiveNamesFromTokens,
-  resolveSemanticMappings,
-  type ResolveSemanticMappingsOptions,
-  type SemanticMappingRecord,
-  type SemanticThemeMappings,
-} from "./semantic.js";
-export {
-  validateEngineInput,
-  validateTaperConfig,
-  type InputValidationResult,
-} from "./validate.js";
+  if (trimmed.startsWith("#")) {
+    return hexToOklch(trimmed, field);
+  }
+
+  const match = /^oklch\(\s*([0-9]*\.?[0-9]+)\s+([0-9]*\.?[0-9]+)\s+(-?[0-9]*\.?[0-9]+)\s*\)$/i.exec(trimmed);
+
+  if (match) {
+    return {
+      l: clampNumber(Number(match[1]), 0, 1),
+      c: clampNumber(Number(match[2]), 0, 1),
+      h: normalizeHue(Number(match[3])),
+    };
+  }
+
+  throw new ColorEngineValidationError({
+    code: "INVALID_SEED",
+    field,
+    value: seed,
+    message: "Seed must be #rgb, #rrggbb, or oklch(L C H).",
+  });
+}
+
+function resolveInput(input: ColorEngineInput): Required<ColorEngineInput> {
+  const preset = input.preset ?? DEFAULT_INPUT.preset;
+  const namespace = input.namespace ?? DEFAULT_INPUT.namespace;
+
+  if (!SURFACE_PRESET_NAMES.includes(preset)) {
+    throw new ColorEngineValidationError({
+      code: "INVALID_PRESET",
+      field: "preset",
+      value: preset,
+      message: "Preset must be quiet, standard, layered, or high-separation.",
+    });
+  }
+
+  if (!/^[a-z][a-z0-9-]*$/i.test(namespace)) {
+    throw new ColorEngineValidationError({
+      code: "INVALID_NAMESPACE",
+      field: "namespace",
+      value: namespace,
+      message: "Namespace must start with a letter and contain only letters, numbers, or hyphens.",
+    });
+  }
+
+  return {
+    neutralSeed: input.neutralSeed ?? DEFAULT_INPUT.neutralSeed,
+    surfaceLightSeed: input.surfaceLightSeed ?? DEFAULT_INPUT.surfaceLightSeed,
+    surfaceDarkSeed: input.surfaceDarkSeed ?? DEFAULT_INPUT.surfaceDarkSeed,
+    preset,
+    namespace,
+  };
+}
+
+function createLevelRamp(options: {
+  readonly family: PrimitiveFamilyName;
+  readonly seed: OklchValue;
+  readonly delta: number;
+  readonly direction: 1 | -1;
+  readonly maxLightness: number;
+  readonly chromaScale: number;
+}): readonly ColorToken[] {
+  return SURFACE_LEVELS.map((level, index) => {
+    const oklch = {
+      l: roundChannel(clampNumber(options.seed.l + index * options.delta * options.direction, 0.02, options.maxLightness)),
+      c: roundChannel(clampNumber(options.seed.c * options.chromaScale, 0, 0.08)),
+      h: roundChannel(normalizeHue(options.seed.h)),
+    };
+
+    return {
+      name: `${options.family}-${level}`,
+      value: formatOklch(oklch),
+      oklch,
+      description: `${options.family} level ${level}`,
+    };
+  });
+}
+
+function toneSeed(surfaceSeed: OklchValue, neutralSeed: OklchValue, chromaScale: number): OklchValue {
+  return {
+    l: surfaceSeed.l,
+    c: Math.min(surfaceSeed.c, neutralSeed.c) * chromaScale,
+    h: neutralSeed.h,
+  };
+}
+
+function createSurfaceSemantics(
+  namespace: string,
+): ColorEngineOutput["semantics"] {
+  return {
+    light: createThemeSemantics(namespace, "surface-light"),
+    dark: createThemeSemantics(namespace, "surface-dark"),
+  };
+}
+
+function createThemeSemantics(
+  namespace: string,
+  family: "surface-light" | "surface-dark",
+): Readonly<Record<SurfaceSemanticTokenName, `var(--${string})`>> {
+  const entries: [SurfaceSemanticTokenName, `var(--${string})`][] = [];
+
+  for (const level of SURFACE_LEVELS) {
+    entries.push([`surface-${level}`, cssVar(namespace, `${family}-${level}`)]);
+    for (const state of SURFACE_STATES) {
+      entries.push([
+        `surface-${level}-${state}`,
+        cssVar(namespace, `${family}-${level}-${state}`),
+      ]);
+    }
+  }
+
+  return Object.fromEntries(entries) as Record<SurfaceSemanticTokenName, `var(--${string})`>;
+}
+
+function createCss(
+  namespace: string,
+  primitives: PrimitiveSurfaceOutput,
+  semantics: ColorEngineOutput["semantics"],
+  preset: SurfacePreset,
+): string {
+  return [
+    createPrimitiveCss(namespace, primitives, preset),
+    createThemeCss(namespace, "light", semantics.light),
+    createThemeCss(namespace, "dark", semantics.dark),
+  ].join("\n\n");
+}
+
+function createPrimitiveCss(
+  namespace: string,
+  primitives: PrimitiveSurfaceOutput,
+  preset: SurfacePreset,
+): string {
+  const declarations: [string, string][] = [];
+
+  for (const tokens of Object.values(primitives)) {
+    for (const token of tokens) {
+      declarations.push([`--${namespace}-${token.name}`, token.value]);
+      for (const state of SURFACE_STATES) {
+        declarations.push([
+          `--${namespace}-${token.name}-${state}`,
+          createStateValue(token.oklch, state, token.name.includes("-light-"), preset),
+        ]);
+      }
+    }
+  }
+
+  return createCssRule(":root", declarations);
+}
+
+function createThemeCss(
+  namespace: string,
+  theme: SurfaceTheme,
+  semantics: Readonly<Record<SurfaceSemanticTokenName, `var(--${string})`>>,
+): string {
+  return createCssRule(
+    `[data-theme-v2="${theme}"]`,
+    Object.entries(semantics).map(([name, value]) => [`--${namespace}-${name}`, value]),
+  );
+}
+
+function createStateValue(
+  base: OklchValue,
+  state: SurfaceState,
+  isLightSurface: boolean,
+  preset: SurfacePreset,
+): `oklch(${string})` {
+  const multiplier = state === "hover" ? 1 : state === "selected" ? 1.65 : 2.2;
+  const direction = isLightSurface ? -1 : 1;
+  const oklch = {
+    l: roundChannel(clampNumber(base.l + direction * preset.stateDelta * multiplier, 0.02, 0.998)),
+    c: roundChannel(clampNumber(base.c * (state === "hover" ? 0.98 : state === "selected" ? 0.96 : 0.94), 0, 0.08)),
+    h: base.h,
+  };
+
+  return formatOklch(oklch);
+}
+
+function createCssRule(selector: string, declarations: readonly (readonly [string, string])[]): string {
+  return `${selector} {\n${declarations.map(([name, value]) => `  ${name}: ${value};`).join("\n")}\n}`;
+}
+
+function cssVar(namespace: string, name: string): `var(--${string})` {
+  return `var(--${namespace}-${name})`;
+}
+
+function hexToOklch(hex: string, field: string): OklchValue {
+  const value = normalizeHex(hex, field);
+  const r = Number.parseInt(value.slice(0, 2), 16) / 255;
+  const g = Number.parseInt(value.slice(2, 4), 16) / 255;
+  const b = Number.parseInt(value.slice(4, 6), 16) / 255;
+
+  return linearSrgbToOklch({
+    r: encodedToLinear(r),
+    g: encodedToLinear(g),
+    b: encodedToLinear(b),
+  });
+}
+
+function normalizeHex(hex: string, field: string): string {
+  const value = hex.slice(1);
+
+  if (/^[0-9a-f]{3}$/i.test(value)) {
+    return value.split("").map((channel) => `${channel}${channel}`).join("");
+  }
+
+  if (/^[0-9a-f]{6}$/i.test(value)) {
+    return value;
+  }
+
+  throw new ColorEngineValidationError({
+    code: "INVALID_SEED",
+    field,
+    value: hex,
+    message: "Hex seeds must be #rgb or #rrggbb.",
+  });
+}
+
+function linearSrgbToOklch(color: { readonly r: number; readonly g: number; readonly b: number }): OklchValue {
+  const l = Math.cbrt(0.4122214708 * color.r + 0.5363325363 * color.g + 0.0514459929 * color.b);
+  const m = Math.cbrt(0.2119034982 * color.r + 0.6806995451 * color.g + 0.1073969566 * color.b);
+  const s = Math.cbrt(0.0883024619 * color.r + 0.2817188376 * color.g + 0.6309787005 * color.b);
+  const oklabL = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s;
+  const a = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
+  const b = -0.031135701 * l + 0.7827717662 * m - 0.7518163563 * s;
+
+  return {
+    l: roundChannel(oklabL),
+    c: roundChannel(Math.hypot(a, b)),
+    h: roundChannel(normalizeHue((Math.atan2(b, a) * 180) / Math.PI)),
+  };
+}
+
+function encodedToLinear(channel: number): number {
+  return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+}
+
+function formatOklch(color: OklchValue): `oklch(${string})` {
+  return `oklch(${formatNumber(color.l)} ${formatNumber(color.c)} ${formatNumber(color.h)})`;
+}
+
+function formatNumber(value: number): string {
+  return Number(value.toFixed(6)).toString();
+}
+
+function normalizeHue(hue: number): number {
+  return ((hue % 360) + 360) % 360;
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+function roundChannel(value: number): number {
+  return Math.round(value * 1_000_000) / 1_000_000;
+}

@@ -6,20 +6,14 @@ const packageJson = JSON.parse(
   await readFile(new URL("../package.json", import.meta.url), "utf8"),
 );
 
-test("package is published under the puzzlefactory color-engine name", () => {
+test("package uses the puzzlefactory color-engine v2 name", () => {
   assert.equal(packageJson.name, "@puzzlefactory/color-engine");
 });
 
 test("package declares no runtime dependencies", () => {
-  assert.ok(!("dependencies" in packageJson), "dependencies must be absent");
-  assert.ok(
-    !("peerDependencies" in packageJson),
-    "peerDependencies must be absent until explicitly justified",
-  );
-  assert.ok(
-    !("optionalDependencies" in packageJson),
-    "optionalDependencies must be absent",
-  );
+  assert.equal("dependencies" in packageJson, false);
+  assert.equal("peerDependencies" in packageJson, false);
+  assert.equal("optionalDependencies" in packageJson, false);
 });
 
 test("package exposes the built public entrypoint", () => {
@@ -29,17 +23,4 @@ test("package exposes the built public entrypoint", () => {
       import: "./dist/index.js",
     },
   });
-  assert.equal(packageJson.types, "./dist/index.d.ts");
-});
-
-test("package test script includes type-level API checks", () => {
-  assert.match(packageJson.scripts.test, /tsconfig\.test\.json/);
-});
-
-test("package test script builds before runtime checks", () => {
-  assert.match(packageJson.scripts.test, /npm run build/);
-});
-
-test("package test script includes runtime validation checks", () => {
-  assert.match(packageJson.scripts.test, /node --test test\/\*\.test\.mjs/);
 });

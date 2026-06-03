@@ -1,5 +1,5 @@
 {
-  "name": "@puzzlefactory/tokens",
+  "name": "@puzzlefactory/color-engine-1",
   "version": "0.0.0",
   "type": "module",
   "private": true,
@@ -18,8 +18,5 @@
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && tsc -p tsconfig.test.json --noEmit && node --test test/*.test.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
-  },
-  "devDependencies": {
-    "@puzzlefactory/color-engine-1": "0.0.0"
   }
 }

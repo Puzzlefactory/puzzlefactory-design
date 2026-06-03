@@ -6,8 +6,8 @@ const packageJson = JSON.parse(
   await readFile(new URL("../package.json", import.meta.url), "utf8"),
 );
 
-test("package is published under the puzzlefactory tokens name", () => {
-  assert.equal(packageJson.name, "@puzzlefactory/tokens");
+test("package is published under the puzzlefactory color-engine-1 reference name", () => {
+  assert.equal(packageJson.name, "@puzzlefactory/color-engine-1");
 });
 
 test("package declares no runtime dependencies", () => {
@@ -20,12 +20,6 @@ test("package declares no runtime dependencies", () => {
     !("optionalDependencies" in packageJson),
     "optionalDependencies must be absent",
   );
-});
-
-test("package uses color-engine only as a development type/test dependency", () => {
-  assert.deepEqual(packageJson.devDependencies, {
-    "@puzzlefactory/color-engine-1": "0.0.0",
-  });
 });
 
 test("package exposes the built public entrypoint", () => {

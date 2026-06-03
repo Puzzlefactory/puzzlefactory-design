@@ -1,14 +1,10 @@
 # @puzzlefactory/color-engine
 
-Generative OKLCH color engine.
+Color engine v2.
 
-This package will accept a seed color, harmony strategy, and mood, then produce primitive and semantic color data for light, dark, high-contrast light, and high-contrast dark themes.
+This package starts with neutral and surface generation only. It uses compact usage-specific ramps, separate neutral/light-surface/dark-surface seeds, and named presets. The v1 broad-ramp implementation is preserved separately as `@puzzlefactory/color-engine-1`.
 
-Runtime dependencies should remain zero except for the explicitly allowed seed-normalization boundary utility, if one is selected.
-
-## Status
-
-Public API and type model scaffold only. The package exports the planned type surface for the color engine, plus a behavior-free entry point function type. It does not implement seed parsing, color conversion, ramp generation, APCA, semantic mapping, or CSS output.
+Runtime dependencies must remain zero.
 
 ## Scripts
 

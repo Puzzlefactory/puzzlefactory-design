@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@puzzlefactory/color-engine": "0.0.0",
-    "@puzzlefactory/tokens": "0.0.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router": "^7.16.0"
