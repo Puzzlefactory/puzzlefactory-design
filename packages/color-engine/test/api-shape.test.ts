@@ -27,6 +27,9 @@ import type {
   SemanticTokenName,
   StatusIntent,
   StatusSemanticTokenName,
+  TextLevel,
+  TextTreatmentStrategy,
+  TextTreatmentStrategyName,
 } from "../src/index.js";
 import {
   APCA_ALGORITHM_VERSION,
@@ -43,6 +46,9 @@ import {
   SURFACE_PRESETS,
   SURFACE_SEMANTIC_TOKEN_NAMES,
   STATUS_SEMANTIC_TOKEN_NAMES,
+  TEXT_LEVELS,
+  TEXT_TREATMENT_STRATEGIES,
+  TEXT_TREATMENT_STRATEGY_NAMES,
   calculateApcaLc,
   calculateApcaLcFromOklch,
   calculateApcaLcFromY,
@@ -74,14 +80,17 @@ const input: ColorEngineInput = {
   infoSeedPolicy: "balanced",
   surfaceLightSeed: "oklch(0.94 0.01 255)",
   surfaceDarkSeed: "#111827",
+  textTreatment: "adaptive",
   preset: presetName,
   namespace: "pf",
 };
 const output: ColorEngineOutput = createColorEngineTheme(input);
 const seedPolicy: SeedPolicy = "anchored";
 const chromeLevel: ChromeLevel = "default";
+const textLevel: TextLevel = "strong";
 const token: ColorToken | undefined = output.primitives["primary-light-solid"][0];
 const chromeToken: ColorToken | undefined = output.primitives["chrome-light"][0];
+const textToken: ColorToken | undefined = output.primitives["text-light"][0];
 const seedToken: ColorToken | undefined = output.primitives["primary-seed"][0];
 const statusToken: ColorToken | undefined = output.primitives["danger-light-soft"][0];
 const neutralSemanticName: NeutralSemanticTokenName = "border-default";
@@ -95,6 +104,8 @@ const primaryDarkSeed: OklchValue = output.seeds.primaryDark;
 const warningSeed: OklchValue = output.seeds.status.warning;
 const warningDarkSeed: OklchValue = output.seeds.statusDark.warning;
 const warningSeedPolicy: SeedPolicy = output.seedPolicies.status.warning;
+const textTreatmentName: TextTreatmentStrategyName = output.textTreatment.name;
+const textTreatment: TextTreatmentStrategy = TEXT_TREATMENT_STRATEGIES[textTreatmentName];
 const cssOutput: ColorEngineCssOutput = output.cssOutput;
 const cssFile: ColorEngineCssFile | undefined = cssOutput.files[0];
 const cssFileName: ColorEngineCssFileName = "primitives.css";
@@ -128,8 +139,10 @@ void lightStepDelta;
 void darkStepDelta;
 void seedPolicy;
 void chromeLevel;
+void textLevel;
 void token;
 void chromeToken;
+void textToken;
 void seedToken;
 void statusToken;
 void neutralSemanticName;
@@ -143,6 +156,8 @@ void primaryDarkSeed;
 void warningSeed;
 void warningDarkSeed;
 void warningSeedPolicy;
+void textTreatmentName;
+void textTreatment;
 void cssOutput;
 void cssFile;
 void cssFileName;
@@ -173,3 +188,5 @@ void assertionThreshold;
 void assertionReportFromHelper;
 void SEED_POLICY_NAMES;
 void CHROME_LEVELS;
+void TEXT_LEVELS;
+void TEXT_TREATMENT_STRATEGY_NAMES;

@@ -112,7 +112,7 @@ CE2-10 is implemented. V2 CSS output remains owned by `@puzzlefactory/color-engi
 
 CE2-11 is implemented. The v2 package now exports a small curated example preset set: `evergreen`, `civic-blue`, `plum`, and `teal`, through `COLOR_ENGINE_THEME_PRESETS`, `COLOR_ENGINE_THEME_PRESET_NAMES`, `ColorEngineThemePresetName`, `ColorEngineThemePresetInput`, and `ColorEngineThemePreset`. Presets are plain input bundles over the existing `ColorEngineInput` fields and balanced seed policies; they do not add new generation concepts or runtime dependencies. Package tests verify preset order, shape, valid output, balanced policies, and zero required APCA failures.
 
-Kitchen Sink now defaults to the exported `evergreen` preset and renders a Theme Presets control section above the manual seed controls. Applying a preset fills the existing manual controls, changes generated primitives/themes/assertions through the normal engine state, and keeps manual editing available by marking the state as custom. Theme preset and surface separation buttons expose selected state with `aria-pressed`. Browser smoke verified applying the `plum` preset changes generated primary CSS, preserves 64/64 assertion passes, renders the theme preview without horizontal overflow, and logs no console warnings/errors.
+Kitchen Sink now defaults to the exported `evergreen` preset and renders a Theme Presets control section above the manual seed controls. Applying a preset fills the existing manual controls, changes generated primitives/themes/assertions through the normal engine state, and keeps manual editing available by marking the state as custom. Theme preset and surface separation buttons expose selected state with `aria-pressed`. Browser smoke verified applying the `plum` preset changes generated primary CSS, preserves required assertion passes, renders the theme preview without horizontal overflow, and logs no console warnings/errors.
 
 CE2-11B is implemented. Primary and status inputs now support optional dark-theme seeds:
 
@@ -126,12 +126,27 @@ Light/default seeds remain the source for light primary/status families. Dark pr
 
 Kitchen Sink now exposes separate light and dark seed fields for primary and each status intent, applies preset dark seeds through the normal manual controls, shows light/dark LCH metadata, and labels primitive ramp notes so reviewers can tell whether a family is driven by the light/default seed or the dark seed. Browser smoke verified Controls, Primitives, Themes, and Assertions render without error and that the separate seed fields plus primitive annotations are visible. The in-app browser could not type into inputs because its virtual clipboard was unavailable and page evaluation is read-only; dark-seed UI mutation behavior is therefore covered by package tests rather than browser text entry.
 
-Independent sub-agent review was not performed for CE2-01 through CE2-10 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed. Independent sub-agent review was performed for CE2-11; two findings were addressed before closeout: preset buttons gained `aria-pressed`, and the Kitchen Sink default assertion test now uses the exported `evergreen` preset input. Re-review confirmed both findings were resolved.
+CE2-11C is implemented. The v2 package now exports named text treatment strategies for soft colored surfaces:
+
+- `same-hue`: preserves the previous behavior by using same-hue solid-family text on primary/status soft surfaces.
+- `neutral`: uses neutral text on primary/status soft surfaces.
+- `adaptive`: chooses from approved same-hue and neutral candidates by APCA coverage against soft rest and hover backgrounds.
+
+The default remains `same-hue`, so existing visual output is preserved unless the caller opts into another strategy. Primary soft assertions now cover rest and hover backgrounds; status soft assertions now cover rest and hover backgrounds. The default Kitchen Sink assertion report now has 76 total pairs with 76 passing. Kitchen Sink exposes text treatment strategy controls and adds a Theme page comparison section with same-hue, neutral, and adaptive cards for light and dark themes.
+
+CE2-11D is implemented. The v2 package now generates independent foreground/text primitive families:
+
+- `text-dark`: `strong`, `primary`, `secondary`, `muted`, and `disabled` near-black foreground levels.
+- `text-light`: `strong`, `primary`, `secondary`, `muted`, and `disabled` near-white foreground levels.
+
+Text primitives are independent from surface ramps. Normal surface text semantics now map to `text-dark-*` in light theme and `text-light-*` in dark theme. Primary/status solid text resolution now chooses from dedicated text primitives rather than borrowed `surface-light-*` or `surface-dark-*` candidates, so colored fills can intentionally use near-white or near-black foregrounds where appropriate. Kitchen Sink renders the new text primitive families and adds text usage samples to the Themes page. The default Kitchen Sink assertion report remains 76/76 passing.
+
+Independent sub-agent review was not performed for CE2-01 through CE2-10 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed. Independent sub-agent review was performed for CE2-11; two findings were addressed before closeout: preset buttons gained `aria-pressed`, and the Kitchen Sink default assertion test now uses the exported `evergreen` preset input. Re-review confirmed both findings were resolved. Independent sub-agent review was performed for CE2-11C; one P3 coverage finding was addressed before closeout by adding status soft hover assertion pairs and tests.
 
 ## Next Actions
 
-- Review CE2-11B visually in Kitchen Sink, especially dark-mode seeded primary/status output for anchored and balanced policies.
-- If CE2-11B is acceptable, proceed to `CE2-12`: consumer integration contract.
+- Review CE2-11D visually in Kitchen Sink, especially whether the dedicated `text-dark`/`text-light` ramps give enough foreground nuance without needing broad per-token overrides.
+- If CE2-11D is visually acceptable, proceed to `CE2-12`: consumer integration contract.
 - Treat `CE2-12` and later as strategic placeholders. Reorder or revise them if Kitchen Sink visual feedback exposes a more important issue.
 
 ## Seed Policy Plan
@@ -195,6 +210,7 @@ This roadmap is intentionally provisional. Kitchen-sink visual review and assert
 4. `CE2-11`: Presets and example themes.
    - Add a small set of credible theme presets using OKLCH seeds and current policy controls.
    - Render preset switching in kitchen-sink so designers can compare starting points quickly.
+   - Add named text treatment presets for primary/status soft surfaces so same-hue, neutral, and adaptive foreground behavior can be compared visually.
    - Avoid turning presets into a broad theme marketplace or adding slider-heavy controls.
 
 5. `CE2-12`: Consumer integration contract.
@@ -233,6 +249,8 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-10` | V2 CSS/token output stabilization | Stabilize v2 CSS output boundaries in `@puzzlefactory/color-engine` with explicit file names and load order. Keep `@puzzlefactory/tokens` on v1 until a later explicit migration. | Component-library implementation |
 | `CE2-11` | Presets and example themes | Add a small set of credible OKLCH theme presets and kitchen-sink preset comparison. Implemented presets: `evergreen`, `civic-blue`, `plum`, and `teal`. | Slider-heavy controls, broad theme marketplace |
 | `CE2-11B` | Theme-specific dark seeds | Add optional dark-theme primary/status seeds, preserve fallback to light/default seeds, keep shared seed policies, preserve anchored theme-specific solid level 2, and expose separate light/dark controls in Kitchen Sink. | General semantic/text overrides, role classification, APCA threshold profiles, high-contrast v2 output |
+| `CE2-11C` | Text treatment exploration | Add named soft colored surface text strategies: `same-hue`, `neutral`, and `adaptive`. Preserve `same-hue` as default, compare strategies in Kitchen Sink, and cover primary/status soft rest and hover pairs in APCA assertions. | Broad text override APIs, tenant manual overrides, threshold profiles, role classification |
+| `CE2-11D` | Dedicated foreground/text ramps | Add independent `text-dark` and `text-light` primitive families, remap normal text semantics to those primitives, and resolve primary/status solid text from dedicated foreground candidates instead of surface tokens. | Broad per-token overrides, tenant override API, high-contrast theme output, threshold profiles |
 | `CE2-12` | Consumer integration contract | Define app consumption, generated CSS loading, theme attributes, and build-once/runtime usage patterns. | Full docs app, component-library implementation |
 | `CE2-13` | First component proof | Build the smallest Web Component proof that exercises color semantics, likely button plus alert/status panel. | Broad component library |
 
@@ -245,6 +263,8 @@ This workstream is substantially complete when:
 - Chrome/border generation is separate from surface fills and surface interaction states.
 - Presets produce repeatable useful visual differences without requiring manual sliders.
 - Example theme presets are plain existing-input bundles that can be applied and compared in Kitchen Sink.
+- Text treatment strategies are named choices for soft colored surfaces, not arbitrary per-token overrides.
+- Foreground/text primitives are independent from surfaces and provide near-black/near-white candidates for colored fills.
 - Primary and status families are compact usage sets, not long universal ramps.
 - Primary and status seed handling is explicit: either balanced/adapted or anchored/preserved.
 - V2 CSS output provides explicit load-order-ready primitive and theme files while preserving the bundled compatibility string.
@@ -268,6 +288,7 @@ This workstream is substantially complete when:
 - **Semantics later:** Generation families use neutral names such as surface, primary, and status usage sets. Brand/accent aliases happen after generation.
 - **Seed policy is per family:** Surfaces can use seeds as tonal guides; primary and status families need future `balanced` versus `anchored` behavior so approved colors can be preserved when required.
 - **Chrome is separate from surface states:** Borders and control edges should use a compact chrome family rather than recycled surface hover/pressed tokens.
+- **Foreground is separate from surfaces:** Text/on-color foregrounds should use dedicated near-black/near-white primitive families rather than borrowed surface colors.
 - **V1 status:** V1 is reference material, not the implementation path.
 
 ## Key Files

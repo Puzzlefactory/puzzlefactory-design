@@ -117,6 +117,7 @@ function createContrastAssertionPairs(): readonly ContrastAssertionPair[] {
     ...createSurfaceTextPairs("text-secondary", "secondary", "required", "Secondary text"),
     ...createSurfaceTextPairs("text-muted", "muted", "diagnostic", "Muted text"),
     ...createUiPairs(),
+    ...createPrimarySoftPairs(),
     ...createStatusPairs(),
   ];
 }
@@ -175,19 +176,42 @@ function createUiPairs(): readonly ContrastAssertionPair[] {
   );
 }
 
+function createPrimarySoftPairs(): readonly ContrastAssertionPair[] {
+  return [
+    "primary-soft-bg",
+    "primary-soft-bg-hover",
+  ].flatMap((background) =>
+    (["light", "dark"] as const satisfies readonly SurfaceTheme[]).map((theme) =>
+      createPair({
+        theme,
+        role: "ui",
+        severity: "required",
+        foreground: "primary-soft-text",
+        background: background as Extract<SemanticTokenName, `primary-${string}`>,
+        description: `Primary soft text on ${background}`,
+      }),
+    ),
+  );
+}
+
 function createStatusPairs(): readonly ContrastAssertionPair[] {
   const pairs: ContrastAssertionPair[] = [];
 
   for (const theme of ["light", "dark"] as const satisfies readonly SurfaceTheme[]) {
     for (const intent of ["danger", "warning", "success", "info"] as const) {
-      pairs.push(createPair({
-        theme,
-        role: "status-soft",
-        severity: "required",
-        foreground: `${intent}-soft-text`,
-        background: `${intent}-soft-bg`,
-        description: `${intent} soft text on soft background`,
-      }));
+      for (const background of [
+        `${intent}-soft-bg`,
+        `${intent}-soft-bg-hover`,
+      ] as const) {
+        pairs.push(createPair({
+          theme,
+          role: "status-soft",
+          severity: "required",
+          foreground: `${intent}-soft-text`,
+          background,
+          description: `${intent} soft text on ${background}`,
+        }));
+      }
 
       for (const background of [
         `${intent}-solid-bg`,

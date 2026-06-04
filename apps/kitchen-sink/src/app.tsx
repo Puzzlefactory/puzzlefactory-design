@@ -11,6 +11,8 @@ import {
   SURFACE_SEMANTIC_TOKEN_NAMES,
   STATUS_INTENTS,
   STATUS_SEMANTIC_TOKEN_NAMES,
+  TEXT_TREATMENT_STRATEGIES,
+  TEXT_TREATMENT_STRATEGY_NAMES,
   createColorEngineTheme,
   type ColorEngineInput,
   type ColorEngineOutput,
@@ -24,6 +26,7 @@ import {
   type SemanticTokenName,
   type SurfacePresetName,
   type SurfaceTheme,
+  type TextTreatmentStrategyName,
 } from "@puzzlefactory/color-engine";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
@@ -40,12 +43,14 @@ const navItems = [
 
 const primitiveFamilies = [
   "neutral-light",
+  "text-dark",
   "surface-light",
   "chrome-light",
   "primary-seed",
   "primary-light-soft",
   "primary-light-solid",
   "neutral-dark",
+  "text-light",
   "surface-dark",
   "chrome-dark",
   "primary-dark-soft",
@@ -128,6 +133,7 @@ export function App() {
   const [infoDarkSeed, setInfoDarkSeed] = useState<string>(defaultInput.infoDarkSeed);
   const [infoSeedPolicy, setInfoSeedPolicy] = useState<SeedPolicy>(defaultInput.infoSeedPolicy);
   const [primarySeedPolicy, setPrimarySeedPolicy] = useState<SeedPolicy>(defaultInput.primarySeedPolicy);
+  const [textTreatment, setTextTreatment] = useState<TextTreatmentStrategyName>(defaultInput.textTreatment);
   const [preset, setPreset] = useState<SurfacePresetName>(defaultInput.preset);
   const [activeTheme, setActiveTheme] = useState<SurfaceTheme>("light");
   const [activeThemePresetName, setActiveThemePresetName] = useState<ActiveThemePresetName>("evergreen");
@@ -156,6 +162,7 @@ export function App() {
     setInfoSeed(input.infoSeed);
     setInfoDarkSeed(input.infoDarkSeed);
     setInfoSeedPolicy(input.infoSeedPolicy);
+    setTextTreatment(input.textTreatment);
     setPreset(input.preset);
   }
 
@@ -190,6 +197,7 @@ export function App() {
         ...(resolvedInfoDarkSeed ? { infoDarkSeed: resolvedInfoDarkSeed } : {}),
         infoSeedPolicy,
         primarySeedPolicy,
+        textTreatment,
         preset,
         namespace: defaultInput.namespace,
       });
@@ -211,6 +219,7 @@ export function App() {
       successSeedPolicy,
       surfaceDarkSeed,
       surfaceLightSeed,
+      textTreatment,
       warningSeed,
       warningDarkSeed,
       warningSeedPolicy,
@@ -270,6 +279,7 @@ export function App() {
                 successSeedPolicy={successSeedPolicy}
                 surfaceDarkSeed={surfaceDarkSeed}
                 surfaceLightSeed={surfaceLightSeed}
+                textTreatment={textTreatment}
                 warningSeed={warningSeed}
                 warningDarkSeed={warningDarkSeed}
                 warningSeedPolicy={warningSeedPolicy}
@@ -337,6 +347,10 @@ export function App() {
                 }}
                 onSurfaceLightSeedChange={(value) => {
                   setSurfaceLightSeed(value);
+                  markCustom();
+                }}
+                onTextTreatmentChange={(value) => {
+                  setTextTreatment(value);
                   markCustom();
                 }}
                 onWarningSeedChange={(value) => {
@@ -422,6 +436,7 @@ function Controls({
   successSeedPolicy,
   surfaceDarkSeed,
   surfaceLightSeed,
+  textTreatment,
   warningSeed,
   warningDarkSeed,
   warningSeedPolicy,
@@ -443,6 +458,7 @@ function Controls({
   onSuccessSeedPolicyChange,
   onSurfaceDarkSeedChange,
   onSurfaceLightSeedChange,
+  onTextTreatmentChange,
   onWarningSeedChange,
   onWarningDarkSeedChange,
   onWarningSeedPolicyChange,
@@ -466,6 +482,7 @@ function Controls({
   successSeedPolicy: SeedPolicy;
   surfaceDarkSeed: string;
   surfaceLightSeed: string;
+  textTreatment: TextTreatmentStrategyName;
   warningSeed: string;
   warningDarkSeed: string;
   warningSeedPolicy: SeedPolicy;
@@ -487,6 +504,7 @@ function Controls({
   onSuccessSeedPolicyChange: (value: SeedPolicy) => void;
   onSurfaceDarkSeedChange: (value: string) => void;
   onSurfaceLightSeedChange: (value: string) => void;
+  onTextTreatmentChange: (value: TextTreatmentStrategyName) => void;
   onWarningSeedChange: (value: string) => void;
   onWarningDarkSeedChange: (value: string) => void;
   onWarningSeedPolicyChange: (value: SeedPolicy) => void;
@@ -654,6 +672,30 @@ function Controls({
           })}
         </div>
       </section>
+      <section className="control-section" aria-label="Text treatment strategies">
+        <div className="section-heading">
+          <h3>Text Treatment</h3>
+          <span>{TEXT_TREATMENT_STRATEGIES[textTreatment].label}</span>
+        </div>
+        <div className="preset-grid">
+          {TEXT_TREATMENT_STRATEGY_NAMES.map((name) => {
+            const option = TEXT_TREATMENT_STRATEGIES[name];
+
+            return (
+              <button
+                className={textTreatment === name ? "preset-button preset-button-active" : "preset-button"}
+                aria-pressed={textTreatment === name}
+                key={name}
+                type="button"
+                onClick={() => onTextTreatmentChange(name)}
+              >
+                <strong>{option.label}</strong>
+                <span>{option.description}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
       {engine.kind === "error" ? <ErrorNotice engine={engine} /> : <EngineMetadata output={engine.output} />}
     </ViewFrame>
   );
@@ -667,7 +709,7 @@ function Primitives({ engine }: { engine: EngineState }) {
   return (
     <ViewFrame
       title="Primitive Ramps"
-      subtitle="Four-step ramps keep neutral, surface, primary, and status concerns split by UI job."
+      subtitle="Compact primitive families keep neutral, text, surface, primary, and status concerns split by UI job."
     >
       <section className="ramp-stack" aria-label="Primitive ramps">
         {primitiveFamilies.map((family) => (
@@ -767,7 +809,96 @@ function ThemePreview({ engine }: { engine: EngineState }) {
           <ThemeSample key={theme.key} label={theme.label} theme={theme.key} />
         ))}
       </section>
+      <TextTreatmentReview output={engine.output} />
     </ViewFrame>
+  );
+}
+
+function TextTreatmentReview({ output }: { output: ColorEngineOutput }) {
+  const strategyOutputs = TEXT_TREATMENT_STRATEGY_NAMES.map((strategy) => ({
+    strategy,
+    output: createColorEngineTheme({
+      ...output.input,
+      namespace: `ds-${strategy}`,
+      textTreatment: strategy,
+    }),
+  }));
+
+  return (
+    <section className="text-treatment-review" aria-label="Text treatment strategy review">
+      <EngineStyles css={strategyOutputs.map((entry) => entry.output.css).join("\n\n")} />
+      <header className="panel-header">
+        <h3>Text Treatment Review</h3>
+        <span>{TEXT_TREATMENT_STRATEGY_NAMES.length} strategies</span>
+      </header>
+      <div className="text-treatment-grid">
+        {strategyOutputs.flatMap(({ output: strategyOutput, strategy }) =>
+          themeOptions.map((theme) => (
+            <TextTreatmentCard
+              key={`${strategy}-${theme.key}`}
+              output={strategyOutput}
+              strategy={strategy}
+              theme={theme.key}
+            />
+          )),
+        )}
+      </div>
+    </section>
+  );
+}
+
+function TextTreatmentCard({
+  output,
+  strategy,
+  theme,
+}: {
+  output: ColorEngineOutput;
+  strategy: TextTreatmentStrategyName;
+  theme: SurfaceTheme;
+}) {
+  const namespace = output.namespace;
+  const label = `${TEXT_TREATMENT_STRATEGIES[strategy].label} ${labelize(theme)}`;
+  const requiredFailures = output.assertions.results.filter((result) =>
+    result.theme === theme &&
+    result.severity === "required" &&
+    !result.passed
+  ).length;
+
+  return (
+    <article className="text-treatment-card" data-theme-v2={theme}>
+      <header className="theme-sample-header">
+        <h3>{label}</h3>
+        <span>{requiredFailures} required fails</span>
+      </header>
+      <p>{TEXT_TREATMENT_STRATEGIES[strategy].description}</p>
+      <div
+        className="text-treatment-soft-sample"
+        style={{
+          background: scopedCssVar(namespace, "primary-soft-bg"),
+          borderColor: scopedCssVar(namespace, "primary-soft-border"),
+          color: scopedCssVar(namespace, "primary-soft-text"),
+        }}
+      >
+        <strong>Primary soft</strong>
+        <span>Soft colored surface text treatment.</span>
+      </div>
+      <div className="text-treatment-status-grid">
+        {statusIntents.map((intent) => (
+          <div
+            className="text-treatment-soft-sample"
+            key={intent.key}
+            style={{
+              background: scopedCssVar(namespace, `${intent.key}-soft-bg`),
+              borderColor: scopedCssVar(namespace, `${intent.key}-soft-border`),
+              color: scopedCssVar(namespace, `${intent.key}-soft-text`),
+            }}
+          >
+            <strong>{intent.label} soft</strong>
+            <span>Same surface, alternate text.</span>
+          </div>
+        ))}
+      </div>
+    </article>
   );
 }
 
@@ -935,6 +1066,11 @@ function ThemeSample({ label, theme }: { label: string; theme: SurfaceTheme }) {
         <span className="state-chip state-hover">Hover</span>
         <span className="state-chip state-selected">Selected</span>
         <span className="state-chip state-pressed">Pressed</span>
+      </div>
+      <div className="text-demo" aria-label={`${label} foreground text preview`}>
+        <strong>Heading text</strong>
+        <p>Body text uses dedicated foreground primitives instead of borrowed surface colors.</p>
+        <span>Muted supporting text remains lower emphasis.</span>
       </div>
       <div className="primary-demo" aria-label={`${label} primary usage preview`}>
         <div className="primary-soft">
@@ -1115,6 +1251,7 @@ function EngineMetadata({ output }: { output: ColorEngineOutput }) {
   return (
     <section className="metric-grid" aria-label="Generated output metadata">
       <Metric label="Namespace" value={output.namespace} />
+      <Metric label="Text treatment" value={output.textTreatment.label} />
       <Metric label="Neutral LCH" value={formatOklchSummary(output.seeds.neutral)} />
       <Metric label="Primary light LCH" value={formatOklchSummary(output.seeds.primary)} />
       <Metric label="Primary dark LCH" value={formatOklchSummary(output.seeds.primaryDark)} />
@@ -1211,6 +1348,10 @@ function optionalSeed(value: string): string | undefined {
 
 function cssVar(token: string): `var(--${string})` {
   return `var(--${defaultInput.namespace}-${token})`;
+}
+
+function scopedCssVar(namespace: string, token: string): `var(--${string})` {
+  return `var(--${namespace}-${token})`;
 }
 
 function declarationCount(css: string): number {

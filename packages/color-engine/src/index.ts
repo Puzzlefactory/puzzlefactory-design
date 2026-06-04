@@ -56,7 +56,11 @@ export type SurfaceState = "hover" | "selected" | "pressed";
 
 export type ChromeLevel = "subtle" | "default" | "strong";
 
+export type TextLevel = "strong" | "primary" | "secondary" | "muted" | "disabled";
+
 export type SeedPolicy = "balanced" | "anchored";
+
+export type TextTreatmentStrategyName = "same-hue" | "neutral" | "adaptive";
 
 export type PrimaryUsageFamilyName =
   | "primary-light-soft"
@@ -77,9 +81,12 @@ export type SeedPrimitiveFamilyName =
 
 export type UsageFamilyName = PrimaryUsageFamilyName | StatusUsageFamilyName;
 
+export type TextPrimitiveFamilyName = "text-dark" | "text-light";
+
 export type PrimitiveFamilyName =
   | "neutral-light"
   | "neutral-dark"
+  | TextPrimitiveFamilyName
   | "surface-light"
   | "surface-dark"
   | "chrome-light"
@@ -149,6 +156,12 @@ export interface SurfacePreset {
   readonly chromaScale: number;
 }
 
+export interface TextTreatmentStrategy {
+  readonly name: TextTreatmentStrategyName;
+  readonly label: string;
+  readonly description: string;
+}
+
 export interface ColorEngineInput {
   readonly neutralSeed?: ColorSeed | string;
   readonly surfaceLightSeed?: ColorSeed | string;
@@ -168,6 +181,7 @@ export interface ColorEngineInput {
   readonly infoSeed?: ColorSeed | string;
   readonly infoDarkSeed?: ColorSeed | string;
   readonly infoSeedPolicy?: SeedPolicy;
+  readonly textTreatment?: TextTreatmentStrategyName;
   readonly preset?: SurfacePresetName;
   readonly namespace?: string;
 }
@@ -191,6 +205,8 @@ export interface ColorToken {
 export interface PrimitiveSurfaceOutput {
   readonly "neutral-light": readonly ColorToken[];
   readonly "neutral-dark": readonly ColorToken[];
+  readonly "text-dark": readonly ColorToken[];
+  readonly "text-light": readonly ColorToken[];
   readonly "surface-light": readonly ColorToken[];
   readonly "surface-dark": readonly ColorToken[];
   readonly "chrome-light": readonly ColorToken[];
@@ -239,6 +255,7 @@ export interface ColorEngineOutput {
     readonly primary: SeedPolicy;
     readonly status: Readonly<Record<StatusIntent, SeedPolicy>>;
   };
+  readonly textTreatment: TextTreatmentStrategy;
   readonly primitives: PrimitiveSurfaceOutput;
   readonly semantics: Readonly<Record<SurfaceTheme, Readonly<Record<SemanticTokenName, `var(--${string})`>>>>;
   readonly assertions: ContrastAssertionReportType;
@@ -263,6 +280,7 @@ export interface ColorEngineCssFile {
 export type ValidationErrorCode =
   | "INVALID_SEED"
   | "INVALID_SEED_POLICY"
+  | "INVALID_TEXT_TREATMENT"
   | "INVALID_PRESET"
   | "INVALID_NAMESPACE";
 
@@ -342,9 +360,33 @@ export const SURFACE_STATES = ["hover", "selected", "pressed"] as const satisfie
 
 export const CHROME_LEVELS = ["subtle", "default", "strong"] as const satisfies readonly ChromeLevel[];
 
+export const TEXT_LEVELS = ["strong", "primary", "secondary", "muted", "disabled"] as const satisfies readonly TextLevel[];
+
 export const STATUS_INTENTS = ["danger", "warning", "success", "info"] as const satisfies readonly StatusIntent[];
 
 export const SEED_POLICY_NAMES = ["balanced", "anchored"] as const satisfies readonly SeedPolicy[];
+
+export const TEXT_TREATMENT_STRATEGIES = {
+  "same-hue": {
+    name: "same-hue",
+    label: "Same Hue",
+    description: "Use same-hue solid-family text on soft colored surfaces.",
+  },
+  neutral: {
+    name: "neutral",
+    label: "Neutral",
+    description: "Use neutral text on soft colored surfaces.",
+  },
+  adaptive: {
+    name: "adaptive",
+    label: "Adaptive",
+    description: "Choose from same-hue and neutral text candidates by APCA coverage.",
+  },
+} as const satisfies Readonly<Record<TextTreatmentStrategyName, TextTreatmentStrategy>>;
+
+export const TEXT_TREATMENT_STRATEGY_NAMES = Object.keys(
+  TEXT_TREATMENT_STRATEGIES,
+) as readonly TextTreatmentStrategyName[];
 
 export const NEUTRAL_SEMANTIC_TOKEN_NAMES = [
   "text-primary",
@@ -458,6 +500,7 @@ export const COLOR_ENGINE_THEME_PRESETS = {
       infoSeed: "oklch(0.48 0.13 235)",
       infoDarkSeed: "oklch(0.68 0.11 235)",
       infoSeedPolicy: "balanced",
+      textTreatment: "same-hue",
       preset: "standard",
     },
   },
@@ -484,6 +527,7 @@ export const COLOR_ENGINE_THEME_PRESETS = {
       infoSeed: "oklch(0.5 0.14 235)",
       infoDarkSeed: "oklch(0.68 0.11 235)",
       infoSeedPolicy: "balanced",
+      textTreatment: "same-hue",
       preset: "standard",
     },
   },
@@ -510,6 +554,7 @@ export const COLOR_ENGINE_THEME_PRESETS = {
       infoSeed: "oklch(0.5 0.14 235)",
       infoDarkSeed: "oklch(0.68 0.11 235)",
       infoSeedPolicy: "balanced",
+      textTreatment: "same-hue",
       preset: "layered",
     },
   },
@@ -536,6 +581,7 @@ export const COLOR_ENGINE_THEME_PRESETS = {
       infoSeed: "oklch(0.5 0.14 235)",
       infoDarkSeed: "oklch(0.68 0.11 235)",
       infoSeedPolicy: "balanced",
+      textTreatment: "same-hue",
       preset: "quiet",
     },
   },
@@ -564,6 +610,7 @@ const DEFAULT_INPUT = {
   infoSeed: "#0b6ea8",
   infoDarkSeed: "#0b6ea8",
   infoSeedPolicy: "balanced",
+  textTreatment: "same-hue",
   preset: "standard",
   namespace: "ds",
 } as const satisfies Required<ColorEngineInput>;
@@ -613,6 +660,14 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     maxLightness: 0.28,
     chromaScale: preset.chromaScale * 0.8,
   });
+  const textDark = createTextRamp({
+    family: "text-dark",
+    seed: neutralSeed,
+  });
+  const textLight = createTextRamp({
+    family: "text-light",
+    seed: neutralSeed,
+  });
   const surfaceLight = createLevelRamp({
     family: "surface-light",
     seed: surfaceLightSeed,
@@ -656,6 +711,8 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
   const primitives: PrimitiveSurfaceOutput = {
     "neutral-light": neutralLight,
     "neutral-dark": neutralDark,
+    "text-dark": textDark,
+    "text-light": textLight,
     "surface-light": surfaceLight,
     "surface-dark": surfaceDark,
     "chrome-light": chromeLight,
@@ -668,7 +725,8 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     "info-seed": createSeedPrimitiveFamily("info-seed", statusSeeds.info),
     ...status,
   };
-  const semantics = createSemantics(resolvedInput.namespace, primitives);
+  const textTreatment = TEXT_TREATMENT_STRATEGIES[resolvedInput.textTreatment];
+  const semantics = createSemantics(resolvedInput.namespace, primitives, textTreatment.name);
   const assertions = createContrastAssertionReport({
     namespace: resolvedInput.namespace,
     primitives,
@@ -690,6 +748,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
       statusDark: statusDarkSeeds,
     },
     seedPolicies,
+    textTreatment,
     primitives,
     semantics,
     assertions,
@@ -750,6 +809,7 @@ function resolveInput(input: ColorEngineInput): Required<ColorEngineInput> {
   const warningSeedPolicy = resolveSeedPolicy(input.warningSeedPolicy, "warningSeedPolicy");
   const successSeedPolicy = resolveSeedPolicy(input.successSeedPolicy, "successSeedPolicy");
   const infoSeedPolicy = resolveSeedPolicy(input.infoSeedPolicy, "infoSeedPolicy");
+  const textTreatment = resolveTextTreatment(input.textTreatment, "textTreatment");
   const primarySeed = input.primarySeed ?? DEFAULT_INPUT.primarySeed;
   const dangerSeed = input.dangerSeed ?? DEFAULT_INPUT.dangerSeed;
   const warningSeed = input.warningSeed ?? DEFAULT_INPUT.warningSeed;
@@ -775,6 +835,7 @@ function resolveInput(input: ColorEngineInput): Required<ColorEngineInput> {
     infoSeed,
     infoDarkSeed: input.infoDarkSeed ?? infoSeed,
     infoSeedPolicy,
+    textTreatment,
     preset,
     namespace,
   };
@@ -792,6 +853,24 @@ function resolveSeedPolicy(policy: SeedPolicy | undefined, field: string): SeedP
     field,
     value: policy,
     message: "Seed policy must be balanced or anchored.",
+  });
+}
+
+function resolveTextTreatment(
+  strategy: TextTreatmentStrategyName | undefined,
+  field: string,
+): TextTreatmentStrategyName {
+  const resolved = strategy ?? DEFAULT_INPUT.textTreatment;
+
+  if (TEXT_TREATMENT_STRATEGY_NAMES.includes(resolved)) {
+    return resolved;
+  }
+
+  throw new ColorEngineValidationError({
+    code: "INVALID_TEXT_TREATMENT",
+    field,
+    value: strategy,
+    message: "Text treatment must be same-hue, neutral, or adaptive.",
   });
 }
 
@@ -815,6 +894,36 @@ function createLevelRamp(options: {
       value: formatOklch(oklch),
       oklch,
       description: `${options.family} level ${level}`,
+    };
+  });
+}
+
+function createTextRamp(options: {
+  readonly family: TextPrimitiveFamilyName;
+  readonly seed: OklchValue;
+}): readonly ColorToken[] {
+  const lightness: Readonly<Record<TextPrimitiveFamilyName, readonly [number, number, number, number, number]>> = {
+    "text-dark": [0.035, 0.16, 0.32, 0.46, 0.58],
+    "text-light": [0.995, 0.93, 0.8, 0.66, 0.54],
+  };
+  const chroma: Readonly<Record<TextPrimitiveFamilyName, readonly [number, number, number, number, number]>> = {
+    "text-dark": [0.003, 0.006, 0.009, 0.011, 0.012],
+    "text-light": [0.002, 0.004, 0.006, 0.008, 0.009],
+  };
+  const hue = roundChannel(normalizeHue(options.seed.h));
+
+  return TEXT_LEVELS.map((level, index) => {
+    const oklch = {
+      l: roundChannel(lightness[options.family][index] ?? lightness[options.family][4]),
+      c: roundChannel(Math.min(options.seed.c * 0.45, chroma[options.family][index] ?? chroma[options.family][4])),
+      h: hue,
+    };
+
+    return {
+      name: `${options.family}-${level}`,
+      value: formatOklch(oklch),
+      oklch,
+      description: `${options.family} ${level} foreground`,
     };
   });
 }
@@ -1109,19 +1218,20 @@ function createUsageRamp(options: {
 function createSemantics(
   namespace: string,
   primitives: PrimitiveSurfaceOutput,
+  textTreatment: TextTreatmentStrategyName,
 ): ColorEngineOutput["semantics"] {
   return {
     light: {
       ...createNeutralSemantics(namespace, "light"),
       ...createSurfaceSemantics(namespace, "surface-light"),
-      ...createPrimarySemantics(namespace, "light"),
-      ...createStatusSemantics(namespace, "light", primitives),
+      ...createPrimarySemantics(namespace, "light", primitives, textTreatment),
+      ...createStatusSemantics(namespace, "light", primitives, textTreatment),
     },
     dark: {
       ...createNeutralSemantics(namespace, "dark"),
       ...createSurfaceSemantics(namespace, "surface-dark"),
-      ...createPrimarySemantics(namespace, "dark"),
-      ...createStatusSemantics(namespace, "dark", primitives),
+      ...createPrimarySemantics(namespace, "dark", primitives, textTreatment),
+      ...createStatusSemantics(namespace, "dark", primitives, textTreatment),
     },
   };
 }
@@ -1132,30 +1242,30 @@ function createNeutralSemantics(
 ): Readonly<Record<NeutralSemanticTokenName, `var(--${string})`>> {
   if (theme === "light") {
     return {
-      "text-primary": cssVar(namespace, "neutral-dark-1"),
-      "text-secondary": cssVar(namespace, "neutral-dark-3"),
-      "text-muted": cssVar(namespace, "neutral-dark-4"),
+      "text-primary": cssVar(namespace, "text-dark-primary"),
+      "text-secondary": cssVar(namespace, "text-dark-secondary"),
+      "text-muted": cssVar(namespace, "text-dark-muted"),
       "border-subtle": cssVar(namespace, "chrome-light-subtle"),
       "border-default": cssVar(namespace, "chrome-light-default"),
       "border-strong": cssVar(namespace, "chrome-light-strong"),
       "control-border": cssVar(namespace, "chrome-light-default"),
       "control-bg": cssVar(namespace, "surface-light-1"),
       "control-bg-hover": cssVar(namespace, "surface-light-2-hover"),
-      "control-text": cssVar(namespace, "neutral-dark-1"),
+      "control-text": cssVar(namespace, "text-dark-primary"),
     };
   }
 
   return {
-    "text-primary": cssVar(namespace, "neutral-light-4"),
-    "text-secondary": cssVar(namespace, "neutral-light-2"),
-    "text-muted": cssVar(namespace, "neutral-light-1"),
+    "text-primary": cssVar(namespace, "text-light-primary"),
+    "text-secondary": cssVar(namespace, "text-light-secondary"),
+    "text-muted": cssVar(namespace, "text-light-muted"),
     "border-subtle": cssVar(namespace, "chrome-dark-subtle"),
     "border-default": cssVar(namespace, "chrome-dark-default"),
     "border-strong": cssVar(namespace, "chrome-dark-strong"),
     "control-border": cssVar(namespace, "chrome-dark-default"),
     "control-bg": cssVar(namespace, "surface-dark-2"),
     "control-bg-hover": cssVar(namespace, "surface-dark-3-hover"),
-    "control-text": cssVar(namespace, "neutral-light-4"),
+    "control-text": cssVar(namespace, "text-light-primary"),
   };
 }
 
@@ -1181,20 +1291,41 @@ function createSurfaceSemantics(
 function createPrimarySemantics(
   namespace: string,
   theme: SurfaceTheme,
+  primitives: PrimitiveSurfaceOutput,
+  textTreatment: TextTreatmentStrategyName,
 ): Readonly<Record<PrimarySemanticTokenName, `var(--${string})`>> {
+  const softFamily = theme === "light" ? "primary-light-soft" : "primary-dark-soft";
+  const solidFamily = theme === "light" ? "primary-light-solid" : "primary-dark-solid";
+  const primaryActionText = resolveSolidForegroundToken({
+    primitives,
+    backgrounds: theme === "light"
+      ? ["primary-light-solid-2", "primary-light-solid-3", "primary-light-solid-4"]
+      : ["primary-dark-solid-2", "primary-dark-solid-1", "primary-dark-solid-3"],
+    preferredToken: theme === "light" ? "text-light-strong" : "text-dark-strong",
+    threshold: CONTRAST_ASSERTION_THRESHOLDS.ui,
+    theme,
+  });
+  const primarySoftText = resolveSoftTextToken({
+    primitives,
+    softBackgrounds: [`${softFamily}-1`, `${softFamily}-2`],
+    sameHueToken: `${solidFamily}-${theme === "light" ? 4 : 1}`,
+    strategy: textTreatment,
+    theme,
+  });
+
   if (theme === "light") {
     return {
       "primary-action-bg": cssVar(namespace, "primary-light-solid-2"),
       "primary-action-bg-hover": cssVar(namespace, "primary-light-solid-3"),
       "primary-action-bg-pressed": cssVar(namespace, "primary-light-solid-4"),
-      "primary-action-text": cssVar(namespace, "surface-light-1"),
+      "primary-action-text": cssVar(namespace, primaryActionText),
       "primary-link": cssVar(namespace, "primary-light-solid-2"),
       "primary-link-hover": cssVar(namespace, "primary-light-solid-3"),
       "primary-focus-ring": cssVar(namespace, "primary-light-solid-1"),
       "primary-soft-bg": cssVar(namespace, "primary-light-soft-1"),
       "primary-soft-bg-hover": cssVar(namespace, "primary-light-soft-2"),
       "primary-soft-border": cssVar(namespace, "primary-light-soft-4"),
-      "primary-soft-text": cssVar(namespace, "primary-light-solid-4"),
+      "primary-soft-text": cssVar(namespace, primarySoftText),
     };
   }
 
@@ -1202,14 +1333,14 @@ function createPrimarySemantics(
     "primary-action-bg": cssVar(namespace, "primary-dark-solid-2"),
     "primary-action-bg-hover": cssVar(namespace, "primary-dark-solid-1"),
     "primary-action-bg-pressed": cssVar(namespace, "primary-dark-solid-3"),
-    "primary-action-text": cssVar(namespace, "surface-dark-1"),
+    "primary-action-text": cssVar(namespace, primaryActionText),
     "primary-link": cssVar(namespace, "primary-dark-solid-2"),
     "primary-link-hover": cssVar(namespace, "primary-dark-solid-1"),
     "primary-focus-ring": cssVar(namespace, "primary-dark-solid-1"),
     "primary-soft-bg": cssVar(namespace, "primary-dark-soft-1"),
     "primary-soft-bg-hover": cssVar(namespace, "primary-dark-soft-2"),
     "primary-soft-border": cssVar(namespace, "primary-dark-soft-4"),
-    "primary-soft-text": cssVar(namespace, "primary-dark-solid-1"),
+    "primary-soft-text": cssVar(namespace, primarySoftText),
   };
 }
 
@@ -1217,6 +1348,7 @@ function createStatusSemantics(
   namespace: string,
   theme: SurfaceTheme,
   primitives: PrimitiveSurfaceOutput,
+  textTreatment: TextTreatmentStrategyName,
 ): Readonly<Record<StatusSemanticTokenName, `var(--${string})`>> {
   const entries: [StatusSemanticTokenName, `var(--${string})`][] = [];
   const themePrefix = theme === "light" ? "light" : "dark";
@@ -1224,8 +1356,14 @@ function createStatusSemantics(
   for (const intent of STATUS_INTENTS) {
     const softFamily = `${intent}-${themePrefix}-soft`;
     const solidFamily = `${intent}-${themePrefix}-solid` as const;
+    const softTextToken = resolveSoftTextToken({
+      primitives,
+      softBackgrounds: [`${softFamily}-1`, `${softFamily}-2`],
+      sameHueToken: `${solidFamily}-${theme === "light" ? 4 : 1}`,
+      strategy: textTreatment,
+      theme,
+    });
     const solidTextToken = resolveStatusSolidTextToken({
-      intent,
       primitives,
       solidFamily,
       theme,
@@ -1234,7 +1372,7 @@ function createStatusSemantics(
     entries.push([`${intent}-soft-bg`, cssVar(namespace, `${softFamily}-1`)]);
     entries.push([`${intent}-soft-bg-hover`, cssVar(namespace, `${softFamily}-2`)]);
     entries.push([`${intent}-soft-border`, cssVar(namespace, `${softFamily}-4`)]);
-    entries.push([`${intent}-soft-text`, cssVar(namespace, `${solidFamily}-${theme === "light" ? 4 : 1}`)]);
+    entries.push([`${intent}-soft-text`, cssVar(namespace, softTextToken)]);
     entries.push([`${intent}-solid-bg`, cssVar(namespace, `${solidFamily}-2`)]);
     entries.push([`${intent}-solid-bg-hover`, cssVar(namespace, `${solidFamily}-${theme === "light" ? 3 : 1}`)]);
     entries.push([`${intent}-solid-bg-pressed`, cssVar(namespace, `${solidFamily}-${theme === "light" ? 4 : 3}`)]);
@@ -1244,19 +1382,27 @@ function createStatusSemantics(
   return Object.fromEntries(entries) as Record<StatusSemanticTokenName, `var(--${string})`>;
 }
 
-function resolveStatusSolidTextToken(options: {
-  readonly intent: StatusIntent;
+function resolveSoftTextToken(options: {
   readonly primitives: PrimitiveSurfaceOutput;
-  readonly solidFamily: `${StatusIntent}-${"light" | "dark"}-solid`;
+  readonly softBackgrounds: readonly string[];
+  readonly sameHueToken: string;
+  readonly strategy: TextTreatmentStrategyName;
   readonly theme: SurfaceTheme;
 }): string {
-  const intended = options.theme === "light" ? "surface-light-1" : "surface-dark-1";
+  if (options.strategy === "same-hue") {
+    return options.sameHueToken;
+  }
+
+  const neutralToken = options.theme === "light" ? "text-dark-primary" : "text-light-primary";
+
+  if (options.strategy === "neutral") {
+    return neutralToken;
+  }
+
   const candidates = options.theme === "light"
-    ? [intended, "neutral-light-4", "neutral-dark-1"] as const
-    : [intended, "neutral-dark-1", "neutral-light-4"] as const;
-  const backgrounds = getStatusSolidBackgroundTokenNames(options.solidFamily, options.theme)
-    .map((name) => findPrimitiveToken(options.primitives, name));
-  const threshold = CONTRAST_ASSERTION_THRESHOLDS["status-solid"];
+    ? [options.sameHueToken, neutralToken, "text-dark-secondary"] as const
+    : [options.sameHueToken, neutralToken, "text-light-secondary"] as const;
+  const backgrounds = options.softBackgrounds.map((name) => findPrimitiveToken(options.primitives, name));
   const scores = candidates.map((name, index) => {
     const token = findPrimitiveToken(options.primitives, name);
     const contrasts = backgrounds.map((background) =>
@@ -1270,10 +1416,57 @@ function resolveStatusSolidTextToken(options: {
       totalContrast: contrasts.reduce((total, contrast) => total + contrast, 0),
     };
   });
-  const intendedScore = scores.find((score) => score.name === intended);
 
-  if (intendedScore && intendedScore.minContrast >= threshold) {
-    return intended;
+  return [...scores]
+    .sort((a, b) =>
+      (b.minContrast - a.minContrast) ||
+      (b.totalContrast - a.totalContrast) ||
+      (a.index - b.index),
+    )[0]?.name ?? options.sameHueToken;
+}
+
+function resolveStatusSolidTextToken(options: {
+  readonly primitives: PrimitiveSurfaceOutput;
+  readonly solidFamily: `${StatusIntent}-${"light" | "dark"}-solid`;
+  readonly theme: SurfaceTheme;
+}): string {
+  return resolveSolidForegroundToken({
+    primitives: options.primitives,
+    backgrounds: getStatusSolidBackgroundTokenNames(options.solidFamily, options.theme),
+    preferredToken: options.theme === "light" ? "text-light-strong" : "text-dark-strong",
+    threshold: CONTRAST_ASSERTION_THRESHOLDS["status-solid"],
+    theme: options.theme,
+  });
+}
+
+function resolveSolidForegroundToken(options: {
+  readonly primitives: PrimitiveSurfaceOutput;
+  readonly backgrounds: readonly string[];
+  readonly preferredToken: string;
+  readonly threshold: number;
+  readonly theme: SurfaceTheme;
+}): string {
+  const candidates = options.theme === "light"
+    ? [options.preferredToken, "text-light-primary", "text-dark-strong", "text-dark-primary"] as const
+    : [options.preferredToken, "text-dark-primary", "text-light-strong", "text-light-primary"] as const;
+  const backgrounds = options.backgrounds.map((name) => findPrimitiveToken(options.primitives, name));
+  const scores = candidates.map((name, index) => {
+    const token = findPrimitiveToken(options.primitives, name);
+    const contrasts = backgrounds.map((background) =>
+      Math.abs(calculateApcaLcFromOklch(token.oklch, background.oklch)),
+    );
+
+    return {
+      name,
+      index,
+      minContrast: Math.min(...contrasts),
+      totalContrast: contrasts.reduce((total, contrast) => total + contrast, 0),
+    };
+  });
+  const preferredScore = scores.find((score) => score.name === options.preferredToken);
+
+  if (preferredScore && preferredScore.minContrast >= options.threshold) {
+    return options.preferredToken;
   }
 
   return [...scores]
@@ -1281,7 +1474,7 @@ function resolveStatusSolidTextToken(options: {
       (b.minContrast - a.minContrast) ||
       (b.totalContrast - a.totalContrast) ||
       (a.index - b.index),
-    )[0]?.name ?? intended;
+    )[0]?.name ?? options.preferredToken;
 }
 
 function getStatusSolidBackgroundTokenNames(
@@ -1357,7 +1550,7 @@ function createPrimitiveCss(
   for (const tokens of Object.values(primitives)) {
     for (const token of tokens) {
       declarations.push([`--${namespace}-${token.name}`, token.value]);
-      if (!token.name.endsWith("-seed")) {
+      if (!token.name.endsWith("-seed") && !token.name.startsWith("text-")) {
         for (const state of SURFACE_STATES) {
           declarations.push([
             `--${namespace}-${token.name}-${state}`,

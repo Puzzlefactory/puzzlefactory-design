@@ -13,6 +13,8 @@ import {
   SURFACE_PRESET_NAMES,
   SURFACE_SEMANTIC_TOKEN_NAMES,
   STATUS_SEMANTIC_TOKEN_NAMES,
+  TEXT_LEVELS,
+  TEXT_TREATMENT_STRATEGY_NAMES,
   createColorEngineTheme,
   parseColorSeed,
 } from "../dist/index.js";
@@ -49,6 +51,8 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
     "success-seed",
     "surface-dark",
     "surface-light",
+    "text-dark",
+    "text-light",
     "warning-dark-soft",
     "warning-dark-solid",
     "warning-light-soft",
@@ -56,13 +60,22 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
     "warning-seed",
   ]);
   assert.deepEqual(SEED_POLICY_NAMES, ["balanced", "anchored"]);
+  assert.deepEqual(TEXT_TREATMENT_STRATEGY_NAMES, ["same-hue", "neutral", "adaptive"]);
+  assert.deepEqual(TEXT_LEVELS, ["strong", "primary", "secondary", "muted", "disabled"]);
   assert.deepEqual(CHROME_LEVELS, ["subtle", "default", "strong"]);
   assert.equal(output.seedPolicies.primary, "balanced");
   assert.equal(output.seedPolicies.status.danger, "balanced");
+  assert.equal(output.textTreatment.name, "same-hue");
   assert.equal(output.primitives["surface-light"].length, 4);
   assert.equal(output.primitives["surface-dark"].length, 4);
   assert.equal(output.primitives["chrome-light"].length, 3);
   assert.equal(output.primitives["chrome-dark"].length, 3);
+  assert.equal(output.primitives["text-dark"].length, 5);
+  assert.equal(output.primitives["text-light"].length, 5);
+  assert.equal(output.primitives["text-dark"][0]?.name, "text-dark-strong");
+  assert.equal(output.primitives["text-light"][0]?.name, "text-light-strong");
+  assert.ok((output.primitives["text-dark"][0]?.oklch.l ?? 1) < 0.05);
+  assert.ok((output.primitives["text-light"][0]?.oklch.l ?? 0) > 0.99);
   assert.equal(output.primitives["primary-seed"].length, 1);
   assert.equal(output.primitives["primary-light-soft"].length, 4);
   assert.equal(output.primitives["primary-dark-solid"].length, 4);
@@ -76,8 +89,8 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
   assert.equal(SEMANTIC_TOKEN_NAMES.length, 69);
   assert.equal(Object.keys(output.semantics.light).length, SEMANTIC_TOKEN_NAMES.length);
   assert.equal(Object.keys(output.semantics.dark).length, SEMANTIC_TOKEN_NAMES.length);
-  assert.equal(output.semantics.light["text-primary"], "var(--ds-neutral-dark-1)");
-  assert.equal(output.semantics.dark["text-primary"], "var(--ds-neutral-light-4)");
+  assert.equal(output.semantics.light["text-primary"], "var(--ds-text-dark-primary)");
+  assert.equal(output.semantics.dark["text-primary"], "var(--ds-text-light-primary)");
   assert.equal(output.semantics.light["border-subtle"], "var(--ds-chrome-light-subtle)");
   assert.equal(output.semantics.light["border-default"], "var(--ds-chrome-light-default)");
   assert.equal(output.semantics.light["border-strong"], "var(--ds-chrome-light-strong)");
@@ -87,7 +100,10 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
   assert.equal(output.semantics.dark["surface-1"], "var(--ds-surface-dark-1)");
   assert.equal(output.semantics.light["primary-action-bg"], "var(--ds-primary-light-solid-2)");
   assert.equal(output.semantics.dark["primary-action-bg"], "var(--ds-primary-dark-solid-2)");
+  assert.equal(output.semantics.light["primary-soft-text"], "var(--ds-primary-light-solid-4)");
+  assert.equal(output.semantics.dark["primary-soft-text"], "var(--ds-primary-dark-solid-1)");
   assert.equal(output.semantics.light["danger-soft-bg"], "var(--ds-danger-light-soft-1)");
+  assert.equal(output.semantics.light["danger-soft-text"], "var(--ds-danger-light-solid-4)");
   assert.equal(output.semantics.dark["warning-solid-bg"], "var(--ds-warning-dark-solid-2)");
   assert.match(output.cssOutput.primitives, /^:root \{/);
   assert.match(output.cssOutput.themes.light, /^\[data-theme-v2="light"\] \{/);
@@ -115,7 +131,10 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
   assert.match(output.css, /--ds-border-default: var\(--ds-chrome-light-default\);/);
   assert.match(output.css, /--ds-primary-seed: oklch\(/);
   assert.doesNotMatch(output.css, /--ds-primary-seed-hover:/);
-  assert.match(output.css, /--ds-text-primary: var\(--ds-neutral-dark-1\);/);
+  assert.match(output.css, /--ds-text-dark-strong: oklch\(/);
+  assert.match(output.css, /--ds-text-light-strong: oklch\(/);
+  assert.doesNotMatch(output.css, /--ds-text-dark-strong-hover:/);
+  assert.match(output.css, /--ds-text-primary: var\(--ds-text-dark-primary\);/);
   assert.match(output.css, /--ds-surface-1-hover: var\(--ds-surface-light-1-hover\);/);
   assert.match(output.css, /--ds-primary-action-bg: var\(--ds-primary-light-solid-2\);/);
   assert.match(output.css, /--ds-success-soft-border: var\(--ds-success-light-soft-4\);/);
@@ -362,6 +381,7 @@ test("example theme presets are valid balanced starting points", () => {
     assert.equal(output.input.warningSeedPolicy, "balanced", name);
     assert.equal(output.input.successSeedPolicy, "balanced", name);
     assert.equal(output.input.infoSeedPolicy, "balanced", name);
+    assert.equal(output.input.textTreatment, "same-hue", name);
     assert.equal(typeof themePreset.input.primaryDarkSeed, "string");
     assert.equal(typeof themePreset.input.dangerDarkSeed, "string");
     assert.equal(typeof themePreset.input.warningDarkSeed, "string");
@@ -411,8 +431,8 @@ test("primary usage ramps separate soft containers from solid actions", () => {
   assert.ok((lightSoft[0]?.oklch.c ?? 1) < (lightSolid[0]?.oklch.c ?? 0));
   assert.ok((darkSolid[1]?.oklch.l ?? 0) > (darkSoft[1]?.oklch.l ?? 1));
   assert.ok((darkSolid[1]?.oklch.c ?? 0) > (darkSoft[1]?.oklch.c ?? 1));
-  assert.equal(output.semantics.light["primary-action-text"], "var(--ds-surface-light-1)");
-  assert.equal(output.semantics.dark["primary-action-text"], "var(--ds-surface-dark-1)");
+  assert.equal(output.semantics.light["primary-action-text"], "var(--ds-text-light-strong)");
+  assert.equal(output.semantics.dark["primary-action-text"], "var(--ds-text-dark-strong)");
 });
 
 test("status usage ramps separate soft containers from solid emphasis for every intent", () => {
@@ -423,14 +443,16 @@ test("status usage ramps separate soft containers from solid emphasis for every 
     infoSeed: "oklch(0.55 0.12 240)",
   });
   const allowedLightSolidText = new Set([
-    "var(--ds-surface-light-1)",
-    "var(--ds-neutral-light-4)",
-    "var(--ds-neutral-dark-1)",
+    "var(--ds-text-light-strong)",
+    "var(--ds-text-light-primary)",
+    "var(--ds-text-dark-strong)",
+    "var(--ds-text-dark-primary)",
   ]);
   const allowedDarkSolidText = new Set([
-    "var(--ds-surface-dark-1)",
-    "var(--ds-neutral-dark-1)",
-    "var(--ds-neutral-light-4)",
+    "var(--ds-text-dark-strong)",
+    "var(--ds-text-dark-primary)",
+    "var(--ds-text-light-strong)",
+    "var(--ds-text-light-primary)",
   ]);
 
   for (const intent of statusIntents) {
@@ -453,6 +475,32 @@ test("status usage ramps separate soft containers from solid emphasis for every 
   );
 });
 
+test("text treatment strategies switch soft colored surface text without changing soft backgrounds", () => {
+  const sameHue = createColorEngineTheme({ textTreatment: "same-hue" });
+  const neutral = createColorEngineTheme({ textTreatment: "neutral" });
+  const adaptive = createColorEngineTheme({ textTreatment: "adaptive" });
+
+  assert.deepEqual(neutral.primitives["primary-light-soft"], sameHue.primitives["primary-light-soft"]);
+  assert.deepEqual(adaptive.primitives["danger-dark-soft"], sameHue.primitives["danger-dark-soft"]);
+  assert.equal(sameHue.semantics.light["primary-soft-text"], "var(--ds-primary-light-solid-4)");
+  assert.equal(sameHue.semantics.dark["warning-soft-text"], "var(--ds-warning-dark-solid-1)");
+  assert.equal(neutral.semantics.light["primary-soft-text"], "var(--ds-text-dark-primary)");
+  assert.equal(neutral.semantics.dark["primary-soft-text"], "var(--ds-text-light-primary)");
+  assert.equal(neutral.semantics.light["danger-soft-text"], "var(--ds-text-dark-primary)");
+  assert.equal(neutral.semantics.dark["info-soft-text"], "var(--ds-text-light-primary)");
+  assert.equal(adaptive.assertions.results.every((result) =>
+    result.severity !== "required" || result.passed
+  ), true);
+});
+
+test("text treatment defaults and fallback preserve same-hue output", () => {
+  const implicit = createColorEngineTheme();
+  const explicit = createColorEngineTheme({ textTreatment: "same-hue" });
+
+  assert.deepEqual(explicit.semantics, implicit.semantics);
+  assert.equal(implicit.input.textTreatment, "same-hue");
+});
+
 test("status solid text preserves intended foregrounds when they pass", () => {
   const output = createColorEngineTheme({
     dangerSeed: "oklch(0.54 0.16 30)",
@@ -460,12 +508,12 @@ test("status solid text preserves intended foregrounds when they pass", () => {
     infoSeed: "oklch(0.55 0.12 240)",
   });
 
-  assert.equal(output.semantics.light["danger-solid-text"], "var(--ds-surface-light-1)");
-  assert.equal(output.semantics.light["success-solid-text"], "var(--ds-surface-light-1)");
-  assert.equal(output.semantics.light["info-solid-text"], "var(--ds-surface-light-1)");
-  assert.equal(output.semantics.dark["danger-solid-text"], "var(--ds-surface-dark-1)");
-  assert.equal(output.semantics.dark["success-solid-text"], "var(--ds-surface-dark-1)");
-  assert.equal(output.semantics.dark["info-solid-text"], "var(--ds-surface-dark-1)");
+  assert.equal(output.semantics.light["danger-solid-text"], "var(--ds-text-light-strong)");
+  assert.equal(output.semantics.light["success-solid-text"], "var(--ds-text-light-strong)");
+  assert.equal(output.semantics.light["info-solid-text"], "var(--ds-text-light-strong)");
+  assert.equal(output.semantics.dark["danger-solid-text"], "var(--ds-text-dark-strong)");
+  assert.equal(output.semantics.dark["success-solid-text"], "var(--ds-text-dark-strong)");
+  assert.equal(output.semantics.dark["info-solid-text"], "var(--ds-text-dark-strong)");
 });
 
 test("status solid text resolves to readable approved candidates when fixed polarity fails", () => {
@@ -476,12 +524,12 @@ test("status solid text resolves to readable approved candidates when fixed pola
   });
 
   assert.equal(warning.input.warningSeed, "#e3bb1d");
-  assert.equal(warning.semantics.light["warning-solid-text"], "var(--ds-neutral-light-4)");
+  assert.equal(warning.semantics.light["warning-solid-text"], "var(--ds-text-light-strong)");
   assert.deepEqual(
     warning.assertions.results.filter((result) => result.role === "status-solid" && !result.passed),
     [],
   );
-  assert.equal(darkBlue.semantics.dark["info-solid-text"], "var(--ds-neutral-light-4)");
+  assert.equal(darkBlue.semantics.dark["info-solid-text"], "var(--ds-text-light-strong)");
   assert.deepEqual(
     darkBlue.assertions.results.filter((result) =>
       result.theme === "dark" &&
@@ -532,6 +580,16 @@ test("createColorEngineTheme rejects invalid seed policies", () => {
       error instanceof ColorEngineValidationError &&
       error.code === "INVALID_SEED_POLICY" &&
       error.field === "primarySeedPolicy",
+  );
+});
+
+test("createColorEngineTheme rejects invalid text treatment strategies", () => {
+  assert.throws(
+    () => createColorEngineTheme({ textTreatment: "slider-mode" }),
+    (error) =>
+      error instanceof ColorEngineValidationError &&
+      error.code === "INVALID_TEXT_TREATMENT" &&
+      error.field === "textTreatment",
   );
 });
 

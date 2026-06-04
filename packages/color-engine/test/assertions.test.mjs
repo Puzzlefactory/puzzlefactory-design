@@ -12,7 +12,7 @@ test("createColorEngineTheme returns APCA diagnostic assertions", () => {
   const report = output.assertions;
 
   assert.equal(report.apcaAlgorithmVersion, APCA_ALGORITHM_VERSION);
-  assert.equal(report.pairs.length, 64);
+  assert.equal(report.pairs.length, 76);
   assert.equal(report.results.length, report.pairs.length);
   assert.deepEqual(report.thresholds, CONTRAST_ASSERTION_THRESHOLDS);
   assert.deepEqual(report.summary, {
@@ -36,8 +36,8 @@ test("assertion report uses role-based thresholds and severities", () => {
   assert.equal(results.filter((result) => result.role === "body").length, 8);
   assert.equal(results.filter((result) => result.role === "secondary").length, 8);
   assert.equal(results.filter((result) => result.role === "muted").length, 8);
-  assert.equal(results.filter((result) => result.role === "ui").length, 8);
-  assert.equal(results.filter((result) => result.role === "status-soft").length, 8);
+  assert.equal(results.filter((result) => result.role === "ui").length, 12);
+  assert.equal(results.filter((result) => result.role === "status-soft").length, 16);
   assert.equal(results.filter((result) => result.role === "status-solid").length, 24);
   assert.equal(results.every((result) => result.role !== "muted" || result.severity === "diagnostic"), true);
   assert.equal(results.every((result) => result.role === "muted" || result.severity === "required"), true);
@@ -52,10 +52,13 @@ test("assertion report covers expected semantic text/background pairs", () => {
   assert.equal(ids.has("light:text-secondary:on:surface-2"), true);
   assert.equal(ids.has("dark:text-muted:on:surface-3"), true);
   assert.equal(ids.has("light:primary-action-text:on:primary-action-bg"), true);
+  assert.equal(ids.has("light:primary-soft-text:on:primary-soft-bg"), true);
+  assert.equal(ids.has("dark:primary-soft-text:on:primary-soft-bg-hover"), true);
   assert.equal(ids.has("dark:primary-action-text:on:primary-action-bg-pressed"), true);
   assert.equal(ids.has("light:control-text:on:control-bg"), true);
   assert.equal(ids.has("dark:control-text:on:control-bg"), true);
   assert.equal(ids.has("light:danger-soft-text:on:danger-soft-bg"), true);
+  assert.equal(ids.has("dark:warning-soft-text:on:warning-soft-bg-hover"), true);
   assert.equal(ids.has("dark:warning-solid-text:on:warning-solid-bg-pressed"), true);
   assert.equal([...ids].some((id) => id.includes("border")), false);
 });
@@ -66,14 +69,14 @@ test("assertion report resolves semantic variables to generated primitive tokens
   const actionResult = findResult(output, "dark:primary-action-text:on:primary-action-bg");
   const statusResult = findResult(output, "light:danger-solid-text:on:danger-solid-bg");
 
-  assert.equal(bodyResult.foregroundToken.name, "neutral-dark-1");
+  assert.equal(bodyResult.foregroundToken.name, "text-dark-primary");
   assert.equal(bodyResult.backgroundToken.name, "surface-light-1");
   assert.equal(bodyResult.threshold, 60);
   assert.equal(bodyResult.absLc, Math.abs(bodyResult.lc));
   assert.equal(bodyResult.passed, bodyResult.absLc >= bodyResult.threshold);
-  assert.equal(actionResult.foregroundToken.name, "surface-dark-1");
+  assert.equal(actionResult.foregroundToken.name, "text-dark-strong");
   assert.equal(actionResult.backgroundToken.name, "primary-dark-solid-2");
-  assert.equal(statusResult.foregroundToken.name, "surface-light-1");
+  assert.equal(statusResult.foregroundToken.name, "text-light-strong");
   assert.equal(statusResult.backgroundToken.name, "danger-light-solid-2");
 });
 
@@ -146,7 +149,7 @@ test("representative balanced preset and seed matrix keeps required assertions p
   for (const { input, name } of matrix) {
     const output = createColorEngineTheme(input);
 
-    assert.equal(output.assertions.summary.total, 64, name);
+    assert.equal(output.assertions.summary.total, 76, name);
     assert.deepEqual(requiredFailures(output), [], name);
   }
 });
@@ -160,9 +163,8 @@ test("representative anchored matrix keeps seed-preservation failures explicit",
         primarySeedPolicy: "anchored",
       },
       expectedFailures: [
-        "light:primary-action-text:on:primary-action-bg",
-        "light:primary-action-text:on:primary-action-bg-hover",
-        "light:primary-action-text:on:primary-action-bg-pressed",
+        "light:primary-soft-text:on:primary-soft-bg",
+        "light:primary-soft-text:on:primary-soft-bg-hover",
       ],
     },
     {
@@ -173,6 +175,7 @@ test("representative anchored matrix keeps seed-preservation failures explicit",
       },
       expectedFailures: [
         "dark:info-soft-text:on:info-soft-bg",
+        "dark:info-soft-text:on:info-soft-bg-hover",
       ],
     },
     {
@@ -183,6 +186,7 @@ test("representative anchored matrix keeps seed-preservation failures explicit",
       },
       expectedFailures: [
         "light:warning-soft-text:on:warning-soft-bg",
+        "light:warning-soft-text:on:warning-soft-bg-hover",
         "light:warning-solid-text:on:warning-solid-bg-pressed",
       ],
     },
