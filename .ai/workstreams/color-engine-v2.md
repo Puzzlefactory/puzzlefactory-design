@@ -141,12 +141,16 @@ CE2-11D is implemented. The v2 package now generates independent foreground/text
 
 Text primitives are independent from surface ramps. Normal surface text semantics now map to `text-dark-*` in light theme and `text-light-*` in dark theme. Primary/status solid text resolution now chooses from dedicated text primitives rather than borrowed `surface-light-*` or `surface-dark-*` candidates, so colored fills can intentionally use near-white or near-black foregrounds where appropriate. Kitchen Sink renders the new text primitive families and adds text usage samples to the Themes page. The default Kitchen Sink assertion report remains 76/76 passing.
 
+CE2-11E is implemented. Surface separation presets can now be selected per theme before the consumer integration contract. `preset` remains the shared compatibility fallback. Optional `lightSurfacePreset` and `darkSurfacePreset` fields override the shared preset for light or dark neutral/surface/chrome/state generation when provided. Resolved presets are exposed as `output.surfacePresets.light` and `output.surfacePresets.dark`. Curated presets now use useful combinations, such as standard light plus layered dark or quiet light plus layered dark.
+
+Kitchen Sink exposes Shared fallback, Light surface separation, and Dark surface separation controls. Light/dark controls include a `Use shared` option; inherited sides omit the theme-specific field when calling the engine, so changing the shared fallback has a visible effect for inherited sides while explicit sides remain isolated. Browser smoke verified that changing dark separation changes dark surface CSS variables without changing light variables, and changing inherited light through the shared fallback does not change explicit dark output.
+
 Independent sub-agent review was not performed for CE2-01 through CE2-10 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed. Independent sub-agent review was performed for CE2-11; two findings were addressed before closeout: preset buttons gained `aria-pressed`, and the Kitchen Sink default assertion test now uses the exported `evergreen` preset input. Re-review confirmed both findings were resolved. Independent sub-agent review was performed for CE2-11C; one P3 coverage finding was addressed before closeout by adding status soft hover assertion pairs and tests.
 
 ## Next Actions
 
-- Review CE2-11D visually in Kitchen Sink, especially whether the dedicated `text-dark`/`text-light` ramps give enough foreground nuance without needing broad per-token overrides.
-- If CE2-11D is visually acceptable, proceed to `CE2-12`: consumer integration contract.
+- Review CE2-11E visually in Kitchen Sink, especially whether the curated preset combinations feel right in a sea of light and dark surfaces.
+- If CE2-11E is acceptable, proceed to `CE2-12`: consumer integration contract.
 - Treat `CE2-12` and later as strategic placeholders. Reorder or revise them if Kitchen Sink visual feedback exposes a more important issue.
 
 ## Seed Policy Plan
@@ -211,6 +215,7 @@ This roadmap is intentionally provisional. Kitchen-sink visual review and assert
    - Add a small set of credible theme presets using OKLCH seeds and current policy controls.
    - Render preset switching in kitchen-sink so designers can compare starting points quickly.
    - Add named text treatment presets for primary/status soft surfaces so same-hue, neutral, and adaptive foreground behavior can be compared visually.
+   - Add independent light/dark surface separation preset controls before consumer integration so light and dark themes are not forced into one compromise surface hierarchy.
    - Avoid turning presets into a broad theme marketplace or adding slider-heavy controls.
 
 5. `CE2-12`: Consumer integration contract.
@@ -251,6 +256,7 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-11B` | Theme-specific dark seeds | Add optional dark-theme primary/status seeds, preserve fallback to light/default seeds, keep shared seed policies, preserve anchored theme-specific solid level 2, and expose separate light/dark controls in Kitchen Sink. | General semantic/text overrides, role classification, APCA threshold profiles, high-contrast v2 output |
 | `CE2-11C` | Text treatment exploration | Add named soft colored surface text strategies: `same-hue`, `neutral`, and `adaptive`. Preserve `same-hue` as default, compare strategies in Kitchen Sink, and cover primary/status soft rest and hover pairs in APCA assertions. | Broad text override APIs, tenant manual overrides, threshold profiles, role classification |
 | `CE2-11D` | Dedicated foreground/text ramps | Add independent `text-dark` and `text-light` primitive families, remap normal text semantics to those primitives, and resolve primary/status solid text from dedicated foreground candidates instead of surface tokens. | Broad per-token overrides, tenant override API, high-contrast theme output, threshold profiles |
+| `CE2-11E` | Theme-specific surface separation presets | Add optional `lightSurfacePreset` and `darkSurfacePreset` controls that fall back to `surfacePreset`; update generation, curated presets, Kitchen Sink controls, and tests so light and dark surface hierarchy can be tuned independently. | Sliders, new surface seed types, consumer integration, high-contrast theme output |
 | `CE2-12` | Consumer integration contract | Define app consumption, generated CSS loading, theme attributes, and build-once/runtime usage patterns. | Full docs app, component-library implementation |
 | `CE2-13` | First component proof | Build the smallest Web Component proof that exercises color semantics, likely button plus alert/status panel. | Broad component library |
 
@@ -260,6 +266,7 @@ This workstream is substantially complete when:
 
 - Neutral and surface v2 output renders credible light and dark UI surfaces in kitchen-sink.
 - Surface generation supports separate neutral, light-surface, and dark-surface seeds.
+- Surface separation can be selected independently for light and dark themes through named presets while retaining a shared fallback.
 - Chrome/border generation is separate from surface fills and surface interaction states.
 - Presets produce repeatable useful visual differences without requiring manual sliders.
 - Example theme presets are plain existing-input bundles that can be applied and compared in Kitchen Sink.
@@ -284,6 +291,7 @@ This workstream is substantially complete when:
 - **Visual-first sequencing:** Every v2 generation slice must render in kitchen-sink immediately.
 - **Compact usage ramps:** Multiple small ramps are preferred over one long generic scale.
 - **Separate surface seeds:** Neutral identity, light surfaces, and dark surfaces may have separate seeds.
+- **Separate surface separation:** Light and dark themes may use different named surface separation presets; a shared preset is only a fallback convenience.
 - **Presets over sliders:** Normal controls should be named presets. Sliders may exist only as internal/debug tooling if later justified.
 - **Semantics later:** Generation families use neutral names such as surface, primary, and status usage sets. Brand/accent aliases happen after generation.
 - **Seed policy is per family:** Surfaces can use seeds as tonal guides; primary and status families need future `balanced` versus `anchored` behavior so approved colors can be preserved when required.

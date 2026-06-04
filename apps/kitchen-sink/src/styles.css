@@ -239,11 +239,25 @@ h3 {
   gap: 12px;
 }
 
+.surface-preset-stack,
+.surface-preset-picker {
+  display: grid;
+  gap: 12px;
+}
+
+.surface-preset-picker {
+  min-width: 0;
+}
+
 .section-heading {
   display: flex;
   gap: 12px;
   align-items: center;
   justify-content: space-between;
+}
+
+.section-heading h4 {
+  margin: 0;
 }
 
 .section-heading span {

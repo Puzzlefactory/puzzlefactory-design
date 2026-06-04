@@ -20,6 +20,7 @@ This file is a rolling index of currently binding decisions. Use ADRs in `docs/a
 - Preserve the first color-engine implementation as `packages/color-engine-1` / `@puzzlefactory/color-engine-1`; the active `packages/color-engine` / `@puzzlefactory/color-engine` package is v2.
 - Soft colored surface text treatment is controlled by named strategies (`same-hue`, `neutral`, `adaptive`) rather than broad per-token overrides. The default remains `same-hue` until visual review justifies changing it.
 - Foreground/text primitives are independent from surface primitives in color-engine v2. Normal text semantics and primary/status solid on-color text must resolve from dedicated near-black/near-white text families, not from reused surface tokens.
+- Light and dark surface separation may use different named presets in color-engine v2. The shared `preset` remains the fallback for compatibility; `lightSurfacePreset` and `darkSurfacePreset` override it when provided.
 
 ## Superseded Decisions
 

@@ -63,6 +63,12 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
   assert.deepEqual(TEXT_TREATMENT_STRATEGY_NAMES, ["same-hue", "neutral", "adaptive"]);
   assert.deepEqual(TEXT_LEVELS, ["strong", "primary", "secondary", "muted", "disabled"]);
   assert.deepEqual(CHROME_LEVELS, ["subtle", "default", "strong"]);
+  assert.equal(output.preset.name, "standard");
+  assert.equal(output.surfacePresets.light.name, "standard");
+  assert.equal(output.surfacePresets.dark.name, "standard");
+  assert.equal(output.input.preset, "standard");
+  assert.equal(output.input.lightSurfacePreset, "standard");
+  assert.equal(output.input.darkSurfacePreset, "standard");
   assert.equal(output.seedPolicies.primary, "balanced");
   assert.equal(output.seedPolicies.status.danger, "balanced");
   assert.equal(output.textTreatment.name, "same-hue");
@@ -333,6 +339,72 @@ test("presets change surface separation", () => {
   assert.ok(separatedDelta > quietDelta);
 });
 
+test("theme-specific surface presets fall back to the shared preset", () => {
+  const fallback = createColorEngineTheme({ preset: "layered" });
+  const explicit = createColorEngineTheme({
+    preset: "layered",
+    lightSurfacePreset: "layered",
+    darkSurfacePreset: "layered",
+  });
+
+  assert.equal(fallback.preset.name, "layered");
+  assert.equal(fallback.surfacePresets.light.name, "layered");
+  assert.equal(fallback.surfacePresets.dark.name, "layered");
+  assert.equal(fallback.input.lightSurfacePreset, "layered");
+  assert.equal(fallback.input.darkSurfacePreset, "layered");
+  assert.deepEqual(fallback.primitives["surface-light"], explicit.primitives["surface-light"]);
+  assert.deepEqual(fallback.primitives["surface-dark"], explicit.primitives["surface-dark"]);
+  assert.deepEqual(fallback.primitives["chrome-light"], explicit.primitives["chrome-light"]);
+  assert.deepEqual(fallback.primitives["chrome-dark"], explicit.primitives["chrome-dark"]);
+  assert.equal(
+    extractCssLightness(fallback.css, "--ds-surface-light-2-hover"),
+    extractCssLightness(explicit.css, "--ds-surface-light-2-hover"),
+  );
+  assert.equal(
+    extractCssLightness(fallback.css, "--ds-surface-dark-2-hover"),
+    extractCssLightness(explicit.css, "--ds-surface-dark-2-hover"),
+  );
+});
+
+test("theme-specific surface presets isolate light and dark surface output", () => {
+  const shared = createColorEngineTheme({ preset: "standard" });
+  const quiet = createColorEngineTheme({ preset: "quiet" });
+  const highSeparation = createColorEngineTheme({ preset: "high-separation" });
+  const split = createColorEngineTheme({
+    preset: "standard",
+    lightSurfacePreset: "quiet",
+    darkSurfacePreset: "high-separation",
+  });
+
+  assert.equal(split.preset.name, "standard");
+  assert.equal(split.surfacePresets.light.name, "quiet");
+  assert.equal(split.surfacePresets.dark.name, "high-separation");
+  assert.equal(split.input.lightSurfacePreset, "quiet");
+  assert.equal(split.input.darkSurfacePreset, "high-separation");
+  assert.notDeepEqual(split.primitives["surface-light"], shared.primitives["surface-light"]);
+  assert.notDeepEqual(split.primitives["surface-dark"], shared.primitives["surface-dark"]);
+  assert.notDeepEqual(split.primitives["chrome-light"], shared.primitives["chrome-light"]);
+  assert.notDeepEqual(split.primitives["chrome-dark"], shared.primitives["chrome-dark"]);
+  assert.ok(rampSpan(split, "surface-light") < rampSpan(shared, "surface-light"));
+  assert.ok(rampSpan(split, "surface-dark") > rampSpan(shared, "surface-dark"));
+  assert.deepEqual(split.primitives["surface-light"], quiet.primitives["surface-light"]);
+  assert.deepEqual(split.primitives["surface-dark"], highSeparation.primitives["surface-dark"]);
+  assert.deepEqual(split.primitives["chrome-light"], quiet.primitives["chrome-light"]);
+  assert.deepEqual(split.primitives["chrome-dark"], highSeparation.primitives["chrome-dark"]);
+  assert.equal(
+    extractCssLightness(split.css, "--ds-surface-light-2-hover"),
+    extractCssLightness(quiet.css, "--ds-surface-light-2-hover"),
+  );
+  assert.equal(
+    extractCssLightness(split.css, "--ds-surface-dark-2-hover"),
+    extractCssLightness(highSeparation.css, "--ds-surface-dark-2-hover"),
+  );
+  assert.deepEqual(split.primitives["primary-light-solid"], shared.primitives["primary-light-solid"]);
+  assert.deepEqual(split.primitives["primary-dark-solid"], shared.primitives["primary-dark-solid"]);
+  assert.deepEqual(split.primitives["danger-light-solid"], shared.primitives["danger-light-solid"]);
+  assert.deepEqual(split.primitives["danger-dark-solid"], shared.primitives["danger-dark-solid"]);
+});
+
 test("preset light and dark spans increase in calibrated order", () => {
   const spans = SURFACE_PRESET_NAMES.map((preset) => {
     const output = createColorEngineTheme({ preset });
@@ -376,6 +448,10 @@ test("example theme presets are valid balanced starting points", () => {
     assert.equal(themePreset.description.length > 0, true);
     assert.equal(output.namespace, "pf");
     assert.equal(output.input.preset, themePreset.input.preset);
+    assert.equal(output.input.lightSurfacePreset, themePreset.input.lightSurfacePreset);
+    assert.equal(output.input.darkSurfacePreset, themePreset.input.darkSurfacePreset);
+    assert.equal(output.surfacePresets.light.name, themePreset.input.lightSurfacePreset);
+    assert.equal(output.surfacePresets.dark.name, themePreset.input.darkSurfacePreset);
     assert.equal(output.input.primarySeedPolicy, "balanced", name);
     assert.equal(output.input.dangerSeedPolicy, "balanced", name);
     assert.equal(output.input.warningSeedPolicy, "balanced", name);
@@ -590,6 +666,23 @@ test("createColorEngineTheme rejects invalid text treatment strategies", () => {
       error instanceof ColorEngineValidationError &&
       error.code === "INVALID_TEXT_TREATMENT" &&
       error.field === "textTreatment",
+  );
+});
+
+test("createColorEngineTheme rejects invalid theme-specific surface presets", () => {
+  assert.throws(
+    () => createColorEngineTheme({ lightSurfacePreset: "flatland" }),
+    (error) =>
+      error instanceof ColorEngineValidationError &&
+      error.code === "INVALID_PRESET" &&
+      error.field === "lightSurfacePreset",
+  );
+  assert.throws(
+    () => createColorEngineTheme({ darkSurfacePreset: "flatland" }),
+    (error) =>
+      error instanceof ColorEngineValidationError &&
+      error.code === "INVALID_PRESET" &&
+      error.field === "darkSurfacePreset",
   );
 });
 

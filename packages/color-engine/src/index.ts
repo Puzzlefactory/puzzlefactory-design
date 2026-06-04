@@ -183,6 +183,8 @@ export interface ColorEngineInput {
   readonly infoSeedPolicy?: SeedPolicy;
   readonly textTreatment?: TextTreatmentStrategyName;
   readonly preset?: SurfacePresetName;
+  readonly lightSurfacePreset?: SurfacePresetName;
+  readonly darkSurfacePreset?: SurfacePresetName;
   readonly namespace?: string;
 }
 
@@ -241,6 +243,7 @@ export interface PrimitiveSurfaceOutput {
 export interface ColorEngineOutput {
   readonly namespace: string;
   readonly preset: SurfacePreset;
+  readonly surfacePresets: Readonly<Record<SurfaceTheme, SurfacePreset>>;
   readonly input: Required<ColorEngineInput>;
   readonly seeds: {
     readonly neutral: OklchValue;
@@ -502,6 +505,8 @@ export const COLOR_ENGINE_THEME_PRESETS = {
       infoSeedPolicy: "balanced",
       textTreatment: "same-hue",
       preset: "standard",
+      lightSurfacePreset: "standard",
+      darkSurfacePreset: "layered",
     },
   },
   "civic-blue": {
@@ -529,6 +534,8 @@ export const COLOR_ENGINE_THEME_PRESETS = {
       infoSeedPolicy: "balanced",
       textTreatment: "same-hue",
       preset: "standard",
+      lightSurfacePreset: "standard",
+      darkSurfacePreset: "layered",
     },
   },
   plum: {
@@ -556,6 +563,8 @@ export const COLOR_ENGINE_THEME_PRESETS = {
       infoSeedPolicy: "balanced",
       textTreatment: "same-hue",
       preset: "layered",
+      lightSurfacePreset: "standard",
+      darkSurfacePreset: "high-separation",
     },
   },
   teal: {
@@ -583,6 +592,8 @@ export const COLOR_ENGINE_THEME_PRESETS = {
       infoSeedPolicy: "balanced",
       textTreatment: "same-hue",
       preset: "quiet",
+      lightSurfacePreset: "quiet",
+      darkSurfacePreset: "layered",
     },
   },
 } as const satisfies Readonly<Record<ColorEngineThemePresetName, ColorEngineThemePreset>>;
@@ -612,12 +623,18 @@ const DEFAULT_INPUT = {
   infoSeedPolicy: "balanced",
   textTreatment: "same-hue",
   preset: "standard",
+  lightSurfacePreset: "standard",
+  darkSurfacePreset: "standard",
   namespace: "ds",
 } as const satisfies Required<ColorEngineInput>;
 
 export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngineOutput {
   const resolvedInput = resolveInput(input);
   const preset = SURFACE_PRESETS[resolvedInput.preset];
+  const surfacePresets = {
+    light: SURFACE_PRESETS[resolvedInput.lightSurfacePreset],
+    dark: SURFACE_PRESETS[resolvedInput.darkSurfacePreset],
+  } as const satisfies Readonly<Record<SurfaceTheme, SurfacePreset>>;
   const neutralSeed = parseColorSeed(resolvedInput.neutralSeed, "neutralSeed");
   const surfaceLightSeed = parseColorSeed(resolvedInput.surfaceLightSeed, "surfaceLightSeed");
   const surfaceDarkSeed = parseColorSeed(resolvedInput.surfaceDarkSeed, "surfaceDarkSeed");
@@ -647,18 +664,18 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
   const neutralLight = createLevelRamp({
     family: "neutral-light",
     seed: toneSeed(surfaceLightSeed, neutralSeed, 0.75),
-    delta: preset.lightStepDelta,
+    delta: surfacePresets.light.lightStepDelta,
     direction: 1,
     maxLightness: 0.995,
-    chromaScale: preset.chromaScale * 0.75,
+    chromaScale: surfacePresets.light.chromaScale * 0.75,
   });
   const neutralDark = createLevelRamp({
     family: "neutral-dark",
     seed: toneSeed(surfaceDarkSeed, neutralSeed, 0.8),
-    delta: preset.darkStepDelta,
+    delta: surfacePresets.dark.darkStepDelta,
     direction: 1,
     maxLightness: 0.28,
-    chromaScale: preset.chromaScale * 0.8,
+    chromaScale: surfacePresets.dark.chromaScale * 0.8,
   });
   const textDark = createTextRamp({
     family: "text-dark",
@@ -671,32 +688,32 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
   const surfaceLight = createLevelRamp({
     family: "surface-light",
     seed: surfaceLightSeed,
-    delta: preset.lightStepDelta,
+    delta: surfacePresets.light.lightStepDelta,
     direction: 1,
     maxLightness: 0.998,
-    chromaScale: preset.chromaScale,
+    chromaScale: surfacePresets.light.chromaScale,
   });
   const surfaceDark = createLevelRamp({
     family: "surface-dark",
     seed: surfaceDarkSeed,
-    delta: preset.darkStepDelta,
+    delta: surfacePresets.dark.darkStepDelta,
     direction: 1,
     maxLightness: 0.32,
-    chromaScale: preset.chromaScale,
+    chromaScale: surfacePresets.dark.chromaScale,
   });
   const chromeLight = createChromeRamp({
     family: "chrome-light",
     surfaceSeed: surfaceLightSeed,
     neutralSeed,
     theme: "light",
-    preset,
+    preset: surfacePresets.light,
   });
   const chromeDark = createChromeRamp({
     family: "chrome-dark",
     surfaceSeed: surfaceDarkSeed,
     neutralSeed,
     theme: "dark",
-    preset,
+    preset: surfacePresets.dark,
   });
   const primary = createPrimaryUsageFamilies({
     lightSeed: primarySeed,
@@ -732,11 +749,12 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     primitives,
     semantics,
   });
-  const cssOutput = createCssOutput(resolvedInput.namespace, primitives, semantics, preset);
+  const cssOutput = createCssOutput(resolvedInput.namespace, primitives, semantics, surfacePresets);
 
   return {
     namespace: resolvedInput.namespace,
     preset,
+    surfacePresets,
     input: resolvedInput,
     seeds: {
       neutral: neutralSeed,
@@ -784,16 +802,13 @@ export function parseColorSeed(seed: string, field = "seed"): OklchValue {
 
 function resolveInput(input: ColorEngineInput): Required<ColorEngineInput> {
   const preset = input.preset ?? DEFAULT_INPUT.preset;
+  const lightSurfacePreset = input.lightSurfacePreset ?? preset;
+  const darkSurfacePreset = input.darkSurfacePreset ?? preset;
   const namespace = input.namespace ?? DEFAULT_INPUT.namespace;
 
-  if (!SURFACE_PRESET_NAMES.includes(preset)) {
-    throw new ColorEngineValidationError({
-      code: "INVALID_PRESET",
-      field: "preset",
-      value: preset,
-      message: "Preset must be quiet, standard, layered, or high-separation.",
-    });
-  }
+  validateSurfacePreset(preset, "preset");
+  validateSurfacePreset(lightSurfacePreset, "lightSurfacePreset");
+  validateSurfacePreset(darkSurfacePreset, "darkSurfacePreset");
 
   if (!/^[a-z][a-z0-9-]*$/i.test(namespace)) {
     throw new ColorEngineValidationError({
@@ -837,8 +852,21 @@ function resolveInput(input: ColorEngineInput): Required<ColorEngineInput> {
     infoSeedPolicy,
     textTreatment,
     preset,
+    lightSurfacePreset,
+    darkSurfacePreset,
     namespace,
   };
+}
+
+function validateSurfacePreset(preset: SurfacePresetName, field: string): void {
+  if (!SURFACE_PRESET_NAMES.includes(preset)) {
+    throw new ColorEngineValidationError({
+      code: "INVALID_PRESET",
+      field,
+      value: preset,
+      message: "Surface preset must be quiet, standard, layered, or high-separation.",
+    });
+  }
 }
 
 function resolveSeedPolicy(policy: SeedPolicy | undefined, field: string): SeedPolicy {
@@ -1505,9 +1533,9 @@ function createCssOutput(
   namespace: string,
   primitives: PrimitiveSurfaceOutput,
   semantics: ColorEngineOutput["semantics"],
-  preset: SurfacePreset,
+  surfacePresets: Readonly<Record<SurfaceTheme, SurfacePreset>>,
 ): ColorEngineCssOutput {
-  const primitiveCss = createPrimitiveCss(namespace, primitives, preset);
+  const primitiveCss = createPrimitiveCss(namespace, primitives, surfacePresets);
   const themeCss = {
     light: createThemeCss(namespace, "light", semantics.light),
     dark: createThemeCss(namespace, "dark", semantics.dark),
@@ -1543,7 +1571,7 @@ function createCssOutput(
 function createPrimitiveCss(
   namespace: string,
   primitives: PrimitiveSurfaceOutput,
-  preset: SurfacePreset,
+  surfacePresets: Readonly<Record<SurfaceTheme, SurfacePreset>>,
 ): string {
   const declarations: [string, string][] = [];
 
@@ -1551,10 +1579,11 @@ function createPrimitiveCss(
     for (const token of tokens) {
       declarations.push([`--${namespace}-${token.name}`, token.value]);
       if (!token.name.endsWith("-seed") && !token.name.startsWith("text-")) {
+        const theme = token.name.includes("-light-") ? "light" : "dark";
         for (const state of SURFACE_STATES) {
           declarations.push([
             `--${namespace}-${token.name}-${state}`,
-            createStateValue(token.oklch, state, token.name.includes("-light-"), preset),
+            createStateValue(token.oklch, state, theme, surfacePresets[theme]),
           ]);
         }
       }
@@ -1578,10 +1607,11 @@ function createThemeCss(
 function createStateValue(
   base: OklchValue,
   state: SurfaceState,
-  isLightSurface: boolean,
+  theme: SurfaceTheme,
   preset: SurfacePreset,
 ): `oklch(${string})` {
   const multiplier = state === "hover" ? 1 : state === "selected" ? 1.65 : 2.2;
+  const isLightSurface = theme === "light";
   const direction = isLightSurface ? -1 : 1;
   const delta = isLightSurface ? preset.lightStateDelta : preset.darkStateDelta;
   const oklch = {

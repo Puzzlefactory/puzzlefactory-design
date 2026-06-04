@@ -82,6 +82,8 @@ const input: ColorEngineInput = {
   surfaceDarkSeed: "#111827",
   textTreatment: "adaptive",
   preset: presetName,
+  lightSurfacePreset: "quiet",
+  darkSurfacePreset: "layered",
   namespace: "pf",
 };
 const output: ColorEngineOutput = createColorEngineTheme(input);
@@ -106,6 +108,8 @@ const warningDarkSeed: OklchValue = output.seeds.statusDark.warning;
 const warningSeedPolicy: SeedPolicy = output.seedPolicies.status.warning;
 const textTreatmentName: TextTreatmentStrategyName = output.textTreatment.name;
 const textTreatment: TextTreatmentStrategy = TEXT_TREATMENT_STRATEGIES[textTreatmentName];
+const lightSurfacePreset: SurfacePreset = output.surfacePresets.light;
+const darkSurfacePreset: SurfacePreset = output.surfacePresets.dark;
 const cssOutput: ColorEngineCssOutput = output.cssOutput;
 const cssFile: ColorEngineCssFile | undefined = cssOutput.files[0];
 const cssFileName: ColorEngineCssFileName = "primitives.css";
@@ -137,6 +141,8 @@ const assertionReportFromHelper: ContrastAssertionReport = createContrastAsserti
 void preset;
 void lightStepDelta;
 void darkStepDelta;
+void lightSurfacePreset;
+void darkSurfacePreset;
 void seedPolicy;
 void chromeLevel;
 void textLevel;

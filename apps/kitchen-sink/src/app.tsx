@@ -114,6 +114,7 @@ const defaultInput = {
 } as const satisfies Required<ColorEngineInput>;
 
 type ActiveThemePresetName = ColorEngineThemePresetName | "custom";
+type SurfacePresetSelection = SurfacePresetName | "inherit";
 
 export function App() {
   const [neutralSeed, setNeutralSeed] = useState<string>(defaultInput.neutralSeed);
@@ -136,6 +137,12 @@ export function App() {
   const [primarySeedPolicy, setPrimarySeedPolicy] = useState<SeedPolicy>(defaultInput.primarySeedPolicy);
   const [textTreatment, setTextTreatment] = useState<TextTreatmentStrategyName>(defaultInput.textTreatment);
   const [preset, setPreset] = useState<SurfacePresetName>(defaultInput.preset);
+  const [lightSurfacePreset, setLightSurfacePreset] = useState<SurfacePresetSelection>(
+    toSurfacePresetSelection(defaultInput.preset, defaultInput.lightSurfacePreset),
+  );
+  const [darkSurfacePreset, setDarkSurfacePreset] = useState<SurfacePresetSelection>(
+    toSurfacePresetSelection(defaultInput.preset, defaultInput.darkSurfacePreset),
+  );
   const [activeTheme, setActiveTheme] = useState<SurfaceTheme>("light");
   const [activeThemePresetName, setActiveThemePresetName] = useState<ActiveThemePresetName>("evergreen");
 
@@ -165,6 +172,8 @@ export function App() {
     setInfoSeedPolicy(input.infoSeedPolicy);
     setTextTreatment(input.textTreatment);
     setPreset(input.preset);
+    setLightSurfacePreset(toSurfacePresetSelection(input.preset, input.lightSurfacePreset));
+    setDarkSurfacePreset(toSurfacePresetSelection(input.preset, input.darkSurfacePreset));
   }
 
   function markCustom() {
@@ -200,6 +209,8 @@ export function App() {
         primarySeedPolicy,
         textTreatment,
         preset,
+        ...(lightSurfacePreset === "inherit" ? {} : { lightSurfacePreset }),
+        ...(darkSurfacePreset === "inherit" ? {} : { darkSurfacePreset }),
         namespace: defaultInput.namespace,
       });
     },
@@ -210,6 +221,8 @@ export function App() {
       infoDarkSeed,
       infoSeed,
       infoSeedPolicy,
+      darkSurfacePreset,
+      lightSurfacePreset,
       neutralSeed,
       preset,
       primarySeed,
@@ -275,6 +288,8 @@ export function App() {
                 primaryDarkSeed={primaryDarkSeed}
                 primarySeedPolicy={primarySeedPolicy}
                 preset={preset}
+                lightSurfacePreset={lightSurfacePreset}
+                darkSurfacePreset={darkSurfacePreset}
                 successSeed={successSeed}
                 successDarkSeed={successDarkSeed}
                 successSeedPolicy={successSeedPolicy}
@@ -328,6 +343,14 @@ export function App() {
                 }}
                 onPresetChange={(value) => {
                   setPreset(value);
+                  markCustom();
+                }}
+                onLightSurfacePresetChange={(value) => {
+                  setLightSurfacePreset(value);
+                  markCustom();
+                }}
+                onDarkSurfacePresetChange={(value) => {
+                  setDarkSurfacePreset(value);
                   markCustom();
                 }}
                 onSuccessSeedChange={(value) => {
@@ -397,7 +420,9 @@ function Overview({
         <>
           <section className="metric-grid" aria-label="Engine summary">
             <Metric label="Active theme" value={labelize(activeTheme)} />
-            <Metric label="Preset" value={engine.output.preset.label} />
+            <Metric label="Shared surface preset" value={engine.output.preset.label} />
+            <Metric label="Light surface preset" value={engine.output.surfacePresets.light.label} />
+            <Metric label="Dark surface preset" value={engine.output.surfacePresets.dark.label} />
             <Metric
               label="Primitive families"
               value={Object.keys(engine.output.primitives).length.toString()}
@@ -432,6 +457,8 @@ function Controls({
   primaryDarkSeed,
   primarySeedPolicy,
   preset,
+  lightSurfacePreset,
+  darkSurfacePreset,
   successSeed,
   successDarkSeed,
   successSeedPolicy,
@@ -454,6 +481,8 @@ function Controls({
   onPrimaryDarkSeedChange,
   onPrimarySeedPolicyChange,
   onPresetChange,
+  onLightSurfacePresetChange,
+  onDarkSurfacePresetChange,
   onSuccessSeedChange,
   onSuccessDarkSeedChange,
   onSuccessSeedPolicyChange,
@@ -478,6 +507,8 @@ function Controls({
   primaryDarkSeed: string;
   primarySeedPolicy: SeedPolicy;
   preset: SurfacePresetName;
+  lightSurfacePreset: SurfacePresetSelection;
+  darkSurfacePreset: SurfacePresetSelection;
   successSeed: string;
   successDarkSeed: string;
   successSeedPolicy: SeedPolicy;
@@ -500,6 +531,8 @@ function Controls({
   onPrimaryDarkSeedChange: (value: string) => void;
   onPrimarySeedPolicyChange: (value: SeedPolicy) => void;
   onPresetChange: (value: SurfacePresetName) => void;
+  onLightSurfacePresetChange: (value: SurfacePresetSelection) => void;
+  onDarkSurfacePresetChange: (value: SurfacePresetSelection) => void;
   onSuccessSeedChange: (value: string) => void;
   onSuccessDarkSeedChange: (value: string) => void;
   onSuccessSeedPolicyChange: (value: SeedPolicy) => void;
@@ -538,7 +571,7 @@ function Controls({
               >
                 <strong>{themePreset.label}</strong>
                 <span>{themePreset.description}</span>
-                <code>{themePreset.input.preset}</code>
+                <code>{themePreset.input.lightSurfacePreset} / {themePreset.input.darkSurfacePreset}</code>
               </button>
             );
           })}
@@ -652,25 +685,30 @@ function Controls({
       <section className="control-section" aria-label="Surface presets">
         <div className="section-heading">
           <h3>Surface Separation</h3>
-          <span>{SURFACE_PRESETS[preset].label}</span>
+          <span>{SURFACE_PRESETS[preset].label} fallback</span>
         </div>
-        <div className="preset-grid">
-          {SURFACE_PRESET_NAMES.map((name) => {
-            const option = SURFACE_PRESETS[name];
-
-            return (
-              <button
-                className={preset === name ? "preset-button preset-button-active" : "preset-button"}
-                aria-pressed={preset === name}
-                key={name}
-                type="button"
-                onClick={() => onPresetChange(name)}
-              >
-                <strong>{option.label}</strong>
-                <span>{option.description}</span>
-              </button>
-            );
-          })}
+        <div className="surface-preset-stack">
+          <SurfacePresetPicker
+            label="Shared fallback"
+            value={preset}
+            onChange={(value) => {
+              if (value !== "inherit") {
+                onPresetChange(value);
+              }
+            }}
+          />
+          <SurfacePresetPicker
+            label="Light surface separation"
+            sharedPreset={preset}
+            value={lightSurfacePreset}
+            onChange={onLightSurfacePresetChange}
+          />
+          <SurfacePresetPicker
+            label="Dark surface separation"
+            sharedPreset={preset}
+            value={darkSurfacePreset}
+            onChange={onDarkSurfacePresetChange}
+          />
         </div>
       </section>
       <section className="control-section" aria-label="Text treatment strategies">
@@ -1252,6 +1290,58 @@ function PolicyField({
   );
 }
 
+function SurfacePresetPicker({
+  label,
+  sharedPreset,
+  value,
+  onChange,
+}: {
+  label: string;
+  sharedPreset?: SurfacePresetName;
+  value: SurfacePresetSelection;
+  onChange: (value: SurfacePresetSelection) => void;
+}) {
+  const resolvedValue = value === "inherit" ? sharedPreset ?? "standard" : value;
+
+  return (
+    <div className="surface-preset-picker">
+      <div className="section-heading">
+        <h4>{label}</h4>
+        <span>{value === "inherit" ? `Using ${SURFACE_PRESETS[resolvedValue].label}` : SURFACE_PRESETS[resolvedValue].label}</span>
+      </div>
+      <div className="preset-grid">
+        {sharedPreset ? (
+          <button
+            className={value === "inherit" ? "preset-button preset-button-active" : "preset-button"}
+            aria-pressed={value === "inherit"}
+            type="button"
+            onClick={() => onChange("inherit")}
+          >
+            <strong>Use shared</strong>
+            <span>Inherit the shared fallback setting.</span>
+          </button>
+        ) : null}
+        {SURFACE_PRESET_NAMES.map((name) => {
+          const option = SURFACE_PRESETS[name];
+
+          return (
+            <button
+              className={value === name ? "preset-button preset-button-active" : "preset-button"}
+              aria-pressed={value === name}
+              key={name}
+              type="button"
+              onClick={() => onChange(name)}
+            >
+              <strong>{option.label}</strong>
+              <span>{option.description}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function SemanticSwatch({ token }: { token: SemanticTokenName }) {
   return (
     <div className="semantic-swatch">
@@ -1299,6 +1389,9 @@ function EngineMetadata({ output }: { output: ColorEngineOutput }) {
       <Metric label="Info dark LCH" value={formatOklchSummary(output.seeds.statusDark.info)} />
       <Metric label="Light surface LCH" value={formatOklchSummary(output.seeds.surfaceLight)} />
       <Metric label="Dark surface LCH" value={formatOklchSummary(output.seeds.surfaceDark)} />
+      <Metric label="Shared preset" value={output.preset.label} />
+      <Metric label="Light preset" value={output.surfacePresets.light.label} />
+      <Metric label="Dark preset" value={output.surfacePresets.dark.label} />
     </section>
   );
 }
@@ -1378,6 +1471,13 @@ function optionalSeed(value: string): string | undefined {
   const trimmed = value.trim();
 
   return trimmed.length > 0 ? value : undefined;
+}
+
+function toSurfacePresetSelection(
+  sharedPreset: SurfacePresetName,
+  themePreset: SurfacePresetName,
+): SurfacePresetSelection {
+  return themePreset === sharedPreset ? "inherit" : themePreset;
 }
 
 function cssVar(token: string): `var(--${string})` {
