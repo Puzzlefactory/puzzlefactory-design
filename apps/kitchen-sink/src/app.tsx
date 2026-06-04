@@ -11,6 +11,7 @@ import {
   SURFACE_SEMANTIC_TOKEN_NAMES,
   STATUS_INTENTS,
   STATUS_SEMANTIC_TOKEN_NAMES,
+  TEXT_LEVELS,
   TEXT_TREATMENT_STRATEGIES,
   TEXT_TREATMENT_STRATEGY_NAMES,
   createColorEngineTheme,
@@ -809,8 +810,41 @@ function ThemePreview({ engine }: { engine: EngineState }) {
           <ThemeSample key={theme.key} label={theme.label} theme={theme.key} />
         ))}
       </section>
+      <ForegroundTextReview />
       <TextTreatmentReview output={engine.output} />
     </ViewFrame>
+  );
+}
+
+function ForegroundTextReview() {
+  return (
+    <section className="foreground-text-review" aria-label="Foreground text review">
+      <header className="panel-header">
+        <h3>Foreground Text Review</h3>
+        <span>{TEXT_LEVELS.length} levels</span>
+      </header>
+      <div className="foreground-text-grid">
+        {themeOptions.map((theme) => (
+          <article className="foreground-text-card" data-theme-v2={theme.key} key={theme.key}>
+            <header className="theme-sample-header">
+              <h3>{theme.label}</h3>
+              <span>{theme.key}</span>
+            </header>
+            <div className="foreground-text-surface">
+              {TEXT_LEVELS.map((level) => (
+                <p className={`foreground-text-line foreground-text-${level}`} key={level}>
+                  <strong>{labelize(level)}</strong>
+                  <span>
+                    This line uses the {theme.key === "light" ? "text-dark" : "text-light"} {level} primitive
+                    on a normal app surface.
+                  </span>
+                </p>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 

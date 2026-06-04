@@ -39,7 +39,9 @@ p {
 
 .app-shell,
 .theme-sample,
-.semantic-panel {
+.semantic-panel,
+.foreground-text-card,
+.text-treatment-card {
   --app-text-primary: var(--ds-text-primary, #101820);
   --app-text-secondary: var(--ds-text-secondary, #536170);
   --app-border: var(--ds-border-default, color-mix(in oklch, var(--ds-surface-1, #eef2f7), #111827 18%));
@@ -55,7 +57,9 @@ p {
 
 .app-shell[data-theme-v2="dark"],
 .theme-sample[data-theme-v2="dark"],
-.semantic-panel[data-theme-v2="dark"] {
+.semantic-panel[data-theme-v2="dark"],
+.foreground-text-card[data-theme-v2="dark"],
+.text-treatment-card[data-theme-v2="dark"] {
   --app-text-primary: var(--ds-text-primary, #f6f8fb);
   --app-text-secondary: var(--ds-text-secondary, #b7c0cc);
   --app-border: var(--ds-border-default, color-mix(in oklch, var(--ds-surface-1, #111827), #ffffff 18%));
@@ -163,6 +167,7 @@ h3 {
 .theme-grid,
 .semantic-layout,
 .ramp-stack,
+.foreground-text-review,
 .text-treatment-review,
 .assertion-groups,
 .assertion-summary-row {
@@ -199,6 +204,7 @@ h3 {
 .ramp-panel,
 .semantic-panel,
 .theme-sample,
+.foreground-text-card,
 .text-treatment-card,
 .notice {
   border: 1px solid var(--app-border);
@@ -633,6 +639,90 @@ h3 {
   color: var(--ds-text-muted);
 }
 
+.foreground-text-review {
+  gap: 14px;
+}
+
+.foreground-text-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.foreground-text-card {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  background: var(--ds-surface-1);
+}
+
+.foreground-text-surface {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--ds-border-subtle);
+  border-radius: 7px;
+  background: var(--ds-surface-2);
+}
+
+.foreground-text-line {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--ds-border-subtle);
+  border-radius: 6px;
+  background: var(--ds-surface-1);
+  line-height: 1.3;
+}
+
+.foreground-text-line strong,
+.foreground-text-line span {
+  min-width: 0;
+}
+
+.foreground-text-card[data-theme-v2="light"] .foreground-text-strong {
+  color: var(--ds-text-dark-strong);
+}
+
+.foreground-text-card[data-theme-v2="light"] .foreground-text-primary {
+  color: var(--ds-text-dark-primary);
+}
+
+.foreground-text-card[data-theme-v2="light"] .foreground-text-secondary {
+  color: var(--ds-text-dark-secondary);
+}
+
+.foreground-text-card[data-theme-v2="light"] .foreground-text-muted {
+  color: var(--ds-text-dark-muted);
+}
+
+.foreground-text-card[data-theme-v2="light"] .foreground-text-disabled {
+  color: var(--ds-text-dark-disabled);
+}
+
+.foreground-text-card[data-theme-v2="dark"] .foreground-text-strong {
+  color: var(--ds-text-light-strong);
+}
+
+.foreground-text-card[data-theme-v2="dark"] .foreground-text-primary {
+  color: var(--ds-text-light-primary);
+}
+
+.foreground-text-card[data-theme-v2="dark"] .foreground-text-secondary {
+  color: var(--ds-text-light-secondary);
+}
+
+.foreground-text-card[data-theme-v2="dark"] .foreground-text-muted {
+  color: var(--ds-text-light-muted);
+}
+
+.foreground-text-card[data-theme-v2="dark"] .foreground-text-disabled {
+  color: var(--ds-text-light-disabled);
+}
+
 .state-chip {
   display: grid;
   min-height: 46px;
@@ -877,6 +967,7 @@ h3 {
   .preset-grid,
   .metric-grid,
   .theme-grid,
+  .foreground-text-grid,
   .text-treatment-grid,
   .semantic-layout,
   .css-output-grid,
@@ -933,6 +1024,7 @@ h3 {
   .preset-grid,
   .metric-grid,
   .theme-grid,
+  .foreground-text-grid,
   .text-treatment-grid,
   .semantic-layout,
   .semantic-grid,
