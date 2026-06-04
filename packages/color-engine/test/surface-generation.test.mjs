@@ -263,6 +263,16 @@ test("status usage ramps separate soft containers from solid emphasis for every 
     successSeed: "oklch(0.52 0.13 154)",
     infoSeed: "oklch(0.55 0.12 240)",
   });
+  const allowedLightSolidText = new Set([
+    "var(--ds-surface-light-1)",
+    "var(--ds-neutral-light-4)",
+    "var(--ds-neutral-dark-1)",
+  ]);
+  const allowedDarkSolidText = new Set([
+    "var(--ds-surface-dark-1)",
+    "var(--ds-neutral-dark-1)",
+    "var(--ds-neutral-light-4)",
+  ]);
 
   for (const intent of statusIntents) {
     const lightSoft = output.primitives[`${intent}-light-soft`];
@@ -274,9 +284,54 @@ test("status usage ramps separate soft containers from solid emphasis for every 
     assert.ok((lightSoft[0]?.oklch.c ?? 1) < (lightSolid[0]?.oklch.c ?? 0), `${intent} light soft should be lower chroma than solid`);
     assert.ok((darkSolid[1]?.oklch.l ?? 0) > (darkSoft[1]?.oklch.l ?? 1), `${intent} dark solid should be brighter than soft`);
     assert.ok((darkSolid[1]?.oklch.c ?? 0) > (darkSoft[1]?.oklch.c ?? 1), `${intent} dark solid should be higher chroma than soft`);
-    assert.equal(output.semantics.light[`${intent}-solid-text`], "var(--ds-surface-light-1)");
-    assert.equal(output.semantics.dark[`${intent}-solid-text`], "var(--ds-surface-dark-1)");
+    assert.equal(allowedLightSolidText.has(output.semantics.light[`${intent}-solid-text`]), true);
+    assert.equal(allowedDarkSolidText.has(output.semantics.dark[`${intent}-solid-text`]), true);
   }
+
+  assert.deepEqual(
+    output.assertions.results.filter((result) => result.role === "status-solid" && !result.passed),
+    [],
+  );
+});
+
+test("status solid text preserves intended foregrounds when they pass", () => {
+  const output = createColorEngineTheme({
+    dangerSeed: "oklch(0.54 0.16 30)",
+    successSeed: "oklch(0.52 0.13 154)",
+    infoSeed: "oklch(0.55 0.12 240)",
+  });
+
+  assert.equal(output.semantics.light["danger-solid-text"], "var(--ds-surface-light-1)");
+  assert.equal(output.semantics.light["success-solid-text"], "var(--ds-surface-light-1)");
+  assert.equal(output.semantics.light["info-solid-text"], "var(--ds-surface-light-1)");
+  assert.equal(output.semantics.dark["danger-solid-text"], "var(--ds-surface-dark-1)");
+  assert.equal(output.semantics.dark["success-solid-text"], "var(--ds-surface-dark-1)");
+  assert.equal(output.semantics.dark["info-solid-text"], "var(--ds-surface-dark-1)");
+});
+
+test("status solid text resolves to readable approved candidates when fixed polarity fails", () => {
+  const warning = createColorEngineTheme({ warningSeed: "#e3bb1d" });
+  const darkBlue = createColorEngineTheme({
+    infoSeed: "#064276",
+    infoSeedPolicy: "anchored",
+  });
+
+  assert.equal(warning.input.warningSeed, "#e3bb1d");
+  assert.equal(warning.semantics.light["warning-solid-text"], "var(--ds-neutral-light-4)");
+  assert.deepEqual(
+    warning.assertions.results.filter((result) => result.role === "status-solid" && !result.passed),
+    [],
+  );
+  assert.equal(darkBlue.semantics.dark["info-solid-text"], "var(--ds-neutral-light-4)");
+  assert.deepEqual(
+    darkBlue.assertions.results.filter((result) =>
+      result.theme === "dark" &&
+      result.role === "status-solid" &&
+      result.id.includes("info") &&
+      !result.passed
+    ),
+    [],
+  );
 });
 
 test("warning status uses softer chroma than danger at matching solid seed chroma", () => {

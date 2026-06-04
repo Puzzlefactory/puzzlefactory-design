@@ -1,5 +1,9 @@
-import { createContrastAssertionReport } from "./assertions.js";
+import {
+  CONTRAST_ASSERTION_THRESHOLDS,
+  createContrastAssertionReport,
+} from "./assertions.js";
 import type { ContrastAssertionReport as ContrastAssertionReportType } from "./assertions.js";
+import { calculateApcaLcFromOklch } from "./apca.js";
 
 export {
   CONTRAST_ASSERTION_THRESHOLDS,
@@ -51,6 +55,8 @@ export type StatusIntent = "danger" | "warning" | "success" | "info";
 
 export type StatusUsageFamilyName =
   `${StatusIntent}-${"light" | "dark"}-${"soft" | "solid"}`;
+
+type SolidContrastProfile = "ui" | "status";
 
 export type SeedPrimitiveFamilyName =
   | "primary-seed"
@@ -393,7 +399,7 @@ const DEFAULT_INPUT = {
   primarySeedPolicy: "balanced",
   dangerSeed: "#c62828",
   dangerSeedPolicy: "balanced",
-  warningSeed: "#b26a00",
+  warningSeed: "#e3bb1d",
   warningSeedPolicy: "balanced",
   successSeed: "#16823a",
   successSeedPolicy: "balanced",
@@ -488,7 +494,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     "info-seed": createSeedPrimitiveFamily("info-seed", statusSeeds.info),
     ...status,
   };
-  const semantics = createSemantics(resolvedInput.namespace);
+  const semantics = createSemantics(resolvedInput.namespace, primitives);
   const assertions = createContrastAssertionReport({
     namespace: resolvedInput.namespace,
     primitives,
@@ -716,7 +722,7 @@ function createPrimaryUsageFamilies(
     "primary-dark-solid": createUsageRamp({
       family: "primary-dark-solid",
       hue,
-      lightness: createSolidLightness(seed, darkSolidBase, "dark", policy),
+      lightness: createSolidLightness(seed, darkSolidBase, "dark", policy, "ui"),
       chroma: createSolidChroma(seed, chroma, "dark", policy),
       description: "primary dark solid",
       ...anchoredUsageBounds(policy),
@@ -747,7 +753,7 @@ function createStatusIntentFamilies(
   const hue = normalizeHue(seed.h);
   const isWarning = intent === "warning";
   const chroma = clampNumber(seed.c, isWarning ? 0.045 : 0.06, isWarning ? 0.145 : 0.18);
-  const lightSolidBase = clampNumber(seed.l + (isWarning ? 0.02 : 0), isWarning ? 0.5 : 0.42, isWarning ? 0.68 : 0.6);
+  const lightSolidBase = clampNumber(seed.l + (isWarning ? 0.02 : 0), isWarning ? 0.5 : 0.42, isWarning ? 0.61 : 0.6);
   const darkSolidBase = clampNumber(seed.l + (isWarning ? 0.22 : 0.2), isWarning ? 0.7 : 0.66, isWarning ? 0.82 : 0.78);
   const lightSoftChroma: readonly [number, number, number, number] = isWarning
     ? [chroma * 0.12, chroma * 0.17, chroma * 0.24, chroma * 0.34]
@@ -782,7 +788,7 @@ function createStatusIntentFamilies(
     [`${intent}-dark-solid`]: createUsageRamp({
       family: `${intent}-dark-solid`,
       hue,
-      lightness: createSolidLightness(seed, darkSolidBase, "dark", policy),
+      lightness: createSolidLightness(seed, darkSolidBase, "dark", policy, "status"),
       chroma: createSolidChroma(seed, chroma, "dark", policy, 0.72),
       description: `${intent} dark solid`,
       ...anchoredUsageBounds(policy),
@@ -795,6 +801,7 @@ function createSolidLightness(
   balancedBase: number,
   theme: SurfaceTheme,
   policy: SeedPolicy,
+  profile: SolidContrastProfile = "ui",
 ): readonly [number, number, number, number] {
   if (policy === "anchored") {
     const lighterDelta = theme === "light" ? 0.055 : 0.045;
@@ -809,6 +816,15 @@ function createSolidLightness(
     ];
   }
 
+  if (theme === "dark" && profile === "status") {
+    return [
+      balancedBase + 0.125,
+      balancedBase + 0.1,
+      balancedBase + 0.095,
+      balancedBase + 0.035,
+    ];
+  }
+
   if (theme === "light") {
     return [
       balancedBase + 0.055,
@@ -819,10 +835,10 @@ function createSolidLightness(
   }
 
   return [
+    balancedBase + 0.075,
     balancedBase + 0.045,
-    balancedBase,
-    balancedBase - 0.055,
-    balancedBase - 0.105,
+    balancedBase + 0.01,
+    balancedBase - 0.035,
   ];
 }
 
@@ -899,19 +915,20 @@ function createUsageRamp(options: {
 
 function createSemantics(
   namespace: string,
+  primitives: PrimitiveSurfaceOutput,
 ): ColorEngineOutput["semantics"] {
   return {
     light: {
       ...createNeutralSemantics(namespace, "light"),
       ...createSurfaceSemantics(namespace, "surface-light"),
       ...createPrimarySemantics(namespace, "light"),
-      ...createStatusSemantics(namespace, "light"),
+      ...createStatusSemantics(namespace, "light", primitives),
     },
     dark: {
       ...createNeutralSemantics(namespace, "dark"),
       ...createSurfaceSemantics(namespace, "surface-dark"),
       ...createPrimarySemantics(namespace, "dark"),
-      ...createStatusSemantics(namespace, "dark"),
+      ...createStatusSemantics(namespace, "dark", primitives),
     },
   };
 }
@@ -1006,13 +1023,20 @@ function createPrimarySemantics(
 function createStatusSemantics(
   namespace: string,
   theme: SurfaceTheme,
+  primitives: PrimitiveSurfaceOutput,
 ): Readonly<Record<StatusSemanticTokenName, `var(--${string})`>> {
   const entries: [StatusSemanticTokenName, `var(--${string})`][] = [];
   const themePrefix = theme === "light" ? "light" : "dark";
 
   for (const intent of STATUS_INTENTS) {
     const softFamily = `${intent}-${themePrefix}-soft`;
-    const solidFamily = `${intent}-${themePrefix}-solid`;
+    const solidFamily = `${intent}-${themePrefix}-solid` as const;
+    const solidTextToken = resolveStatusSolidTextToken({
+      intent,
+      primitives,
+      solidFamily,
+      theme,
+    });
 
     entries.push([`${intent}-soft-bg`, cssVar(namespace, `${softFamily}-1`)]);
     entries.push([`${intent}-soft-bg-hover`, cssVar(namespace, `${softFamily}-2`)]);
@@ -1021,10 +1045,74 @@ function createStatusSemantics(
     entries.push([`${intent}-solid-bg`, cssVar(namespace, `${solidFamily}-2`)]);
     entries.push([`${intent}-solid-bg-hover`, cssVar(namespace, `${solidFamily}-${theme === "light" ? 3 : 1}`)]);
     entries.push([`${intent}-solid-bg-pressed`, cssVar(namespace, `${solidFamily}-${theme === "light" ? 4 : 3}`)]);
-    entries.push([`${intent}-solid-text`, cssVar(namespace, theme === "light" ? "surface-light-1" : "surface-dark-1")]);
+    entries.push([`${intent}-solid-text`, cssVar(namespace, solidTextToken)]);
   }
 
   return Object.fromEntries(entries) as Record<StatusSemanticTokenName, `var(--${string})`>;
+}
+
+function resolveStatusSolidTextToken(options: {
+  readonly intent: StatusIntent;
+  readonly primitives: PrimitiveSurfaceOutput;
+  readonly solidFamily: `${StatusIntent}-${"light" | "dark"}-solid`;
+  readonly theme: SurfaceTheme;
+}): string {
+  const intended = options.theme === "light" ? "surface-light-1" : "surface-dark-1";
+  const candidates = options.theme === "light"
+    ? [intended, "neutral-light-4", "neutral-dark-1"] as const
+    : [intended, "neutral-dark-1", "neutral-light-4"] as const;
+  const backgrounds = getStatusSolidBackgroundTokenNames(options.solidFamily, options.theme)
+    .map((name) => findPrimitiveToken(options.primitives, name));
+  const threshold = CONTRAST_ASSERTION_THRESHOLDS["status-solid"];
+  const scores = candidates.map((name, index) => {
+    const token = findPrimitiveToken(options.primitives, name);
+    const contrasts = backgrounds.map((background) =>
+      Math.abs(calculateApcaLcFromOklch(token.oklch, background.oklch)),
+    );
+
+    return {
+      name,
+      index,
+      minContrast: Math.min(...contrasts),
+      totalContrast: contrasts.reduce((total, contrast) => total + contrast, 0),
+    };
+  });
+  const intendedScore = scores.find((score) => score.name === intended);
+
+  if (intendedScore && intendedScore.minContrast >= threshold) {
+    return intended;
+  }
+
+  return [...scores]
+    .sort((a, b) =>
+      (b.minContrast - a.minContrast) ||
+      (b.totalContrast - a.totalContrast) ||
+      (a.index - b.index),
+    )[0]?.name ?? intended;
+}
+
+function getStatusSolidBackgroundTokenNames(
+  solidFamily: `${StatusIntent}-${"light" | "dark"}-solid`,
+  theme: SurfaceTheme,
+): readonly string[] {
+  return theme === "light"
+    ? [`${solidFamily}-2`, `${solidFamily}-3`, `${solidFamily}-4`]
+    : [`${solidFamily}-2`, `${solidFamily}-1`, `${solidFamily}-3`];
+}
+
+function findPrimitiveToken(
+  primitives: PrimitiveSurfaceOutput,
+  name: string,
+): ColorToken {
+  const token = Object.values(primitives)
+    .flatMap((tokens) => [...tokens])
+    .find((candidate) => candidate.name === name);
+
+  if (!token) {
+    throw new Error(`Could not resolve primitive token ${name}.`);
+  }
+
+  return token;
 }
 
 function createCssOutput(

@@ -162,7 +162,9 @@ h3 {
 .metric-grid,
 .theme-grid,
 .semantic-layout,
-.ramp-stack {
+.ramp-stack,
+.assertion-groups,
+.assertion-summary-row {
   display: grid;
   gap: 14px;
 }
@@ -174,6 +176,10 @@ h3 {
 .control-grid,
 .metric-grid {
   grid-template-columns: repeat(4, minmax(170px, 1fr));
+}
+
+.assertion-summary-row {
+  grid-template-columns: repeat(7, minmax(140px, 1fr));
 }
 
 .preset-grid {
@@ -292,13 +298,15 @@ h3 {
 .ramp-panel,
 .semantic-panel,
 .theme-sample,
-.css-output {
+.css-output,
+.assertion-panel {
   display: grid;
   gap: 16px;
   padding: 16px;
 }
 
-.css-output {
+.css-output,
+.assertion-panel {
   border: 1px solid var(--app-border);
   border-radius: 8px;
   background: var(--ds-surface-2, #f2f5f9);
@@ -398,6 +406,106 @@ h3 {
 
 .css-output-card strong {
   font-size: 0.9rem;
+}
+
+.assertion-groups {
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+}
+
+.assertion-failure-panel {
+  border-color: var(--app-border-strong);
+}
+
+.assertion-policy-panel {
+  border-color: var(--app-border-strong);
+}
+
+.assertion-policy-panel p,
+.assertion-note {
+  color: var(--app-text-secondary);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.policy-chip-row {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.policy-chip {
+  border: 1px solid var(--app-border-strong);
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: var(--ds-surface-1, #eef2f7);
+  color: var(--app-text-primary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.assertion-list {
+  display: grid;
+  gap: 8px;
+}
+
+.assertion-row {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  background: var(--ds-surface-1, #eef2f7);
+}
+
+.assertion-row-fail {
+  border-color: var(--app-border-strong);
+  background: var(--ds-surface-1-selected, var(--ds-surface-1, #eef2f7));
+}
+
+.assertion-row-main,
+.assertion-row-metrics,
+.assertion-row-tokens {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.assertion-row-main strong {
+  overflow-wrap: anywhere;
+  font-size: 0.9rem;
+}
+
+.assertion-status,
+.assertion-row-metrics span {
+  border: 1px solid var(--app-border);
+  border-radius: 999px;
+  padding: 3px 7px;
+  background: var(--ds-surface-2, #f2f5f9);
+  color: var(--app-text-secondary);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.assertion-row-fail .assertion-status {
+  border-color: var(--app-border-strong);
+  color: var(--app-text-primary);
+}
+
+.assertion-row-tokens code {
+  color: var(--app-text-secondary);
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
+.assertion-empty {
+  color: var(--app-text-secondary);
+  line-height: 1.45;
 }
 
 .semantic-grid {
@@ -674,7 +782,9 @@ h3 {
   .metric-grid,
   .theme-grid,
   .semantic-layout,
-  .css-output-grid {
+  .css-output-grid,
+  .assertion-groups,
+  .assertion-summary-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -729,6 +839,8 @@ h3 {
   .semantic-layout,
   .semantic-grid,
   .css-output-grid,
+  .assertion-groups,
+  .assertion-summary-row,
   .state-row,
   .status-demo {
     grid-template-columns: 1fr;

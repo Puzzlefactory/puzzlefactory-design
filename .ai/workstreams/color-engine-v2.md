@@ -98,13 +98,22 @@ CE2-08B is implemented. The active v2 package now returns `output.assertions`, a
 
 The first assertion set covers 64 pairs across light and dark themes: primary/secondary/muted text on surfaces, primary action text on action states, control text on control background, status soft text on soft backgrounds, and status solid text on solid states. Border/chrome assertions remain excluded. The default report currently surfaces required failures, mostly around dark status solid states plus one dark primary pressed pair; those are evidence for CE2-08C review and later CE2-09 tuning, not changes made in CE2-08B. No kitchen-sink assertion report, enforcement, auto-tuning, token expansion, or component work was added.
 
-Independent sub-agent review was not performed for CE2-01 through CE2-08B because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
+CE2-08C is implemented. Kitchen-sink now has an `/assertions` route and sidebar/overview navigation entry. The view consumes `output.assertions` and renders summary counts, algorithm/threshold metadata, a failure-first section, and grouped results by theme and assertion role. Rows show pass/fail, semantic foreground/background names, signed APCA Lc, absolute APCA Lc, threshold, severity, and resolved primitive token names. The route is diagnostic only; no threshold, pair, recipe, enforcement, or auto-tuning changes were made. Browser smoke verification at `http://127.0.0.1:5173/assertions` showed the expected 64 pairs, 56 passed, 8 required failures, and 12 grouped panels with no horizontal overflow at the tested desktop viewport.
+
+CE2-09A is implemented. Balanced dark primary/status solid ramps were tuned so default dark solid required assertions pass. Primary dark solid uses an internal `ui` contrast profile; status dark solid uses a brighter internal `status` contrast profile. Anchored policy behavior, assertion pairs, thresholds, soft ramps, light-mode recipes, token package output, and component work were not changed. Focused tests now cover default dark solid required assertions plus the Kitchen Sink seed defaults. Browser smoke verification at `http://127.0.0.1:5173/assertions` showed 64 pairs, 64 passed, 0 required failures, and 0 diagnostic failures for Kitchen Sink defaults; `/themes` rendered the light/dark cards without horizontal overflow at the tested desktop viewport. Package defaults still have one known light warning solid required failure, `light:warning-solid-text:on:warning-solid-bg`, which is outside CE2-09A scope.
+
+CE2-09B is implemented. Kitchen Sink now shows an anchored policy diagnostic panel only when primary or status policies are set to `anchored`. Failed assertion rows related to anchored primary/status policies include a note that the failure is the contrast cost of preserving the seed rather than silently adapting it. This slice did not change generation recipes, assertion thresholds, assertion pairs, anchored behavior, package APIs, token output, or component work. Browser smoke verified that default balanced output has no anchored diagnostic panel, while a light anchored primary seed (`#F8D7FF`) shows the panel, a primary policy chip, linked failures, per-row anchored notes, no horizontal overflow, and no browser console errors.
+
+CE2-09C is implemented. Status solid text semantics now resolve from a small approved foreground candidate set after primitives are generated. The resolver evaluates APCA coverage across rest, hover, and pressed status solid backgrounds; it preserves the existing intended token when it passes, and otherwise chooses the strongest approved candidate. This preserves cases like ordinary danger/success/info using the original surface text, while allowing a dark-blue anchored status to use light text and the default gold warning to use a lighter neutral text. No Colorjs.io dependency was added, and APCA thresholds/pairs were unchanged. The default warning seed changed from `#b26a00` to `#e3bb1d`, and balanced warning light solid was capped slightly darker so the default remains gold/yellow while passing status solid assertions. Kitchen Sink defaults now show 64 passed, 0 required failures, and 0 diagnostic failures. Browser smoke verified `/assertions` and `/themes` at the default desktop viewport with no horizontal overflow; theme preview showed light warning solid as darker gold with light text and dark warning solid as pale gold with dark text.
+
+CE2-09D is implemented. The package now has a representative assertion matrix that covers balanced defaults, quiet green/gold, layered blue/dark-blue info, high-separation purple/saturated status, legacy brown warning, and anchored tradeoff cases. Balanced matrix cases must have zero required failures. Anchored matrix cases assert explicit expected failures for light anchored primary, dark-blue anchored info soft text, and anchored gold warning soft/pressed states. The matrix exposed two small balanced edge failures, so warning light solid was capped slightly darker and dark status solid level 3 was brightened slightly; these were scoped tuning changes, not broad auto-tuning. Kitchen Sink default assertions still show 64 passed, 0 required failures, and 0 diagnostic failures. Browser smoke verified `/assertions` and `/themes` with no horizontal overflow and no console warnings/errors.
+
+Independent sub-agent review was not performed for CE2-01 through CE2-09D because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
 
 ## Next Actions
 
-- Pause and review CE2-08B assertion pairs and thresholds before continuing.
-- If CE2-08B is acceptable, proceed to `CE2-08C`: kitchen-sink assertion report rendering.
-- After `CE2-08C`, review kitchen-sink report output before planning tuning.
+- Review the CE2-09D matrix and current Kitchen Sink output before continuing.
+- If CE2-09D is acceptable, proceed to `CE2-10`: v2 CSS/token output stabilization.
 - Treat `CE2-09` and later as strategic placeholders. Reorder or revise them if CE2-08 visual/assertion feedback exposes a more important issue.
 
 ## Seed Policy Plan
@@ -122,6 +131,23 @@ Potential policies:
 - `anchored`: preserve the exact seed as an explicit primitive and likely as the main/rest solid token, then generate adjacent hover/pressed/supporting steps around it.
 - `strict`: possible future mode. Preserve the exact seed as a named semantic value and limit adjustment to explicitly derived states. Do not implement until a concrete need appears.
 
+Future primary/identity direction:
+
+- Do not equate `primary` with brand. A brand/identity color can be bright, pale, or intentionally eye-catching, which often makes it poor as repeated UI chrome or a solid action fill.
+- Add a future primary seed mode that distinguishes the seed's job:
+  - `action`: the seed is expected to be usable near the solid action color.
+  - `identity`: the seed is the recognizable identity color; preserve it in accent/soft/tint roles and derive usable action colors around it.
+  - `anchored`: the exact seed must occupy the solid role, and failures remain explicit.
+- This should solve light or vivid identity colors without forcing them into solid button backgrounds and without adding slider-heavy controls.
+
+Future seed-classification exploration:
+
+- Consider accepting a small pool of identity/input seeds without requiring the user to assign each seed to a role up front.
+- Evaluate each seed against role requirements before semantic assignment: solid action fit, accent/highlight fit, soft/tint fit, status fit, contrast viability, and need for a derived companion color.
+- The engine could classify seeds into the roles they best fit, then derive missing role colors as needed. For example, a dark green may become an action candidate, a pale lavender may become an identity tint/accent candidate, and a gold may become a warning/accent candidate with resolved foreground semantics.
+- Kitchen Sink must make this classification visible and honest: show which seed was used directly, which roles were derived, and why a seed was not used as a solid action fill.
+- Do not implement this until the current explicit-seed API, CSS output, and preset story are stable.
+
 Kitchen-sink should make seed policy visible when implemented. Primitive ramps should clearly show whether the seed was adapted or anchored, so the generator feels honest during visual review.
 
 ## Strategic Roadmap
@@ -135,9 +161,12 @@ This roadmap is intentionally provisional. Kitchen-sink visual review and assert
    - Stop before assertion enforcement, auto-tuning, token package expansion, and component packages.
 
 2. `CE2-09`: Tune from assertion and visual feedback.
-   - Use CE2-08 report plus kitchen-sink review to tune only the generation recipes or semantic pair mappings that fail or feel visibly weak.
-   - Keep changes targeted; do not add new color families unless a specific assertion/visual gap proves a missing UI job.
-   - Stop before hard enforcement and downstream token packages.
+   - Execute as focused sub-slices, not one broad tuning pass.
+   - `CE2-09A`: Tune balanced dark primary/status solid ramps so default required dark solid assertions pass. Focus on `primary-action-*` and `<status>-solid-*` failures. Do not change thresholds, assertion pairs, anchored policy behavior, or unrelated families.
+   - `CE2-09B`: Review anchored policy diagnostics. Exact seed preservation can legitimately create failures; report those clearly rather than silently adapting anchored seeds. Add clearer kitchen-sink messaging only if needed.
+   - `CE2-09C`: Review remaining soft/status/body assertion and visual weak spots. Tune only when failures or visible weakness justify it; muted text remains diagnostic unless intentionally promoted. Include narrow status solid foreground resolution if it resolves real generated-background failures: choose from approved semantic foreground candidates based on APCA coverage across rest/hover/pressed, preserve the intended token when it already passes, and expose the selected token in the existing assertion/Kitchen Sink output. Do not expand this into broad auto-tuning.
+   - `CE2-09D`: Add a small representative preset/seed regression matrix so tuning is not only optimized for the default green/status colors.
+   - Stop before hard enforcement, broad auto-tuning, downstream token package expansion, and new color families without a proven UI job.
 
 3. `CE2-10`: CSS/token output stabilization for v2.
    - Decide whether v2 CSS output remains in `@puzzlefactory/color-engine`, moves into `@puzzlefactory/tokens`, or is exposed through a thin adapter.
@@ -178,7 +207,11 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-08A` | APCA calculation port | Port/adapt v1 APCA calculation into v2 and verify against known fixtures. No assertion model or UI yet. | Assertion pair model, kitchen-sink report, enforcement |
 | `CE2-08B` | Assertion pair model | Define semantic text/background assertion pairs, thresholds, and diagnostic report output from `createColorEngineTheme`. | Kitchen-sink report rendering, enforcement, auto-tuning |
 | `CE2-08C` | Kitchen-sink assertion report | Render CE2-08B assertion output in kitchen-sink for light/dark visual review. | Enforcement, auto-tuning, recipe tuning |
-| `CE2-09` | Assertion-driven tuning | Tune recipes or semantic pair mappings based on CE2-08 report and kitchen-sink visual review. | New color families without proven UI job, hard enforcement, token package expansion |
+| `CE2-09` | Assertion-driven tuning milestone | Strategic milestone covering assertion-informed tuning. Execute as `CE2-09A` through `CE2-09D`. | New color families without proven UI job, hard enforcement, token package expansion |
+| `CE2-09A` | Dark solid required-pair tuning | Tune balanced dark primary/status solid ramps so default required dark solid assertions pass while preserving visual quality. | Threshold changes, assertion pair changes, anchored policy behavior, unrelated family tuning |
+| `CE2-09B` | Anchored policy diagnostics | Review anchored primary/status failures and make seed-preservation tradeoffs clear in diagnostics or kitchen-sink messaging. | Silently adapting anchored seeds, broad auto-tuning, threshold changes |
+| `CE2-09C` | Soft/status/body review pass | Review remaining soft, status, body, secondary, and muted assertion/visual weak spots; tune only where evidence justifies it. May include narrow status solid foreground resolution from an approved candidate set when generated backgrounds prove fixed text polarity is too rigid. | Promoting muted failures without design decision, broad recipe rewrites, broad auto-tuning, state-delta assertions |
+| `CE2-09D` | Preset and seed regression matrix | Run/report assertions across a small representative set of seeds and presets so tuning is not default-only. | Large theme marketplace, exhaustive seed search, hard enforcement |
 | `CE2-10` | V2 CSS/token output stabilization | Stabilize v2 CSS output boundaries and decide how `@puzzlefactory/tokens` should consume or wrap v2 output. | Component-library implementation |
 | `CE2-11` | Presets and example themes | Add a small set of credible OKLCH theme presets and kitchen-sink preset comparison. | Slider-heavy controls, broad theme marketplace |
 | `CE2-12` | Consumer integration contract | Define app consumption, generated CSS loading, theme attributes, and build-once/runtime usage patterns. | Full docs app, component-library implementation |

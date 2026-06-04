@@ -14,7 +14,7 @@
 
 ### `@puzzlefactory/color-engine`
 
-Status: v2 neutral/surface/chrome foundation with calibrated surface presets, primary usage ramps, status usage ramps, per-family seed policy, stable semantic aliases, CSS output, APCA calculation, and APCA assertion diagnostics. Target runtime is a TypeScript library. Current exports define the public API type surface for `createColorEngineTheme(input): ColorEngineOutput`, `parseColorSeed`, `ColorEngineValidationError`, surface preset constants, chrome level constants, seed policy constants, semantic token name constants, structured `cssOutput`, APCA constants/calculation helpers, contrast assertion thresholds/report types, and neutral/surface/chrome/primary/status output types. Surface presets use separate light/dark step deltas and separate light/dark state deltas. Chrome generation emits compact light/dark `subtle`, `default`, and `strong` primitives derived from existing surface/neutral inputs and preset strength. Primary generation uses an explicit `primarySeed` and emits compact light/dark soft and solid usage families. Status generation uses explicit `dangerSeed`, `warningSeed`, `successSeed`, and `infoSeed` values and emits compact light/dark soft and solid usage families per status intent. Primary and status seed policies support `balanced` and `anchored`; `balanced` remains the default, while `anchored` preserves the parsed seed as solid level 2 and as a single-token seed primitive. APCA assertion output is diagnostic only; enforcement, auto-tuning, and kitchen-sink report rendering are deferred to later CE2 slices.
+Status: v2 neutral/surface/chrome foundation with calibrated surface presets, primary usage ramps, status usage ramps, per-family seed policy, stable semantic aliases, CSS output, APCA calculation, and APCA assertion diagnostics. Target runtime is a TypeScript library. Current exports define the public API type surface for `createColorEngineTheme(input): ColorEngineOutput`, `parseColorSeed`, `ColorEngineValidationError`, surface preset constants, chrome level constants, seed policy constants, semantic token name constants, structured `cssOutput`, APCA constants/calculation helpers, contrast assertion thresholds/report types, and neutral/surface/chrome/primary/status output types. Surface presets use separate light/dark step deltas and separate light/dark state deltas. Chrome generation emits compact light/dark `subtle`, `default`, and `strong` primitives derived from existing surface/neutral inputs and preset strength. Primary generation uses an explicit `primarySeed` and emits compact light/dark soft and solid usage families. Status generation uses explicit `dangerSeed`, `warningSeed`, `successSeed`, and `infoSeed` values and emits compact light/dark soft and solid usage families per status intent; the default warning seed is `#e3bb1d`. Primary and status seed policies support `balanced` and `anchored`; `balanced` remains the default, while `anchored` preserves the parsed seed as solid level 2 and as a single-token seed primitive. Balanced dark solid generation uses separate internal `ui` and `status` contrast profiles so default dark primary/status solid required assertions pass without changing thresholds, pairs, or anchored behavior. Status solid text semantics resolve from a small approved foreground candidate set using APCA coverage across rest/hover/pressed backgrounds, preserving the intended text token when it passes. Package tests include a representative balanced preset/seed matrix that must pass required assertions and an anchored matrix with explicit expected seed-preservation failures. APCA assertion output is diagnostic only; enforcement and broad auto-tuning remain deferred to later CE2 slices.
 
 Runtime dependencies must remain zero.
 
@@ -22,7 +22,7 @@ Build/test scripts:
 
 - `build`: `tsc -p tsconfig.json`
 - `typecheck`: `tsc -p tsconfig.json --noEmit`
-- `test`: builds `dist`, then runs TypeScript API-shape checks plus Node test runner package-boundary, surface/chrome/primary/status generation, seed policy, semantic alias, and CSS output checks
+- `test`: builds `dist`, then runs TypeScript API-shape checks plus Node test runner package-boundary, surface/chrome/primary/status generation, seed policy, semantic alias, CSS output, APCA assertion, and representative preset/seed matrix checks
 
 #### Color Space
 
@@ -71,12 +71,12 @@ Not yet decided. Deferred until the color engine layer is complete. Web Componen
 
 ### `apps/kitchen-sink`
 
-Status: React + Vite + React Router 7 verification shell wired to v2 neutral/surface/chrome/primary/status color-engine output, seed policy, and generated semantic aliases.
+Status: React + Vite + React Router 7 verification shell wired to v2 neutral/surface/chrome/primary/status color-engine output, seed policy, generated semantic aliases, and APCA assertion diagnostics.
 
 - Package name: `@puzzlefactory/kitchen-sink`
 - Runtime stack: React 19, Vite 8, React Router 7
 - Purpose: visual verification surface for the color engine and later token/theme/component states
-- Current behavior: routed verification tool that consumes v2 `@puzzlefactory/color-engine`, injects generated CSS directly, switches `data-theme-v2`, and displays neutral/surface/chrome/primary/status seed controls, per-family seed policy controls, compact primitive ramps with seed anchor markers, semantic text/chrome/surface/primary/status roles, generated CSS output sections, light/dark nested surface previews, primary action/link/focus previews, and status soft/solid cards
+- Current behavior: routed verification tool that consumes v2 `@puzzlefactory/color-engine`, injects generated CSS directly, switches `data-theme-v2`, and displays neutral/surface/chrome/primary/status seed controls, per-family seed policy controls, compact primitive ramps with seed anchor markers, semantic text/chrome/surface/primary/status roles, generated CSS output sections, light/dark nested surface previews, primary action/link/focus previews, status soft/solid cards, and an APCA assertion report grouped by theme and role. Current Kitchen Sink defaults use warning seed `#e3bb1d` and show 64/64 assertion pairs passing after CE2-09C. When anchored policy is active, the assertion report identifies linked failures as seed-preservation tradeoffs rather than silent tuning opportunities.
 
 ### `apps/docs`
 

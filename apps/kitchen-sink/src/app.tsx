@@ -13,6 +13,8 @@ import {
   type ColorEngineInput,
   type ColorEngineOutput,
   type ColorToken,
+  type ContrastAssertionRole,
+  type ResolvedContrastAssertion,
   type PrimitiveFamilyName,
   type SeedPolicy,
   type SemanticTokenName,
@@ -29,6 +31,7 @@ const navItems = [
   { to: "/primitives", label: "Primitives" },
   { to: "/semantic", label: "Semantic" },
   { to: "/themes", label: "Themes" },
+  { to: "/assertions", label: "Assertions" },
 ] as const;
 
 const primitiveFamilies = [
@@ -77,6 +80,24 @@ const themeOptions = [
   { key: "dark", label: "Dark" },
 ] as const satisfies readonly { readonly key: SurfaceTheme; readonly label: string }[];
 
+const assertionRoles = [
+  "body",
+  "secondary",
+  "muted",
+  "ui",
+  "status-soft",
+  "status-solid",
+] as const satisfies readonly ContrastAssertionRole[];
+
+const assertionRoleLabels = {
+  body: "Body",
+  secondary: "Secondary",
+  muted: "Muted",
+  ui: "UI",
+  "status-soft": "Status Soft",
+  "status-solid": "Status Solid",
+} as const satisfies Readonly<Record<ContrastAssertionRole, string>>;
+
 const defaultInput = {
   neutralSeed: "#d8dee8",
   primarySeed: "#0f6f3d",
@@ -84,7 +105,7 @@ const defaultInput = {
   surfaceDarkSeed: "#111827",
   dangerSeed: "#c62828",
   dangerSeedPolicy: "balanced",
-  warningSeed: "#b26a00",
+  warningSeed: "#e3bb1d",
   warningSeedPolicy: "balanced",
   successSeed: "#16823a",
   successSeedPolicy: "balanced",
@@ -220,6 +241,7 @@ export function App() {
           <Route path="/primitives" element={<Primitives engine={engine} />} />
           <Route path="/semantic" element={<SemanticPreview engine={engine} />} />
           <Route path="/themes" element={<ThemePreview engine={engine} />} />
+          <Route path="/assertions" element={<AssertionReport engine={engine} />} />
         </Routes>
       </main>
     </div>
@@ -545,6 +567,143 @@ function ThemePreview({ engine }: { engine: EngineState }) {
         ))}
       </section>
     </ViewFrame>
+  );
+}
+
+function AssertionReport({ engine }: { engine: EngineState }) {
+  if (engine.kind === "error") {
+    return <ErrorView engine={engine} />;
+  }
+
+  const report = engine.output.assertions;
+  const failed = report.results.filter((result) => !result.passed);
+
+  return (
+    <ViewFrame
+      title="APCA Assertions"
+      subtitle="Diagnostic text and UI contrast pairs rendered from generated semantic roles. Failures are reported only; no tuning is applied here."
+    >
+      <section className="metric-grid" aria-label="Assertion summary">
+        <Metric label="Total pairs" value={report.summary.total.toString()} />
+        <Metric label="Passed" value={report.summary.passed.toString()} />
+        <Metric label="Required failed" value={report.summary.requiredFailed.toString()} />
+        <Metric label="Diagnostic failed" value={report.summary.diagnosticFailed.toString()} />
+      </section>
+      <AnchoredPolicyDiagnostics output={engine.output} failures={failed} />
+      <section className="assertion-summary-row" aria-label="Assertion metadata">
+        <Metric label="Algorithm" value={report.apcaAlgorithmVersion} />
+        {assertionRoles.map((role) => (
+          <Metric
+            key={role}
+            label={`${assertionRoleLabels[role]} threshold`}
+            value={`Lc ${report.thresholds[role]}`}
+          />
+        ))}
+      </section>
+      <section className="assertion-panel assertion-failure-panel" aria-label="Failed assertions">
+        <header className="panel-header">
+          <h3>Failures</h3>
+          <span>{failed.length} pairs</span>
+        </header>
+        {failed.length > 0 ? (
+          <div className="assertion-list">
+            {failed.map((result) => (
+              <AssertionResultRow key={result.id} output={engine.output} result={result} />
+            ))}
+          </div>
+        ) : (
+          <p className="assertion-empty">No assertion failures for the current inputs.</p>
+        )}
+      </section>
+      <section className="assertion-groups" aria-label="Assertions grouped by theme and role">
+        {themeOptions.flatMap((theme) =>
+          assertionRoles.map((role) => {
+            const results = report.results.filter(
+              (result) => result.theme === theme.key && result.role === role,
+            );
+            const failures = results.filter((result) => !result.passed).length;
+
+            return (
+              <article className="assertion-panel" key={`${theme.key}-${role}`}>
+                <header className="panel-header">
+                  <h3>{theme.label} {assertionRoleLabels[role]}</h3>
+                  <span>{failures} failed / {results.length}</span>
+                </header>
+                <div className="assertion-list">
+                  {results.map((result) => (
+                    <AssertionResultRow key={result.id} output={engine.output} result={result} />
+                  ))}
+                </div>
+              </article>
+            );
+          }),
+        )}
+      </section>
+    </ViewFrame>
+  );
+}
+
+function AnchoredPolicyDiagnostics({
+  failures,
+  output,
+}: {
+  failures: readonly ResolvedContrastAssertion[];
+  output: ColorEngineOutput;
+}) {
+  const activeAnchoredPolicies = getActiveAnchoredPolicyLabels(output);
+
+  if (activeAnchoredPolicies.length === 0) {
+    return null;
+  }
+
+  const anchoredFailures = failures.filter((result) => getAnchoredPolicyNote(result, output) !== null);
+
+  return (
+    <section className="assertion-panel assertion-policy-panel" aria-label="Anchored policy diagnostics">
+      <header className="panel-header">
+        <h3>Anchored Policy Diagnostics</h3>
+        <span>{anchoredFailures.length} linked failures</span>
+      </header>
+      <p>
+        Anchored mode preserves the exact seed as the solid level 2 token. Related failures mean the preserved seed
+        or its derived state does not meet the role threshold without adaptation.
+      </p>
+      <div className="policy-chip-row" aria-label="Active anchored policies">
+        {activeAnchoredPolicies.map((label) => (
+          <span className="policy-chip" key={label}>{label}</span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AssertionResultRow({
+  output,
+  result,
+}: {
+  output: ColorEngineOutput;
+  result: ResolvedContrastAssertion;
+}) {
+  const anchoredPolicyNote = getAnchoredPolicyNote(result, output);
+
+  return (
+    <div className={result.passed ? "assertion-row assertion-row-pass" : "assertion-row assertion-row-fail"}>
+      <div className="assertion-row-main">
+        <span className="assertion-status">{result.passed ? "Pass" : "Fail"}</span>
+        <strong>{result.foreground} on {result.background}</strong>
+      </div>
+      <div className="assertion-row-metrics">
+        <span>Lc {formatNumber(result.lc)}</span>
+        <span>Abs {formatNumber(result.absLc)}</span>
+        <span>Min {result.threshold}</span>
+        <span>{labelize(result.severity)}</span>
+      </div>
+      <div className="assertion-row-tokens">
+        <code>{result.foregroundToken.name}</code>
+        <code>{result.backgroundToken.name}</code>
+      </div>
+      {anchoredPolicyNote ? <p className="assertion-note">{anchoredPolicyNote}</p> : null}
+    </div>
   );
 }
 
@@ -923,6 +1082,49 @@ function isSeedAnchor(
   }
 
   return false;
+}
+
+function getActiveAnchoredPolicyLabels(output: ColorEngineOutput): readonly string[] {
+  const labels: string[] = [];
+
+  if (output.seedPolicies.primary === "anchored") {
+    labels.push("Primary");
+  }
+
+  for (const intent of STATUS_INTENTS) {
+    if (output.seedPolicies.status[intent] === "anchored") {
+      labels.push(labelize(intent));
+    }
+  }
+
+  return labels;
+}
+
+function getAnchoredPolicyNote(
+  result: ResolvedContrastAssertion,
+  output: ColorEngineOutput,
+): string | null {
+  if (result.passed) {
+    return null;
+  }
+
+  if (
+    output.seedPolicies.primary === "anchored" &&
+    (result.foreground.startsWith("primary-") || result.background.startsWith("primary-"))
+  ) {
+    return "Anchored primary preserves the seed in the solid action ramp; this failure is the contrast cost of that preservation.";
+  }
+
+  for (const intent of STATUS_INTENTS) {
+    if (
+      output.seedPolicies.status[intent] === "anchored" &&
+      (result.foreground.startsWith(`${intent}-`) || result.background.startsWith(`${intent}-`))
+    ) {
+      return `Anchored ${intent} preserves the seed in its solid ramp; this failure is the contrast cost of that preservation.`;
+    }
+  }
+
+  return null;
 }
 
 function formatOklchSummary(color: { readonly l: number; readonly c: number; readonly h: number }): string {
