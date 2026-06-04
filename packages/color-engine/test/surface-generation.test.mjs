@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   CHROME_LEVELS,
+  COLOR_ENGINE_CSS_LOAD_ORDER,
+  COLOR_ENGINE_THEME_PRESET_NAMES,
+  COLOR_ENGINE_THEME_PRESETS,
   ColorEngineValidationError,
   NEUTRAL_SEMANTIC_TOKEN_NAMES,
   PRIMARY_SEMANTIC_TOKEN_NAMES,
@@ -89,8 +92,25 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
   assert.match(output.cssOutput.primitives, /^:root \{/);
   assert.match(output.cssOutput.themes.light, /^\[data-theme-v2="light"\] \{/);
   assert.match(output.cssOutput.themes.dark, /^\[data-theme-v2="dark"\] \{/);
+  assert.deepEqual(
+    output.cssOutput.files.map((file) => file.fileName),
+    [...COLOR_ENGINE_CSS_LOAD_ORDER],
+  );
+  assert.deepEqual(
+    output.cssOutput.files.map((file) => file.kind),
+    ["primitives", "theme", "theme"],
+  );
+  assert.deepEqual(
+    output.cssOutput.files.map((file) => file.theme ?? null),
+    [null, "light", "dark"],
+  );
+  assert.equal(output.cssOutput.files[0].css, output.cssOutput.primitives);
+  assert.equal(output.cssOutput.files[1].css, output.cssOutput.themes.light);
+  assert.equal(output.cssOutput.files[2].css, output.cssOutput.themes.dark);
+  assert.equal(output.cssOutput.all, output.cssOutput.files.map((file) => file.css).join("\n\n"));
   assert.equal(output.css, output.cssOutput.all);
   assert.match(output.css, /\[data-theme-v2="light"\]/);
+  assert.doesNotMatch(output.css, /\[data-theme-v2="high-contrast/);
   assert.match(output.css, /--ds-chrome-light-default: oklch\(/);
   assert.match(output.css, /--ds-border-default: var\(--ds-chrome-light-default\);/);
   assert.match(output.css, /--ds-primary-seed: oklch\(/);
@@ -146,6 +166,100 @@ test("anchored seed policy preserves exact parsed seeds as solid rest steps", ()
   assert.equal(output.semantics.light["warning-solid-bg"], "var(--ds-warning-light-solid-2)");
   assert.equal(output.seedPolicies.primary, "anchored");
   assert.equal(output.seedPolicies.status.warning, "anchored");
+});
+
+test("omitted dark seeds fall back to the matching light/default seed", () => {
+  const input = {
+    primarySeed: "oklch(0.52 0.14 145)",
+    warningSeed: "oklch(0.62 0.1 76)",
+  };
+  const fallback = createColorEngineTheme(input);
+  const explicit = createColorEngineTheme({
+    ...input,
+    primaryDarkSeed: input.primarySeed,
+    warningDarkSeed: input.warningSeed,
+  });
+
+  assert.deepEqual(fallback.seeds.primaryDark, parseColorSeed(input.primarySeed));
+  assert.deepEqual(fallback.seeds.statusDark.warning, parseColorSeed(input.warningSeed));
+  assert.deepEqual(fallback.primitives["primary-dark-soft"], explicit.primitives["primary-dark-soft"]);
+  assert.deepEqual(fallback.primitives["primary-dark-solid"], explicit.primitives["primary-dark-solid"]);
+  assert.deepEqual(fallback.primitives["warning-dark-soft"], explicit.primitives["warning-dark-soft"]);
+  assert.deepEqual(fallback.primitives["warning-dark-solid"], explicit.primitives["warning-dark-solid"]);
+});
+
+test("dark seeds override dark usage families without changing light output", () => {
+  const statusLightSeeds = {
+    danger: "oklch(0.54 0.14 30)",
+    warning: "oklch(0.62 0.1 76)",
+    success: "oklch(0.52 0.12 154)",
+    info: "oklch(0.55 0.11 240)",
+  };
+  const statusDarkSeeds = {
+    danger: "oklch(0.68 0.12 24)",
+    warning: "oklch(0.74 0.12 92)",
+    success: "oklch(0.69 0.11 142)",
+    info: "oklch(0.7 0.1 220)",
+  };
+  const base = createColorEngineTheme({
+    primarySeed: "oklch(0.52 0.14 145)",
+    dangerSeed: statusLightSeeds.danger,
+    warningSeed: statusLightSeeds.warning,
+    successSeed: statusLightSeeds.success,
+    infoSeed: statusLightSeeds.info,
+  });
+  const overridden = createColorEngineTheme({
+    primarySeed: "oklch(0.52 0.14 145)",
+    primaryDarkSeed: "oklch(0.68 0.12 250)",
+    dangerSeed: statusLightSeeds.danger,
+    dangerDarkSeed: statusDarkSeeds.danger,
+    warningSeed: statusLightSeeds.warning,
+    warningDarkSeed: statusDarkSeeds.warning,
+    successSeed: statusLightSeeds.success,
+    successDarkSeed: statusDarkSeeds.success,
+    infoSeed: statusLightSeeds.info,
+    infoDarkSeed: statusDarkSeeds.info,
+  });
+
+  assert.deepEqual(overridden.primitives["primary-light-soft"], base.primitives["primary-light-soft"]);
+  assert.deepEqual(overridden.primitives["primary-light-solid"], base.primitives["primary-light-solid"]);
+  assert.notDeepEqual(overridden.primitives["primary-dark-solid"], base.primitives["primary-dark-solid"]);
+  assert.equal(overridden.primitives["primary-dark-soft"][0]?.oklch.h, 250);
+  assert.equal(overridden.seeds.primary.h, 145);
+  assert.equal(overridden.seeds.primaryDark.h, 250);
+
+  for (const intent of statusIntents) {
+    const lightSeed = parseColorSeed(statusLightSeeds[intent]);
+    const darkSeed = parseColorSeed(statusDarkSeeds[intent]);
+
+    assert.deepEqual(overridden.primitives[`${intent}-light-soft`], base.primitives[`${intent}-light-soft`], intent);
+    assert.deepEqual(overridden.primitives[`${intent}-light-solid`], base.primitives[`${intent}-light-solid`], intent);
+    assert.notDeepEqual(overridden.primitives[`${intent}-dark-soft`], base.primitives[`${intent}-dark-soft`], intent);
+    assert.notDeepEqual(overridden.primitives[`${intent}-dark-solid`], base.primitives[`${intent}-dark-solid`], intent);
+    assert.equal(overridden.primitives[`${intent}-dark-solid`][0]?.oklch.h, darkSeed.h, intent);
+    assert.equal(overridden.seeds.status[intent].h, lightSeed.h, intent);
+    assert.equal(overridden.seeds.statusDark[intent].h, darkSeed.h, intent);
+  }
+});
+
+test("anchored policy preserves theme-specific seeds as solid rest steps", () => {
+  const primarySeed = "oklch(0.51 0.123 144)";
+  const primaryDarkSeed = "oklch(0.68 0.11 248)";
+  const warningSeed = "oklch(0.72 0.18 88)";
+  const warningDarkSeed = "oklch(0.76 0.12 96)";
+  const output = createColorEngineTheme({
+    primarySeed,
+    primaryDarkSeed,
+    primarySeedPolicy: "anchored",
+    warningSeed,
+    warningDarkSeed,
+    warningSeedPolicy: "anchored",
+  });
+
+  assert.deepEqual(output.primitives["primary-light-solid"][1]?.oklch, parseColorSeed(primarySeed));
+  assert.deepEqual(output.primitives["primary-dark-solid"][1]?.oklch, parseColorSeed(primaryDarkSeed));
+  assert.deepEqual(output.primitives["warning-light-solid"][1]?.oklch, parseColorSeed(warningSeed));
+  assert.deepEqual(output.primitives["warning-dark-solid"][1]?.oklch, parseColorSeed(warningDarkSeed));
 });
 
 test("balanced seed policy keeps previous status recipe behavior", () => {
@@ -218,6 +332,51 @@ test("preset light and dark spans increase in calibrated order", () => {
 
   for (const span of spans) {
     assert.ok(span.dark > span.light, `${span.preset} should give dark surfaces more separation than light surfaces`);
+  }
+});
+
+test("example theme presets are valid balanced starting points", () => {
+  assert.deepEqual(COLOR_ENGINE_THEME_PRESET_NAMES, [
+    "evergreen",
+    "civic-blue",
+    "plum",
+    "teal",
+  ]);
+
+  for (const name of COLOR_ENGINE_THEME_PRESET_NAMES) {
+    const themePreset = COLOR_ENGINE_THEME_PRESETS[name];
+    const output = createColorEngineTheme({
+      ...themePreset.input,
+      namespace: "pf",
+    });
+
+    assert.equal(themePreset.name, name);
+    assert.equal(typeof themePreset.label, "string");
+    assert.equal(themePreset.label.length > 0, true);
+    assert.equal(typeof themePreset.description, "string");
+    assert.equal(themePreset.description.length > 0, true);
+    assert.equal(output.namespace, "pf");
+    assert.equal(output.input.preset, themePreset.input.preset);
+    assert.equal(output.input.primarySeedPolicy, "balanced", name);
+    assert.equal(output.input.dangerSeedPolicy, "balanced", name);
+    assert.equal(output.input.warningSeedPolicy, "balanced", name);
+    assert.equal(output.input.successSeedPolicy, "balanced", name);
+    assert.equal(output.input.infoSeedPolicy, "balanced", name);
+    assert.equal(typeof themePreset.input.primaryDarkSeed, "string");
+    assert.equal(typeof themePreset.input.dangerDarkSeed, "string");
+    assert.equal(typeof themePreset.input.warningDarkSeed, "string");
+    assert.equal(typeof themePreset.input.successDarkSeed, "string");
+    assert.equal(typeof themePreset.input.infoDarkSeed, "string");
+    assert.deepEqual(output.seeds.primaryDark, parseColorSeed(themePreset.input.primaryDarkSeed));
+    assert.deepEqual(output.seeds.statusDark.danger, parseColorSeed(themePreset.input.dangerDarkSeed));
+    assert.deepEqual(output.seeds.statusDark.warning, parseColorSeed(themePreset.input.warningDarkSeed));
+    assert.deepEqual(output.seeds.statusDark.success, parseColorSeed(themePreset.input.successDarkSeed));
+    assert.deepEqual(output.seeds.statusDark.info, parseColorSeed(themePreset.input.infoDarkSeed));
+    assert.deepEqual(
+      output.assertions.results.filter((result) => !result.passed && result.severity === "required"),
+      [],
+      name,
+    );
   }
 });
 

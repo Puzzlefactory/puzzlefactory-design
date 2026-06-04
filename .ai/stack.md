@@ -14,9 +14,27 @@
 
 ### `@puzzlefactory/color-engine`
 
-Status: v2 neutral/surface/chrome foundation with calibrated surface presets, primary usage ramps, status usage ramps, per-family seed policy, stable semantic aliases, CSS output, APCA calculation, and APCA assertion diagnostics. Target runtime is a TypeScript library. Current exports define the public API type surface for `createColorEngineTheme(input): ColorEngineOutput`, `parseColorSeed`, `ColorEngineValidationError`, surface preset constants, chrome level constants, seed policy constants, semantic token name constants, structured `cssOutput`, APCA constants/calculation helpers, contrast assertion thresholds/report types, and neutral/surface/chrome/primary/status output types. Surface presets use separate light/dark step deltas and separate light/dark state deltas. Chrome generation emits compact light/dark `subtle`, `default`, and `strong` primitives derived from existing surface/neutral inputs and preset strength. Primary generation uses an explicit `primarySeed` and emits compact light/dark soft and solid usage families. Status generation uses explicit `dangerSeed`, `warningSeed`, `successSeed`, and `infoSeed` values and emits compact light/dark soft and solid usage families per status intent; the default warning seed is `#e3bb1d`. Primary and status seed policies support `balanced` and `anchored`; `balanced` remains the default, while `anchored` preserves the parsed seed as solid level 2 and as a single-token seed primitive. Balanced dark solid generation uses separate internal `ui` and `status` contrast profiles so default dark primary/status solid required assertions pass without changing thresholds, pairs, or anchored behavior. Status solid text semantics resolve from a small approved foreground candidate set using APCA coverage across rest/hover/pressed backgrounds, preserving the intended text token when it passes. Package tests include a representative balanced preset/seed matrix that must pass required assertions and an anchored matrix with explicit expected seed-preservation failures. APCA assertion output is diagnostic only; enforcement and broad auto-tuning remain deferred to later CE2 slices.
+Status: v2 neutral/surface/chrome foundation with calibrated surface presets, primary usage ramps, status usage ramps, theme-specific dark seeds, per-family seed policy, stable semantic aliases, CSS output, APCA calculation, APCA assertion diagnostics, and curated example theme presets. Target runtime is a TypeScript library. Current exports define the public API type surface for `createColorEngineTheme(input): ColorEngineOutput`, `parseColorSeed`, `ColorEngineValidationError`, surface preset constants, chrome level constants, seed policy constants, semantic token name constants, structured `cssOutput`, CSS file/load-order constants and types, theme preset constants and types, APCA constants/calculation helpers, contrast assertion thresholds/report types, and neutral/surface/chrome/primary/status output types. Surface presets use separate light/dark step deltas and separate light/dark state deltas. Chrome generation emits compact light/dark `subtle`, `default`, and `strong` primitives derived from existing surface/neutral inputs and preset strength. Primary generation uses `primarySeed` for light output and optional `primaryDarkSeed` for dark output; when omitted, the dark seed falls back to `primarySeed`. Status generation uses explicit light/default `dangerSeed`, `warningSeed`, `successSeed`, and `infoSeed` values plus optional `dangerDarkSeed`, `warningDarkSeed`, `successDarkSeed`, and `infoDarkSeed` values for dark output; omitted dark seeds fall back to their matching light/default seed. The default warning seed is `#e3bb1d`. Primary and status seed policies support `balanced` and `anchored`; `balanced` remains the default, while `anchored` preserves the parsed theme-specific seed as solid level 2 and preserves the light/default seed as a single-token seed primitive. Balanced dark solid generation uses separate internal `ui` and `status` contrast profiles so default dark primary/status solid required assertions pass without changing thresholds, pairs, or anchored behavior. Status solid text semantics resolve from a small approved foreground candidate set using APCA coverage across rest/hover/pressed backgrounds, preserving the intended text token when it passes. Package tests include dark seed fallback/override/anchored preservation checks, a representative balanced preset/seed matrix, a curated theme preset test, and an anchored matrix with explicit expected seed-preservation failures. APCA assertion output is diagnostic only; enforcement and broad auto-tuning remain deferred to later CE2 slices.
 
 Runtime dependencies must remain zero.
+
+CSS output contract:
+
+- `cssOutput.primitives`: root primitive custom property rule.
+- `cssOutput.themes.light`: light semantic alias rule.
+- `cssOutput.themes.dark`: dark semantic alias rule.
+- `cssOutput.files`: ordered files for `primitives.css`, `theme-light.css`, and `theme-dark.css`.
+- `COLOR_ENGINE_CSS_LOAD_ORDER`: canonical file load order.
+- `cssOutput.all` and `output.css`: compatibility bundle string equal to the ordered file CSS joined with blank lines.
+- No high-contrast v2 CSS file is emitted yet.
+
+Theme preset contract:
+
+- `COLOR_ENGINE_THEME_PRESETS`: curated example input bundles for `evergreen`, `civic-blue`, `plum`, and `teal`.
+- `COLOR_ENGINE_THEME_PRESET_NAMES`: canonical display order for theme presets.
+- `ColorEngineThemePresetName`, `ColorEngineThemePresetInput`, and `ColorEngineThemePreset`: public types for preset consumers.
+- Presets use existing `ColorEngineInput` fields, explicit dark primary/status seeds where useful, and balanced seed policies; they do not add new generation concepts.
+- Balanced example presets must have zero required APCA assertion failures.
 
 Build/test scripts:
 
@@ -71,12 +89,12 @@ Not yet decided. Deferred until the color engine layer is complete. Web Componen
 
 ### `apps/kitchen-sink`
 
-Status: React + Vite + React Router 7 verification shell wired to v2 neutral/surface/chrome/primary/status color-engine output, seed policy, generated semantic aliases, and APCA assertion diagnostics.
+Status: React + Vite + React Router 7 verification shell wired to v2 neutral/surface/chrome/primary/status color-engine output, curated theme presets, theme-specific dark seeds, seed policy, generated semantic aliases, and APCA assertion diagnostics.
 
 - Package name: `@puzzlefactory/kitchen-sink`
 - Runtime stack: React 19, Vite 8, React Router 7
 - Purpose: visual verification surface for the color engine and later token/theme/component states
-- Current behavior: routed verification tool that consumes v2 `@puzzlefactory/color-engine`, injects generated CSS directly, switches `data-theme-v2`, and displays neutral/surface/chrome/primary/status seed controls, per-family seed policy controls, compact primitive ramps with seed anchor markers, semantic text/chrome/surface/primary/status roles, generated CSS output sections, light/dark nested surface previews, primary action/link/focus previews, status soft/solid cards, and an APCA assertion report grouped by theme and role. Current Kitchen Sink defaults use warning seed `#e3bb1d` and show 64/64 assertion pairs passing after CE2-09C. When anchored policy is active, the assertion report identifies linked failures as seed-preservation tradeoffs rather than silent tuning opportunities.
+- Current behavior: routed verification tool that consumes v2 `@puzzlefactory/color-engine`, injects generated CSS directly, switches `data-theme-v2`, and displays curated theme preset controls, neutral/surface/chrome controls, separate light/dark primary and status seed controls, per-family seed policy controls, compact primitive ramps with seed anchor markers and light/dark seed-source notes, semantic text/chrome/surface/primary/status roles, generated CSS output sections, light/dark nested surface previews, primary action/link/focus previews, status soft/solid cards, and an APCA assertion report grouped by theme and role. Current Kitchen Sink defaults use the exported `evergreen` theme preset and show 64/64 assertion pairs passing. When anchored policy is active, the assertion report identifies linked failures as seed-preservation tradeoffs rather than silent tuning opportunities.
 
 ### `apps/docs`
 

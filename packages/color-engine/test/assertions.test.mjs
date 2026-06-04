@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   APCA_ALGORITHM_VERSION,
+  COLOR_ENGINE_THEME_PRESETS,
   CONTRAST_ASSERTION_THRESHOLDS,
   createColorEngineTheme,
 } from "../dist/index.js";
@@ -89,15 +90,7 @@ test("default balanced dark solid required assertions pass", () => {
 
 test("kitchen-sink defaults preserve passing dark solid assertions", () => {
   const output = createColorEngineTheme({
-    neutralSeed: "#d8dee8",
-    primarySeed: "#0f6f3d",
-    surfaceLightSeed: "#edf2f7",
-    surfaceDarkSeed: "#111827",
-    dangerSeed: "#c62828",
-    warningSeed: "#e3bb1d",
-    successSeed: "#16823a",
-    infoSeed: "#0b6ea8",
-    preset: "standard",
+    ...COLOR_ENGINE_THEME_PRESETS.evergreen.input,
     namespace: "ds",
   });
   const darkSolidRequiredResults = darkSolidRequiredAssertions(output);

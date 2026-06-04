@@ -1,5 +1,7 @@
 import {
   ColorEngineValidationError,
+  COLOR_ENGINE_THEME_PRESET_NAMES,
+  COLOR_ENGINE_THEME_PRESETS,
   NEUTRAL_SEMANTIC_TOKEN_NAMES,
   PRIMARY_SEMANTIC_TOKEN_NAMES,
   SEED_POLICY_NAMES,
@@ -12,6 +14,8 @@ import {
   createColorEngineTheme,
   type ColorEngineInput,
   type ColorEngineOutput,
+  type ColorEngineThemePresetName,
+  type ColorEngineThemePresetInput,
   type ColorToken,
   type ContrastAssertionRole,
   type ResolvedContrastAssertion,
@@ -99,73 +103,116 @@ const assertionRoleLabels = {
 } as const satisfies Readonly<Record<ContrastAssertionRole, string>>;
 
 const defaultInput = {
-  neutralSeed: "#d8dee8",
-  primarySeed: "#0f6f3d",
-  surfaceLightSeed: "#edf2f7",
-  surfaceDarkSeed: "#111827",
-  dangerSeed: "#c62828",
-  dangerSeedPolicy: "balanced",
-  warningSeed: "#e3bb1d",
-  warningSeedPolicy: "balanced",
-  successSeed: "#16823a",
-  successSeedPolicy: "balanced",
-  infoSeed: "#0b6ea8",
-  infoSeedPolicy: "balanced",
-  primarySeedPolicy: "balanced",
-  preset: "standard",
+  ...COLOR_ENGINE_THEME_PRESETS.evergreen.input,
   namespace: "ds",
 } as const satisfies Required<ColorEngineInput>;
+
+type ActiveThemePresetName = ColorEngineThemePresetName | "custom";
 
 export function App() {
   const [neutralSeed, setNeutralSeed] = useState<string>(defaultInput.neutralSeed);
   const [primarySeed, setPrimarySeed] = useState<string>(defaultInput.primarySeed);
+  const [primaryDarkSeed, setPrimaryDarkSeed] = useState<string>(defaultInput.primaryDarkSeed);
   const [surfaceLightSeed, setSurfaceLightSeed] = useState<string>(defaultInput.surfaceLightSeed);
   const [surfaceDarkSeed, setSurfaceDarkSeed] = useState<string>(defaultInput.surfaceDarkSeed);
   const [dangerSeed, setDangerSeed] = useState<string>(defaultInput.dangerSeed);
+  const [dangerDarkSeed, setDangerDarkSeed] = useState<string>(defaultInput.dangerDarkSeed);
   const [dangerSeedPolicy, setDangerSeedPolicy] = useState<SeedPolicy>(defaultInput.dangerSeedPolicy);
   const [warningSeed, setWarningSeed] = useState<string>(defaultInput.warningSeed);
+  const [warningDarkSeed, setWarningDarkSeed] = useState<string>(defaultInput.warningDarkSeed);
   const [warningSeedPolicy, setWarningSeedPolicy] = useState<SeedPolicy>(defaultInput.warningSeedPolicy);
   const [successSeed, setSuccessSeed] = useState<string>(defaultInput.successSeed);
+  const [successDarkSeed, setSuccessDarkSeed] = useState<string>(defaultInput.successDarkSeed);
   const [successSeedPolicy, setSuccessSeedPolicy] = useState<SeedPolicy>(defaultInput.successSeedPolicy);
   const [infoSeed, setInfoSeed] = useState<string>(defaultInput.infoSeed);
+  const [infoDarkSeed, setInfoDarkSeed] = useState<string>(defaultInput.infoDarkSeed);
   const [infoSeedPolicy, setInfoSeedPolicy] = useState<SeedPolicy>(defaultInput.infoSeedPolicy);
   const [primarySeedPolicy, setPrimarySeedPolicy] = useState<SeedPolicy>(defaultInput.primarySeedPolicy);
   const [preset, setPreset] = useState<SurfacePresetName>(defaultInput.preset);
   const [activeTheme, setActiveTheme] = useState<SurfaceTheme>("light");
+  const [activeThemePresetName, setActiveThemePresetName] = useState<ActiveThemePresetName>("evergreen");
+
+  function applyThemePreset(name: ColorEngineThemePresetName) {
+    applyThemePresetInput(COLOR_ENGINE_THEME_PRESETS[name].input);
+    setActiveThemePresetName(name);
+  }
+
+  function applyThemePresetInput(input: ColorEngineThemePresetInput) {
+    setNeutralSeed(input.neutralSeed);
+    setPrimarySeed(input.primarySeed);
+    setPrimaryDarkSeed(input.primaryDarkSeed);
+    setPrimarySeedPolicy(input.primarySeedPolicy);
+    setSurfaceLightSeed(input.surfaceLightSeed);
+    setSurfaceDarkSeed(input.surfaceDarkSeed);
+    setDangerSeed(input.dangerSeed);
+    setDangerDarkSeed(input.dangerDarkSeed);
+    setDangerSeedPolicy(input.dangerSeedPolicy);
+    setWarningSeed(input.warningSeed);
+    setWarningDarkSeed(input.warningDarkSeed);
+    setWarningSeedPolicy(input.warningSeedPolicy);
+    setSuccessSeed(input.successSeed);
+    setSuccessDarkSeed(input.successDarkSeed);
+    setSuccessSeedPolicy(input.successSeedPolicy);
+    setInfoSeed(input.infoSeed);
+    setInfoDarkSeed(input.infoDarkSeed);
+    setInfoSeedPolicy(input.infoSeedPolicy);
+    setPreset(input.preset);
+  }
+
+  function markCustom() {
+    setActiveThemePresetName("custom");
+  }
 
   const engine = useMemo(
-    () =>
-      createEngineState({
+    () => {
+      const resolvedPrimaryDarkSeed = optionalSeed(primaryDarkSeed);
+      const resolvedDangerDarkSeed = optionalSeed(dangerDarkSeed);
+      const resolvedWarningDarkSeed = optionalSeed(warningDarkSeed);
+      const resolvedSuccessDarkSeed = optionalSeed(successDarkSeed);
+      const resolvedInfoDarkSeed = optionalSeed(infoDarkSeed);
+
+      return createEngineState({
         neutralSeed,
         primarySeed,
+        ...(resolvedPrimaryDarkSeed ? { primaryDarkSeed: resolvedPrimaryDarkSeed } : {}),
         surfaceLightSeed,
         surfaceDarkSeed,
         dangerSeed,
+        ...(resolvedDangerDarkSeed ? { dangerDarkSeed: resolvedDangerDarkSeed } : {}),
         dangerSeedPolicy,
         warningSeed,
+        ...(resolvedWarningDarkSeed ? { warningDarkSeed: resolvedWarningDarkSeed } : {}),
         warningSeedPolicy,
         successSeed,
+        ...(resolvedSuccessDarkSeed ? { successDarkSeed: resolvedSuccessDarkSeed } : {}),
         successSeedPolicy,
         infoSeed,
+        ...(resolvedInfoDarkSeed ? { infoDarkSeed: resolvedInfoDarkSeed } : {}),
         infoSeedPolicy,
         primarySeedPolicy,
         preset,
         namespace: defaultInput.namespace,
-      }),
+      });
+    },
     [
       dangerSeed,
+      dangerDarkSeed,
       dangerSeedPolicy,
+      infoDarkSeed,
       infoSeed,
       infoSeedPolicy,
       neutralSeed,
       preset,
       primarySeed,
+      primaryDarkSeed,
       primarySeedPolicy,
+      successDarkSeed,
       successSeed,
       successSeedPolicy,
       surfaceDarkSeed,
       surfaceLightSeed,
       warningSeed,
+      warningDarkSeed,
       warningSeedPolicy,
     ],
   );
@@ -205,36 +252,105 @@ export function App() {
             element={
               <Controls
                 activeTheme={activeTheme}
+                activeThemePresetName={activeThemePresetName}
                 dangerSeed={dangerSeed}
+                dangerDarkSeed={dangerDarkSeed}
                 dangerSeedPolicy={dangerSeedPolicy}
                 engine={engine}
                 infoSeed={infoSeed}
+                infoDarkSeed={infoDarkSeed}
                 infoSeedPolicy={infoSeedPolicy}
                 neutralSeed={neutralSeed}
                 primarySeed={primarySeed}
+                primaryDarkSeed={primaryDarkSeed}
                 primarySeedPolicy={primarySeedPolicy}
                 preset={preset}
                 successSeed={successSeed}
+                successDarkSeed={successDarkSeed}
                 successSeedPolicy={successSeedPolicy}
                 surfaceDarkSeed={surfaceDarkSeed}
                 surfaceLightSeed={surfaceLightSeed}
                 warningSeed={warningSeed}
+                warningDarkSeed={warningDarkSeed}
                 warningSeedPolicy={warningSeedPolicy}
+                onThemePresetApply={applyThemePreset}
                 onActiveThemeChange={setActiveTheme}
-                onDangerSeedChange={setDangerSeed}
-                onDangerSeedPolicyChange={setDangerSeedPolicy}
-                onInfoSeedChange={setInfoSeed}
-                onInfoSeedPolicyChange={setInfoSeedPolicy}
-                onNeutralSeedChange={setNeutralSeed}
-                onPrimarySeedChange={setPrimarySeed}
-                onPrimarySeedPolicyChange={setPrimarySeedPolicy}
-                onPresetChange={setPreset}
-                onSuccessSeedChange={setSuccessSeed}
-                onSuccessSeedPolicyChange={setSuccessSeedPolicy}
-                onSurfaceDarkSeedChange={setSurfaceDarkSeed}
-                onSurfaceLightSeedChange={setSurfaceLightSeed}
-                onWarningSeedChange={setWarningSeed}
-                onWarningSeedPolicyChange={setWarningSeedPolicy}
+                onDangerSeedChange={(value) => {
+                  setDangerSeed(value);
+                  markCustom();
+                }}
+                onDangerDarkSeedChange={(value) => {
+                  setDangerDarkSeed(value);
+                  markCustom();
+                }}
+                onDangerSeedPolicyChange={(value) => {
+                  setDangerSeedPolicy(value);
+                  markCustom();
+                }}
+                onInfoSeedChange={(value) => {
+                  setInfoSeed(value);
+                  markCustom();
+                }}
+                onInfoDarkSeedChange={(value) => {
+                  setInfoDarkSeed(value);
+                  markCustom();
+                }}
+                onInfoSeedPolicyChange={(value) => {
+                  setInfoSeedPolicy(value);
+                  markCustom();
+                }}
+                onNeutralSeedChange={(value) => {
+                  setNeutralSeed(value);
+                  markCustom();
+                }}
+                onPrimarySeedChange={(value) => {
+                  setPrimarySeed(value);
+                  markCustom();
+                }}
+                onPrimaryDarkSeedChange={(value) => {
+                  setPrimaryDarkSeed(value);
+                  markCustom();
+                }}
+                onPrimarySeedPolicyChange={(value) => {
+                  setPrimarySeedPolicy(value);
+                  markCustom();
+                }}
+                onPresetChange={(value) => {
+                  setPreset(value);
+                  markCustom();
+                }}
+                onSuccessSeedChange={(value) => {
+                  setSuccessSeed(value);
+                  markCustom();
+                }}
+                onSuccessDarkSeedChange={(value) => {
+                  setSuccessDarkSeed(value);
+                  markCustom();
+                }}
+                onSuccessSeedPolicyChange={(value) => {
+                  setSuccessSeedPolicy(value);
+                  markCustom();
+                }}
+                onSurfaceDarkSeedChange={(value) => {
+                  setSurfaceDarkSeed(value);
+                  markCustom();
+                }}
+                onSurfaceLightSeedChange={(value) => {
+                  setSurfaceLightSeed(value);
+                  markCustom();
+                }}
+                onWarningSeedChange={(value) => {
+                  setWarningSeed(value);
+                  markCustom();
+                }}
+                onWarningDarkSeedChange={(value) => {
+                  setWarningDarkSeed(value);
+                  markCustom();
+                }}
+                onWarningSeedPolicyChange={(value) => {
+                  setWarningSeedPolicy(value);
+                  markCustom();
+                }}
               />
             }
           />
@@ -288,67 +404,91 @@ function Overview({
 
 function Controls({
   activeTheme,
+  activeThemePresetName,
   dangerSeed,
+  dangerDarkSeed,
   dangerSeedPolicy,
   engine,
   infoSeed,
+  infoDarkSeed,
   infoSeedPolicy,
   neutralSeed,
   primarySeed,
+  primaryDarkSeed,
   primarySeedPolicy,
   preset,
   successSeed,
+  successDarkSeed,
   successSeedPolicy,
   surfaceDarkSeed,
   surfaceLightSeed,
   warningSeed,
+  warningDarkSeed,
   warningSeedPolicy,
+  onThemePresetApply,
   onActiveThemeChange,
   onDangerSeedChange,
+  onDangerDarkSeedChange,
   onDangerSeedPolicyChange,
   onInfoSeedChange,
+  onInfoDarkSeedChange,
   onInfoSeedPolicyChange,
   onNeutralSeedChange,
   onPrimarySeedChange,
+  onPrimaryDarkSeedChange,
   onPrimarySeedPolicyChange,
   onPresetChange,
   onSuccessSeedChange,
+  onSuccessDarkSeedChange,
   onSuccessSeedPolicyChange,
   onSurfaceDarkSeedChange,
   onSurfaceLightSeedChange,
   onWarningSeedChange,
+  onWarningDarkSeedChange,
   onWarningSeedPolicyChange,
 }: {
   activeTheme: SurfaceTheme;
+  activeThemePresetName: ActiveThemePresetName;
   dangerSeed: string;
+  dangerDarkSeed: string;
   dangerSeedPolicy: SeedPolicy;
   engine: EngineState;
   infoSeed: string;
+  infoDarkSeed: string;
   infoSeedPolicy: SeedPolicy;
   neutralSeed: string;
   primarySeed: string;
+  primaryDarkSeed: string;
   primarySeedPolicy: SeedPolicy;
   preset: SurfacePresetName;
   successSeed: string;
+  successDarkSeed: string;
   successSeedPolicy: SeedPolicy;
   surfaceDarkSeed: string;
   surfaceLightSeed: string;
   warningSeed: string;
+  warningDarkSeed: string;
   warningSeedPolicy: SeedPolicy;
+  onThemePresetApply: (value: ColorEngineThemePresetName) => void;
   onActiveThemeChange: (value: SurfaceTheme) => void;
   onDangerSeedChange: (value: string) => void;
+  onDangerDarkSeedChange: (value: string) => void;
   onDangerSeedPolicyChange: (value: SeedPolicy) => void;
   onInfoSeedChange: (value: string) => void;
+  onInfoDarkSeedChange: (value: string) => void;
   onInfoSeedPolicyChange: (value: SeedPolicy) => void;
   onNeutralSeedChange: (value: string) => void;
   onPrimarySeedChange: (value: string) => void;
+  onPrimaryDarkSeedChange: (value: string) => void;
   onPrimarySeedPolicyChange: (value: SeedPolicy) => void;
   onPresetChange: (value: SurfacePresetName) => void;
   onSuccessSeedChange: (value: string) => void;
+  onSuccessDarkSeedChange: (value: string) => void;
   onSuccessSeedPolicyChange: (value: SeedPolicy) => void;
   onSurfaceDarkSeedChange: (value: string) => void;
   onSurfaceLightSeedChange: (value: string) => void;
   onWarningSeedChange: (value: string) => void;
+  onWarningDarkSeedChange: (value: string) => void;
   onWarningSeedPolicyChange: (value: SeedPolicy) => void;
 }) {
   return (
@@ -356,6 +496,35 @@ function Controls({
       title="Controls"
       subtitle="Tune neutral, surface, primary, and status seeds with a named surface separation preset."
     >
+      <section className="control-section" aria-label="Example theme presets">
+        <div className="section-heading">
+          <h3>Theme Presets</h3>
+          <span>{activeThemePresetName === "custom" ? "Custom" : COLOR_ENGINE_THEME_PRESETS[activeThemePresetName].label}</span>
+        </div>
+        <div className="preset-grid">
+          {COLOR_ENGINE_THEME_PRESET_NAMES.map((name) => {
+            const themePreset = COLOR_ENGINE_THEME_PRESETS[name];
+
+            return (
+              <button
+                className={
+                  activeThemePresetName === name
+                    ? "preset-button preset-button-active"
+                    : "preset-button"
+                }
+                aria-pressed={activeThemePresetName === name}
+                key={name}
+                type="button"
+                onClick={() => onThemePresetApply(name)}
+              >
+                <strong>{themePreset.label}</strong>
+                <span>{themePreset.description}</span>
+                <code>{themePreset.input.preset}</code>
+              </button>
+            );
+          })}
+        </div>
+      </section>
       <section className="control-grid" aria-label="Engine controls">
         <SeedField
           label="Neutral seed"
@@ -363,9 +532,14 @@ function Controls({
           onChange={onNeutralSeedChange}
         />
         <SeedField
-          label="Primary seed"
+          label="Primary light seed"
           value={primarySeed}
           onChange={onPrimarySeedChange}
+        />
+        <SeedField
+          label="Primary dark seed (optional)"
+          value={primaryDarkSeed}
+          onChange={onPrimaryDarkSeedChange}
         />
         <PolicyField
           label="Primary policy"
@@ -383,9 +557,14 @@ function Controls({
           onChange={onSurfaceDarkSeedChange}
         />
         <SeedField
-          label="Danger seed"
+          label="Danger light seed"
           value={dangerSeed}
           onChange={onDangerSeedChange}
+        />
+        <SeedField
+          label="Danger dark seed (optional)"
+          value={dangerDarkSeed}
+          onChange={onDangerDarkSeedChange}
         />
         <PolicyField
           label="Danger policy"
@@ -393,9 +572,14 @@ function Controls({
           onChange={onDangerSeedPolicyChange}
         />
         <SeedField
-          label="Warning seed"
+          label="Warning light seed"
           value={warningSeed}
           onChange={onWarningSeedChange}
+        />
+        <SeedField
+          label="Warning dark seed (optional)"
+          value={warningDarkSeed}
+          onChange={onWarningDarkSeedChange}
         />
         <PolicyField
           label="Warning policy"
@@ -403,9 +587,14 @@ function Controls({
           onChange={onWarningSeedPolicyChange}
         />
         <SeedField
-          label="Success seed"
+          label="Success light seed"
           value={successSeed}
           onChange={onSuccessSeedChange}
+        />
+        <SeedField
+          label="Success dark seed (optional)"
+          value={successDarkSeed}
+          onChange={onSuccessDarkSeedChange}
         />
         <PolicyField
           label="Success policy"
@@ -413,9 +602,14 @@ function Controls({
           onChange={onSuccessSeedPolicyChange}
         />
         <SeedField
-          label="Info seed"
+          label="Info light seed"
           value={infoSeed}
           onChange={onInfoSeedChange}
+        />
+        <SeedField
+          label="Info dark seed (optional)"
+          value={infoDarkSeed}
+          onChange={onInfoDarkSeedChange}
         />
         <PolicyField
           label="Info policy"
@@ -436,22 +630,29 @@ function Controls({
           </select>
         </label>
       </section>
-      <section className="preset-grid" aria-label="Surface presets">
-        {SURFACE_PRESET_NAMES.map((name) => {
-          const option = SURFACE_PRESETS[name];
+      <section className="control-section" aria-label="Surface presets">
+        <div className="section-heading">
+          <h3>Surface Separation</h3>
+          <span>{SURFACE_PRESETS[preset].label}</span>
+        </div>
+        <div className="preset-grid">
+          {SURFACE_PRESET_NAMES.map((name) => {
+            const option = SURFACE_PRESETS[name];
 
-          return (
-            <button
-              className={preset === name ? "preset-button preset-button-active" : "preset-button"}
-              key={name}
-              type="button"
-              onClick={() => onPresetChange(name)}
-            >
-              <strong>{option.label}</strong>
-              <span>{option.description}</span>
-            </button>
-          );
-        })}
+            return (
+              <button
+                className={preset === name ? "preset-button preset-button-active" : "preset-button"}
+                aria-pressed={preset === name}
+                key={name}
+                type="button"
+                onClick={() => onPresetChange(name)}
+              >
+                <strong>{option.label}</strong>
+                <span>{option.description}</span>
+              </button>
+            );
+          })}
+        </div>
       </section>
       {engine.kind === "error" ? <ErrorNotice engine={engine} /> : <EngineMetadata output={engine.output} />}
     </ViewFrame>
@@ -915,11 +1116,16 @@ function EngineMetadata({ output }: { output: ColorEngineOutput }) {
     <section className="metric-grid" aria-label="Generated output metadata">
       <Metric label="Namespace" value={output.namespace} />
       <Metric label="Neutral LCH" value={formatOklchSummary(output.seeds.neutral)} />
-      <Metric label="Primary LCH" value={formatOklchSummary(output.seeds.primary)} />
-      <Metric label="Danger LCH" value={formatOklchSummary(output.seeds.status.danger)} />
-      <Metric label="Warning LCH" value={formatOklchSummary(output.seeds.status.warning)} />
-      <Metric label="Success LCH" value={formatOklchSummary(output.seeds.status.success)} />
-      <Metric label="Info LCH" value={formatOklchSummary(output.seeds.status.info)} />
+      <Metric label="Primary light LCH" value={formatOklchSummary(output.seeds.primary)} />
+      <Metric label="Primary dark LCH" value={formatOklchSummary(output.seeds.primaryDark)} />
+      <Metric label="Danger light LCH" value={formatOklchSummary(output.seeds.status.danger)} />
+      <Metric label="Danger dark LCH" value={formatOklchSummary(output.seeds.statusDark.danger)} />
+      <Metric label="Warning light LCH" value={formatOklchSummary(output.seeds.status.warning)} />
+      <Metric label="Warning dark LCH" value={formatOklchSummary(output.seeds.statusDark.warning)} />
+      <Metric label="Success light LCH" value={formatOklchSummary(output.seeds.status.success)} />
+      <Metric label="Success dark LCH" value={formatOklchSummary(output.seeds.statusDark.success)} />
+      <Metric label="Info light LCH" value={formatOklchSummary(output.seeds.status.info)} />
+      <Metric label="Info dark LCH" value={formatOklchSummary(output.seeds.statusDark.info)} />
       <Metric label="Light surface LCH" value={formatOklchSummary(output.seeds.surfaceLight)} />
       <Metric label="Dark surface LCH" value={formatOklchSummary(output.seeds.surfaceDark)} />
     </section>
@@ -997,6 +1203,12 @@ function createEngineState(input: ColorEngineInput): EngineState {
   }
 }
 
+function optionalSeed(value: string): string | undefined {
+  const trimmed = value.trim();
+
+  return trimmed.length > 0 ? value : undefined;
+}
+
 function cssVar(token: string): `var(--${string})` {
   return `var(--${defaultInput.namespace}-${token})`;
 }
@@ -1024,32 +1236,52 @@ function levelLabel(name: string): string {
 
 function getFamilyPolicyLabel(family: PrimitiveFamilyName, output: ColorEngineOutput): string | null {
   if (family === "primary-seed") {
-    return "Exact parsed primary seed.";
+    return "Exact parsed primary light seed. Dark output can use a separate dark seed.";
   }
 
-  if (family === "primary-light-solid" || family === "primary-dark-solid") {
-    return `${labelize(output.seedPolicies.primary)} primary policy. ${output.seedPolicies.primary === "anchored" ? "Level 2 preserves the seed." : "Seed adapted into a balanced solid ramp."}`;
+  if (family === "primary-light-solid") {
+    return `${labelize(output.seedPolicies.primary)} primary policy. ${output.seedPolicies.primary === "anchored" ? "Level 2 preserves the light seed." : "Light seed adapted into a balanced solid ramp."}`;
   }
 
-  if (family === "primary-light-soft" || family === "primary-dark-soft") {
-    return `${labelize(output.seedPolicies.primary)} primary policy. Soft ramps stay derived for usable containers.`;
+  if (family === "primary-dark-solid") {
+    return `${labelize(output.seedPolicies.primary)} primary policy. ${output.seedPolicies.primary === "anchored" ? "Level 2 preserves the dark seed." : "Dark seed adapted into a balanced solid ramp."}`;
+  }
+
+  if (family === "primary-light-soft") {
+    return `${labelize(output.seedPolicies.primary)} primary policy. Soft ramp derives from the light seed for usable containers.`;
+  }
+
+  if (family === "primary-dark-soft") {
+    return `${labelize(output.seedPolicies.primary)} primary policy. Soft ramp derives from the dark seed for dark containers.`;
   }
 
   for (const intent of STATUS_INTENTS) {
     if (family === `${intent}-seed`) {
-      return `Exact parsed ${intent} seed.`;
+      return `Exact parsed ${intent} light seed. Dark output can use a separate dark seed.`;
     }
 
-    if (family === `${intent}-light-solid` || family === `${intent}-dark-solid`) {
+    if (family === `${intent}-light-solid`) {
       const policy = output.seedPolicies.status[intent];
 
-      return `${labelize(policy)} ${intent} policy. ${policy === "anchored" ? "Level 2 preserves the seed." : "Seed adapted into a balanced solid ramp."}`;
+      return `${labelize(policy)} ${intent} policy. ${policy === "anchored" ? "Level 2 preserves the light seed." : "Light seed adapted into a balanced solid ramp."}`;
     }
 
-    if (family === `${intent}-light-soft` || family === `${intent}-dark-soft`) {
+    if (family === `${intent}-dark-solid`) {
       const policy = output.seedPolicies.status[intent];
 
-      return `${labelize(policy)} ${intent} policy. Soft ramps stay derived for usable containers.`;
+      return `${labelize(policy)} ${intent} policy. ${policy === "anchored" ? "Level 2 preserves the dark seed." : "Dark seed adapted into a balanced solid ramp."}`;
+    }
+
+    if (family === `${intent}-light-soft`) {
+      const policy = output.seedPolicies.status[intent];
+
+      return `${labelize(policy)} ${intent} policy. Soft ramp derives from the light seed for usable containers.`;
+    }
+
+    if (family === `${intent}-dark-soft`) {
+      const policy = output.seedPolicies.status[intent];
+
+      return `${labelize(policy)} ${intent} policy. Soft ramp derives from the dark seed for dark containers.`;
     }
   }
 

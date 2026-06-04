@@ -2,7 +2,7 @@
 
 Status: active
 Created: 2026-06-02
-Last Updated: 2026-06-03
+Last Updated: 2026-06-04
 
 This workstream covers the second color-engine attempt. The v2 direction is visual-first and usage-first: generate compact, purpose-built color families with named presets and immediate kitchen-sink feedback instead of broad generic ramps that are mapped to semantics after the fact.
 
@@ -108,13 +108,31 @@ CE2-09C is implemented. Status solid text semantics now resolve from a small app
 
 CE2-09D is implemented. The package now has a representative assertion matrix that covers balanced defaults, quiet green/gold, layered blue/dark-blue info, high-separation purple/saturated status, legacy brown warning, and anchored tradeoff cases. Balanced matrix cases must have zero required failures. Anchored matrix cases assert explicit expected failures for light anchored primary, dark-blue anchored info soft text, and anchored gold warning soft/pressed states. The matrix exposed two small balanced edge failures, so warning light solid was capped slightly darker and dark status solid level 3 was brightened slightly; these were scoped tuning changes, not broad auto-tuning. Kitchen Sink default assertions still show 64 passed, 0 required failures, and 0 diagnostic failures. Browser smoke verified `/assertions` and `/themes` with no horizontal overflow and no console warnings/errors.
 
-Independent sub-agent review was not performed for CE2-01 through CE2-09D because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed.
+CE2-10 is implemented. V2 CSS output remains owned by `@puzzlefactory/color-engine` for now; `@puzzlefactory/tokens` continues to consume the preserved v1 reference output until a later explicit migration slice. The v2 package now exposes `COLOR_ENGINE_CSS_LOAD_ORDER`, `ColorEngineCssFileName`, `ColorEngineCssFileKind`, and `ColorEngineCssFile`, and `cssOutput.files` provides load-order-ready entries for `primitives.css`, `theme-light.css`, and `theme-dark.css`. Compatibility fields are preserved: `cssOutput.primitives`, `cssOutput.themes.light`, `cssOutput.themes.dark`, `cssOutput.all`, and `output.css` still work, with `cssOutput.all` equal to the ordered file CSS joined with blank lines. No high-contrast v2 CSS output was added.
+
+CE2-11 is implemented. The v2 package now exports a small curated example preset set: `evergreen`, `civic-blue`, `plum`, and `teal`, through `COLOR_ENGINE_THEME_PRESETS`, `COLOR_ENGINE_THEME_PRESET_NAMES`, `ColorEngineThemePresetName`, `ColorEngineThemePresetInput`, and `ColorEngineThemePreset`. Presets are plain input bundles over the existing `ColorEngineInput` fields and balanced seed policies; they do not add new generation concepts or runtime dependencies. Package tests verify preset order, shape, valid output, balanced policies, and zero required APCA failures.
+
+Kitchen Sink now defaults to the exported `evergreen` preset and renders a Theme Presets control section above the manual seed controls. Applying a preset fills the existing manual controls, changes generated primitives/themes/assertions through the normal engine state, and keeps manual editing available by marking the state as custom. Theme preset and surface separation buttons expose selected state with `aria-pressed`. Browser smoke verified applying the `plum` preset changes generated primary CSS, preserves 64/64 assertion passes, renders the theme preview without horizontal overflow, and logs no console warnings/errors.
+
+CE2-11B is implemented. Primary and status inputs now support optional dark-theme seeds:
+
+- `primaryDarkSeed`
+- `dangerDarkSeed`
+- `warningDarkSeed`
+- `successDarkSeed`
+- `infoDarkSeed`
+
+Light/default seeds remain the source for light primary/status families. Dark primary/status soft and solid families use the matching dark seed when provided, and fall back to the existing light/default seed when omitted. Existing seed policies remain shared per family; no separate dark seed policies were added. Anchored policy now preserves the theme-specific seed at solid level 2, so light solid level 2 preserves the light/default seed and dark solid level 2 preserves the dark seed. The exported curated presets include explicit dark seeds where useful while retaining zero required APCA assertion failures.
+
+Kitchen Sink now exposes separate light and dark seed fields for primary and each status intent, applies preset dark seeds through the normal manual controls, shows light/dark LCH metadata, and labels primitive ramp notes so reviewers can tell whether a family is driven by the light/default seed or the dark seed. Browser smoke verified Controls, Primitives, Themes, and Assertions render without error and that the separate seed fields plus primitive annotations are visible. The in-app browser could not type into inputs because its virtual clipboard was unavailable and page evaluation is read-only; dark-seed UI mutation behavior is therefore covered by package tests rather than browser text entry.
+
+Independent sub-agent review was not performed for CE2-01 through CE2-10 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed. Independent sub-agent review was performed for CE2-11; two findings were addressed before closeout: preset buttons gained `aria-pressed`, and the Kitchen Sink default assertion test now uses the exported `evergreen` preset input. Re-review confirmed both findings were resolved.
 
 ## Next Actions
 
-- Review the CE2-09D matrix and current Kitchen Sink output before continuing.
-- If CE2-09D is acceptable, proceed to `CE2-10`: v2 CSS/token output stabilization.
-- Treat `CE2-09` and later as strategic placeholders. Reorder or revise them if CE2-08 visual/assertion feedback exposes a more important issue.
+- Review CE2-11B visually in Kitchen Sink, especially dark-mode seeded primary/status output for anchored and balanced policies.
+- If CE2-11B is acceptable, proceed to `CE2-12`: consumer integration contract.
+- Treat `CE2-12` and later as strategic placeholders. Reorder or revise them if Kitchen Sink visual feedback exposes a more important issue.
 
 ## Seed Policy Plan
 
@@ -212,8 +230,9 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-09B` | Anchored policy diagnostics | Review anchored primary/status failures and make seed-preservation tradeoffs clear in diagnostics or kitchen-sink messaging. | Silently adapting anchored seeds, broad auto-tuning, threshold changes |
 | `CE2-09C` | Soft/status/body review pass | Review remaining soft, status, body, secondary, and muted assertion/visual weak spots; tune only where evidence justifies it. May include narrow status solid foreground resolution from an approved candidate set when generated backgrounds prove fixed text polarity is too rigid. | Promoting muted failures without design decision, broad recipe rewrites, broad auto-tuning, state-delta assertions |
 | `CE2-09D` | Preset and seed regression matrix | Run/report assertions across a small representative set of seeds and presets so tuning is not default-only. | Large theme marketplace, exhaustive seed search, hard enforcement |
-| `CE2-10` | V2 CSS/token output stabilization | Stabilize v2 CSS output boundaries and decide how `@puzzlefactory/tokens` should consume or wrap v2 output. | Component-library implementation |
-| `CE2-11` | Presets and example themes | Add a small set of credible OKLCH theme presets and kitchen-sink preset comparison. | Slider-heavy controls, broad theme marketplace |
+| `CE2-10` | V2 CSS/token output stabilization | Stabilize v2 CSS output boundaries in `@puzzlefactory/color-engine` with explicit file names and load order. Keep `@puzzlefactory/tokens` on v1 until a later explicit migration. | Component-library implementation |
+| `CE2-11` | Presets and example themes | Add a small set of credible OKLCH theme presets and kitchen-sink preset comparison. Implemented presets: `evergreen`, `civic-blue`, `plum`, and `teal`. | Slider-heavy controls, broad theme marketplace |
+| `CE2-11B` | Theme-specific dark seeds | Add optional dark-theme primary/status seeds, preserve fallback to light/default seeds, keep shared seed policies, preserve anchored theme-specific solid level 2, and expose separate light/dark controls in Kitchen Sink. | General semantic/text overrides, role classification, APCA threshold profiles, high-contrast v2 output |
 | `CE2-12` | Consumer integration contract | Define app consumption, generated CSS loading, theme attributes, and build-once/runtime usage patterns. | Full docs app, component-library implementation |
 | `CE2-13` | First component proof | Build the smallest Web Component proof that exercises color semantics, likely button plus alert/status panel. | Broad component library |
 
@@ -225,8 +244,10 @@ This workstream is substantially complete when:
 - Surface generation supports separate neutral, light-surface, and dark-surface seeds.
 - Chrome/border generation is separate from surface fills and surface interaction states.
 - Presets produce repeatable useful visual differences without requiring manual sliders.
+- Example theme presets are plain existing-input bundles that can be applied and compared in Kitchen Sink.
 - Primary and status families are compact usage sets, not long universal ramps.
 - Primary and status seed handling is explicit: either balanced/adapted or anchored/preserved.
+- V2 CSS output provides explicit load-order-ready primitive and theme files while preserving the bundled compatibility string.
 - Kitchen-sink shows primitives, semantic aliases, and real usage previews for each generated family.
 - Future agents can explain each generated token by the UI job it serves.
 
