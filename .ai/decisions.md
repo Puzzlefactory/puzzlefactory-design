@@ -23,6 +23,7 @@ This file is a rolling index of currently binding decisions. Use ADRs in `docs/a
 - Light and dark surface separation may use different named presets in color-engine v2. The shared `preset` remains the fallback for compatibility; `lightSurfacePreset` and `darkSurfacePreset` override it when provided.
 - V2 generated CSS is consumed directly from `@puzzlefactory/color-engine` for now. Consumers load `primitives.css`, then `theme-light.css`, then `theme-dark.css`, and select semantics with `data-theme-v2="light"` or `data-theme-v2="dark"`. `@puzzlefactory/tokens` remains v1/reference-backed until an explicit migration slice changes it.
 - The first component proof uses Web Components / Custom Elements in `@puzzlefactory/components`. Components consume semantic `--ds-*` custom properties only and must not import or call color-engine generation internals at runtime.
+- Component state recipes must select existing semantic tokens directly. Disabled component states should use neutral/control semantics rather than whole-element opacity, CSS filters, `color-mix()`, primitive ramp variables, or component-local color derivation. A future dedicated disabled text semantic may be added if `--ds-text-muted` proves too imprecise.
 
 ## Superseded Decisions
 

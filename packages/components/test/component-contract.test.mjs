@@ -27,9 +27,12 @@ test("components consume semantic CSS variables only", () => {
     "--ds-primary-action-text",
     "--ds-primary-focus-ring",
     "--ds-control-bg",
+    "--ds-control-border",
     "--ds-control-text",
+    "--ds-border-strong",
     "--ds-surface-2-pressed",
     "--ds-text-primary",
+    "--ds-text-muted",
     "--ds-danger-soft-bg",
     "--ds-danger-soft-text",
     "--ds-danger-solid-bg",
@@ -49,6 +52,19 @@ test("components consume semantic CSS variables only", () => {
   assert.doesNotMatch(source, /--ds-[a-z]+-(?:light|dark)-(?:soft|solid)-\d/);
   assert.doesNotMatch(source, /--ds-surface-(?:light|dark)-\d/);
   assert.doesNotMatch(source, /--ds-text-(?:light|dark)-\w/);
+});
+
+test("button disabled state uses neutral semantic tokens directly", () => {
+  assert.match(source, /\.button:disabled,\s*\.button:disabled:hover,\s*\.button:disabled:active/);
+  assert.match(source, /border-color: var\(--ds-control-border\);/);
+  assert.match(source, /background: var\(--ds-control-bg\);/);
+  assert.match(source, /color: var\(--ds-text-muted\);/);
+});
+
+test("component color recipes avoid local color derivation", () => {
+  assert.doesNotMatch(source, /\bopacity\s*:/);
+  assert.doesNotMatch(source, /\bfilter\s*:/);
+  assert.doesNotMatch(source, /color-mix\(/);
 });
 
 test("components do not import color engine internals", () => {

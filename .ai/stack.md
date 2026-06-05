@@ -86,17 +86,18 @@ Status: implemented TypeScript library/generator that consumes `EngineOutput`.
 
 ### `@puzzlefactory/components`
 
-Status: first Web Component proof. Target runtime is a TypeScript library of Custom Elements that consume semantic CSS custom properties from the v2 color-engine CSS contract.
+Status: first Web Component proof with bounded state recipes. Target runtime is a TypeScript library of Custom Elements that consume semantic CSS custom properties from the v2 color-engine CSS contract.
 
 - Package folder: `packages/components`
 - Package name: `@puzzlefactory/components`
 - Runtime dependencies: none
 - Current exports: `definePuzzleFactoryComponents`, `PfButtonElement`, `PfAlertElement`, `PUZZLEFACTORY_COMPONENT_TAG_NAMES`, and small public types for button variant, alert status, alert variant, and tag names
 - Current custom elements:
-  - `pf-button`: primary and secondary button proof using semantic variables such as `--ds-primary-action-bg`, `--ds-primary-action-text`, `--ds-control-bg`, `--ds-control-text`, and `--ds-primary-focus-ring`
+  - `pf-button`: primary, secondary, and disabled button proof using semantic variables such as `--ds-primary-action-bg`, `--ds-primary-action-text`, `--ds-control-bg`, `--ds-control-border`, `--ds-control-text`, `--ds-text-muted`, and `--ds-primary-focus-ring`
   - `pf-alert`: status alert proof using semantic status variables such as `--ds-danger-soft-bg`, `--ds-danger-soft-text`, `--ds-danger-solid-bg`, and matching warning/success/info roles
 - Components must not import or call `@puzzlefactory/color-engine` or `createColorEngineTheme`; they depend on generated CSS being loaded by the consumer.
 - Components should use semantic variables only. Primitive ramp variables such as `--ds-primary-light-solid-2`, `--ds-surface-light-1`, or `--ds-text-light-primary` remain out of component scope.
+- Component color recipes should not use whole-element opacity, filters, `color-mix()`, or local color derivation. Disabled state currently resolves directly to neutral/control semantics (`--ds-control-bg`, `--ds-control-border`, and `--ds-text-muted`).
 
 Build/test scripts:
 

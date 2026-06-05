@@ -151,9 +151,11 @@ Independent sub-agent review was not performed for CE2-01 through CE2-10 because
 
 CE2-13 is implemented. `packages/components` is now a bounded `@puzzlefactory/components` Web Component proof with zero runtime dependencies. It exports `definePuzzleFactoryComponents`, `PfButtonElement`, `PfAlertElement`, and small public types/constants. `pf-button` and `pf-alert` consume semantic CSS custom properties only and do not import or call `@puzzlefactory/color-engine` or `createColorEngineTheme`. Kitchen Sink registers the components and adds a `/components` route that renders primary/secondary buttons plus soft/solid danger/warning/success/info alerts in light and dark `data-theme-v2` boundaries. Browser smoke verified the route after restarting Vite: 6 `pf-button` elements, 16 `pf-alert` elements, both light/dark samples, upgraded shadow DOM for both elements, no horizontal overflow, no page-error event, and no Vite error overlay.
 
+CE2-14 is implemented. `pf-button` disabled state now uses neutral/control semantic CSS custom properties directly instead of dimming the whole primary button with opacity. Disabled primary and secondary buttons resolve to `--ds-control-bg`, `--ds-control-border`, and `--ds-text-muted`; hover and pressed disabled states stay neutral. The component proof also removed `color-mix()` from the focus recipe so component color recipes remain direct semantic-token selection. Contract tests now forbid component opacity, filters, `color-mix()`, primitive ramp variables, and color-engine imports. Kitchen Sink renders disabled primary and secondary examples in both light and dark component samples.
+
 ## Next Actions
 
-- Review CE2-13 visually in Kitchen Sink, especially whether `pf-alert` should remain the first status component or be renamed/refined before broader component work.
+- Review CE2-14 visually in Kitchen Sink and decide whether `--ds-text-muted` is sufficient for disabled component foregrounds or whether a future dedicated `--ds-text-disabled` semantic alias should be added.
 - Decide the next component slice after visual review. Candidate: refine the component proof API and accessibility contract before adding more components.
 - Treat later component work as strategic placeholders. Reorder or revise if Kitchen Sink visual feedback exposes a more important color/token issue.
 
@@ -263,6 +265,7 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-11E` | Theme-specific surface separation presets | Add optional `lightSurfacePreset` and `darkSurfacePreset` controls that fall back to `surfacePreset`; update generation, curated presets, Kitchen Sink controls, and tests so light and dark surface hierarchy can be tuned independently. | Sliders, new surface seed types, consumer integration, high-contrast theme output |
 | `CE2-12` | Consumer integration contract | Implemented. Defined app consumption, generated CSS loading, theme attributes, and build-once/runtime usage patterns. | Full docs app, component-library implementation |
 | `CE2-13` | First component proof | Implemented. Built `pf-button` and `pf-alert` Web Component proof consuming semantic CSS variables only, with Kitchen Sink visual verification. | Broad component library |
+| `CE2-14` | Component state recipes | Implemented. Refined `pf-button` disabled state to use neutral/control semantic tokens directly; added contract tests forbidding opacity, filters, `color-mix()`, primitive variables, and color-engine imports in component color recipes. | New components, local color derivation, new color-engine tokens unless existing semantics clearly fail |
 
 ## Completion Shape
 
@@ -281,6 +284,7 @@ This workstream is substantially complete when:
 - V2 CSS output provides explicit load-order-ready primitive and theme files while preserving the bundled compatibility string.
 - Consumer integration is documented for direct v2 `@puzzlefactory/color-engine` CSS output, including build-once, persisted runtime, and blob-hosted CSS patterns.
 - First Web Component proof consumes semantic CSS variables without calling color-generation internals.
+- Component state recipes consume semantic CSS variables directly, including disabled states that use neutral/control semantics instead of opacity, filters, `color-mix()`, or local color derivation.
 - Kitchen-sink shows primitives, semantic aliases, and real usage previews for each generated family.
 - Future agents can explain each generated token by the UI job it serves.
 

@@ -64,14 +64,17 @@ const buttonTemplate = documentSafeTemplate(`
     }
 
     .button:focus-visible {
-      outline: 3px solid color-mix(in oklch, var(--ds-primary-focus-ring), transparent 45%);
+      outline: 3px solid var(--ds-primary-focus-ring);
       outline-offset: 2px;
     }
 
-    .button:disabled {
+    .button:disabled,
+    .button:disabled:hover,
+    .button:disabled:active {
+      border-color: var(--ds-control-border);
+      background: var(--ds-control-bg);
       color: var(--ds-text-muted);
       cursor: not-allowed;
-      opacity: 0.56;
     }
   </style>
   <button class="button" part="button" type="button">

@@ -887,6 +887,9 @@ function ComponentSample({ label, theme }: { label: string; theme: SurfaceTheme 
           <pf-button>Primary action</pf-button>
           <pf-button variant="secondary">Secondary</pf-button>
           <pf-button disabled>Disabled</pf-button>
+          <pf-button variant="secondary" disabled>
+            Disabled secondary
+          </pf-button>
         </div>
         <div className="component-alerts" aria-label={`${label} alert proof`}>
           {statusIntents.map((intent) => (
