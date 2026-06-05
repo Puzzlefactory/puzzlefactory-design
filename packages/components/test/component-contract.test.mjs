@@ -71,3 +71,27 @@ test("components do not import color engine internals", () => {
   assert.doesNotMatch(source, /@puzzlefactory\/color-engine/);
   assert.doesNotMatch(source, /createColorEngineTheme/);
 });
+
+test("button exposes a narrow native-backed API contract", () => {
+  assert.match(source, /get disabled\(\): boolean/);
+  assert.match(source, /set disabled\(value: boolean\)/);
+  assert.match(source, /get variant\(\): PfButtonVariant/);
+  assert.match(source, /set variant\(value: PfButtonVariant\)/);
+  assert.match(source, /click\(\): void/);
+  assert.match(source, /focus\(options\?: FocusOptions\): void/);
+  assert.match(source, /<button class="button" part="button" type="button">/);
+});
+
+test("button keeps native form behavior intentionally deferred", () => {
+  assert.doesNotMatch(source, /static formAssociated/);
+  assert.doesNotMatch(source, /attachInternals/);
+  assert.doesNotMatch(source, /setFormValue/);
+});
+
+test("alert exposes status and variant properties without becoming interactive", () => {
+  assert.match(source, /get status\(\): PfAlertStatus/);
+  assert.match(source, /set status\(value: PfAlertStatus\)/);
+  assert.match(source, /get variant\(\): PfAlertVariant/);
+  assert.match(source, /set variant\(value: PfAlertVariant\)/);
+  assert.match(source, /role="status"/);
+});

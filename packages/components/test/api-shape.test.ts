@@ -19,6 +19,19 @@ const tagNames: readonly PuzzleFactoryComponentTagName[] = PUZZLEFACTORY_COMPONE
 const define: (registry?: CustomElementRegistry) => void = definePuzzleFactoryComponents;
 const buttonConstructor: typeof PfButtonElement = PfButtonElement;
 const alertConstructor: typeof PfAlertElement = PfAlertElement;
+const buttonElement = new PfButtonElement();
+const alertElement = new PfAlertElement();
+const buttonDisabled: boolean = buttonElement.disabled;
+const currentButtonVariant: PfButtonVariant = buttonElement.variant;
+const currentAlertStatus: PfAlertStatus = alertElement.status;
+const currentAlertVariant: PfAlertVariant = alertElement.variant;
+
+buttonElement.disabled = true;
+buttonElement.variant = "secondary";
+buttonElement.focus();
+buttonElement.click();
+alertElement.status = "danger";
+alertElement.variant = "solid";
 
 void tagName;
 void buttonVariant;
@@ -28,3 +41,7 @@ void tagNames;
 void define;
 void buttonConstructor;
 void alertConstructor;
+void buttonDisabled;
+void currentButtonVariant;
+void currentAlertStatus;
+void currentAlertVariant;

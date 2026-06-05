@@ -205,6 +205,55 @@ export class PfButtonElement extends HTMLElementBase {
     this.#syncDisabled();
   }
 
+  get disabled(): boolean {
+    return this.hasAttribute("disabled");
+  }
+
+  set disabled(value: boolean) {
+    this.toggleAttribute("disabled", value);
+  }
+
+  get variant(): PfButtonVariant {
+    return this.getAttribute("variant") === "secondary" ? "secondary" : "primary";
+  }
+
+  set variant(value: PfButtonVariant) {
+    if (value === "secondary") {
+      this.setAttribute("variant", value);
+      return;
+    }
+
+    this.removeAttribute("variant");
+  }
+
+  click(): void {
+    if (this.disabled) {
+      return;
+    }
+
+    if (this.#button) {
+      this.#button.click();
+      return;
+    }
+
+    const click = HTMLElementBase.prototype.click;
+    if (typeof click === "function") {
+      click.call(this);
+    }
+  }
+
+  focus(options?: FocusOptions): void {
+    if (this.#button) {
+      this.#button.focus(options);
+      return;
+    }
+
+    const focus = HTMLElementBase.prototype.focus;
+    if (typeof focus === "function") {
+      focus.call(this, options);
+    }
+  }
+
   #syncDisabled() {
     if (!this.#button) {
       return;
@@ -224,6 +273,38 @@ export class PfAlertElement extends HTMLElementBase {
 
     const shadowRoot = this.attachShadow({ mode: "open" });
     shadowRoot.append(alertTemplate.content.cloneNode(true));
+  }
+
+  get status(): PfAlertStatus {
+    const status = this.getAttribute("status");
+
+    if (status === "danger" || status === "warning" || status === "success") {
+      return status;
+    }
+
+    return "info";
+  }
+
+  set status(value: PfAlertStatus) {
+    if (value === "info") {
+      this.removeAttribute("status");
+      return;
+    }
+
+    this.setAttribute("status", value);
+  }
+
+  get variant(): PfAlertVariant {
+    return this.getAttribute("variant") === "solid" ? "solid" : "soft";
+  }
+
+  set variant(value: PfAlertVariant) {
+    if (value === "solid") {
+      this.setAttribute("variant", value);
+      return;
+    }
+
+    this.removeAttribute("variant");
   }
 }
 

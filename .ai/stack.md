@@ -86,24 +86,28 @@ Status: implemented TypeScript library/generator that consumes `EngineOutput`.
 
 ### `@puzzlefactory/components`
 
-Status: first Web Component proof with bounded state recipes. Target runtime is a TypeScript library of Custom Elements that consume semantic CSS custom properties from the v2 color-engine CSS contract.
+Status: first Web Component proof with bounded state recipes and explicit API/accessibility contract. Target runtime is a TypeScript library of Custom Elements that consume semantic CSS custom properties from the v2 color-engine CSS contract.
 
 - Package folder: `packages/components`
 - Package name: `@puzzlefactory/components`
 - Runtime dependencies: none
 - Current exports: `definePuzzleFactoryComponents`, `PfButtonElement`, `PfAlertElement`, `PUZZLEFACTORY_COMPONENT_TAG_NAMES`, and small public types for button variant, alert status, alert variant, and tag names
 - Current custom elements:
-  - `pf-button`: primary, secondary, and disabled button proof using semantic variables such as `--ds-primary-action-bg`, `--ds-primary-action-text`, `--ds-control-bg`, `--ds-control-border`, `--ds-control-text`, `--ds-text-muted`, and `--ds-primary-focus-ring`
-  - `pf-alert`: status alert proof using semantic status variables such as `--ds-danger-soft-bg`, `--ds-danger-soft-text`, `--ds-danger-solid-bg`, and matching warning/success/info roles
+  - `pf-button`: primary, secondary, and disabled button proof backed by an internal native `<button type="button">`, using semantic variables such as `--ds-primary-action-bg`, `--ds-primary-action-text`, `--ds-control-bg`, `--ds-control-border`, `--ds-control-text`, `--ds-text-muted`, and `--ds-primary-focus-ring`
+  - `pf-alert`: non-interactive status-region proof using semantic status variables such as `--ds-danger-soft-bg`, `--ds-danger-soft-text`, `--ds-danger-solid-bg`, and matching warning/success/info roles
+- Current public component API:
+  - `pf-button`: `disabled` attribute/property, `variant` attribute/property with `primary` or `secondary`, `focus(options?)`, and `click()`. Programmatic `click()` delegates to the internal button only when enabled. Form participation, submit/reset behavior, `type`, `name`, `value`, `form`, and constraint validation are deferred.
+  - `pf-alert`: `status` attribute/property with `danger`, `warning`, `success`, or `info`; `variant` attribute/property with `soft` or `solid`; optional `slot="title"` content. It renders an internal `role="status"` region and does not manage focus.
 - Components must not import or call `@puzzlefactory/color-engine` or `createColorEngineTheme`; they depend on generated CSS being loaded by the consumer.
 - Components should use semantic variables only. Primitive ramp variables such as `--ds-primary-light-solid-2`, `--ds-surface-light-1`, or `--ds-text-light-primary` remain out of component scope.
 - Component color recipes should not use whole-element opacity, filters, `color-mix()`, or local color derivation. Disabled state currently resolves directly to neutral/control semantics (`--ds-control-bg`, `--ds-control-border`, and `--ds-text-muted`).
+- Complex interactive components and form components require an explicit foundation decision before implementation. The current package does not yet choose Lit, Lion, Shoelace, Spectrum, Material Web, React wrappers, or form-associated custom element infrastructure.
 
 Build/test scripts:
 
 - `build`: `tsc -p tsconfig.json`
 - `typecheck`: `tsc -p tsconfig.json --noEmit`
-- `test`: builds `dist`, then runs TypeScript API-shape checks plus Node test runner package-boundary and semantic-variable contract checks
+- `test`: builds `dist`, then runs TypeScript API-shape checks plus Node test runner package-boundary, semantic-variable, state-recipe, and API/accessibility contract checks
 
 ## Apps
 
