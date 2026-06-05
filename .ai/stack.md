@@ -91,6 +91,7 @@ Status: first Web Component proof with bounded state recipes and explicit API/ac
 - Package folder: `packages/components`
 - Package name: `@puzzlefactory/components`
 - Runtime dependencies: none
+- Dev-only test dependency: `playwright` for Chromium-backed DOM-runtime tests
 - Current exports: `definePuzzleFactoryComponents`, `PfButtonElement`, `PfAlertElement`, `PUZZLEFACTORY_COMPONENT_TAG_NAMES`, and small public types for button variant, alert status, alert variant, and tag names
 - Current custom elements:
   - `pf-button`: primary, secondary, and disabled button proof backed by an internal native `<button type="button">`, using semantic variables such as `--ds-primary-action-bg`, `--ds-primary-action-text`, `--ds-control-bg`, `--ds-control-border`, `--ds-control-text`, `--ds-text-muted`, and `--ds-primary-focus-ring`
@@ -107,7 +108,8 @@ Build/test scripts:
 
 - `build`: `tsc -p tsconfig.json`
 - `typecheck`: `tsc -p tsconfig.json --noEmit`
-- `test`: builds `dist`, then runs TypeScript API-shape checks plus Node test runner package-boundary, semantic-variable, state-recipe, and API/accessibility contract checks
+- `test`: builds `dist`, then runs TypeScript API-shape checks plus Node test runner package-boundary, semantic-variable, state-recipe, API/accessibility contract, and Chromium-backed DOM-runtime checks
+- `test:install-browsers`: `playwright install chromium`; run once in fresh environments when the Playwright browser binary is missing
 
 ## Apps
 

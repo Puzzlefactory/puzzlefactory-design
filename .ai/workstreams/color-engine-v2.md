@@ -155,10 +155,12 @@ CE2-14 is implemented. `pf-button` disabled state now uses neutral/control seman
 
 CE2-15 is implemented. The current `@puzzlefactory/components` proof now has an explicit API/accessibility contract. `pf-button` remains backed by an internal native `<button type="button">`; it supports reflected `disabled` and `variant` properties, delegates `focus(options?)` to the internal button, and delegates `click()` only when enabled. `pf-button` is explicitly not form-associated and does not currently support submit/reset, `type`, `name`, `value`, form owner, or constraint-validation behavior. `pf-alert` now exposes reflected `status` and `variant` properties over its existing non-interactive internal `role="status"` region. The component README documents the supported API, deferred form behavior, and direction that simple components should prefer native HTML while complex interactive/form components require an explicit foundation decision. Independent review found no issues; residual risk is that event retargeting, accessible-name behavior, and focus delegation are still covered by platform behavior plus browser smoke, not automated DOM-runtime tests.
 
+CE2-16 is implemented. `@puzzlefactory/components` now has Chromium-backed DOM-runtime tests for the current `pf-button` and `pf-alert` proof contract. Tests register the custom elements in a browser `CustomElementRegistry`, verify `pf-button` disabled and variant reflection, internal native button disabled state, enabled/disabled `click()` behavior, focus delegation to the internal button, and slotted label projection. Tests also verify `pf-alert` status and variant reflection, internal `role="status"` rendering, and title/body slot projection. Playwright is a dev-only dependency; runtime dependencies remain zero. A `test:install-browsers` script documents the required one-time Chromium install for fresh environments. Independent review found one setup issue around fresh browser installation; it was addressed before closeout.
+
 ## Next Actions
 
-- Decide the next component slice after visual review. Candidate: add DOM-runtime component tests before broadening the component set.
 - Evaluate component foundation direction before building form or complex interactive components: raw Custom Elements plus native controls, Lit for authoring ergonomics, a white-label foundation such as Lion, a full Web Component library, React wrappers, or a mix.
+- Decide whether the next component slice is a foundation decision, React wrappers, or another narrow proof component. Do not broaden into form/complex components until the foundation choice is explicit.
 - Keep reviewing whether `--ds-text-muted` is sufficient for disabled component foregrounds or whether a future dedicated `--ds-text-disabled` semantic alias should be added.
 - Treat later component work as strategic placeholders. Reorder or revise if Kitchen Sink visual feedback exposes a more important color/token issue.
 
@@ -270,6 +272,7 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-13` | First component proof | Implemented. Built `pf-button` and `pf-alert` Web Component proof consuming semantic CSS variables only, with Kitchen Sink visual verification. | Broad component library |
 | `CE2-14` | Component state recipes | Implemented. Refined `pf-button` disabled state to use neutral/control semantic tokens directly; added contract tests forbidding opacity, filters, `color-mix()`, primitive variables, and color-engine imports in component color recipes. | New components, local color derivation, new color-engine tokens unless existing semantics clearly fail |
 | `CE2-15` | Component API and accessibility contract | Implemented. Documented and tested the current `pf-button`/`pf-alert` API boundary; added reflected properties and native button focus/click delegation; explicitly deferred form-associated behavior. | New form components, complex interactive components, dependencies, full form-associated custom elements |
+| `CE2-16` | Component DOM-runtime tests | Implemented. Added Chromium-backed DOM-runtime tests for current `pf-button` and `pf-alert` registration, reflection, native delegation, click/focus behavior, and slot/status rendering. | New components, form-associated custom elements, React wrappers, runtime dependencies |
 
 ## Completion Shape
 
@@ -290,6 +293,7 @@ This workstream is substantially complete when:
 - First Web Component proof consumes semantic CSS variables without calling color-generation internals.
 - Component state recipes consume semantic CSS variables directly, including disabled states that use neutral/control semantics instead of opacity, filters, `color-mix()`, or local color derivation.
 - Component API/accessibility contracts are explicit about supported native-backed behavior and deferred form/complex interaction behavior.
+- Component DOM/API contracts that depend on browser behavior are covered by DOM-runtime tests before the component set is broadened.
 - Kitchen-sink shows primitives, semantic aliases, and real usage previews for each generated family.
 - Future agents can explain each generated token by the UI job it serves.
 

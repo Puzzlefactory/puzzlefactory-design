@@ -17,6 +17,10 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && tsc -p tsconfig.test.json --noEmit && node --test test/*.test.mjs",
+    "test:install-browsers": "playwright install chromium",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
   }
 }

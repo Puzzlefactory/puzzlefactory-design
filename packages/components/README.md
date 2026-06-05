@@ -80,3 +80,6 @@ Simple components should prefer native HTML behavior under the hood. Complex int
 - `npm run build --workspace @puzzlefactory/components`
 - `npm run typecheck --workspace @puzzlefactory/components`
 - `npm run test --workspace @puzzlefactory/components`
+- `npm run test:install-browsers --workspace @puzzlefactory/components`
+
+The test script includes Chromium-backed DOM-runtime tests for Custom Elements and Shadow DOM behavior. If Playwright reports that Chromium is missing in a fresh environment, run the browser-install script once before rerunning the package tests.
