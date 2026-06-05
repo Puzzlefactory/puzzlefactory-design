@@ -6,7 +6,7 @@ ADRs capture the context and reasoning behind decisions that would otherwise be 
 
 ## Index
 
-[ADRs will be listed here as they are added.]
+- [ADR 0001: Component Foundation Direction](0001-component-foundation.md)
 
 ## Conventions
 

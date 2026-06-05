@@ -26,6 +26,7 @@ This file is a rolling index of currently binding decisions. Use ADRs in `docs/a
 - Component state recipes must select existing semantic tokens directly. Disabled component states should use neutral/control semantics rather than whole-element opacity, CSS filters, `color-mix()`, primitive ramp variables, or component-local color derivation. A future dedicated disabled text semantic may be added if `--ds-text-muted` proves too imprecise.
 - Current proof components should be honest about native behavior. `pf-button` is backed by a native internal `<button type="button">`, supports only the documented `disabled`/`variant` contract plus focus/click delegation, and is not form-associated. Complex interactive or form components require an explicit foundation decision before implementation.
 - Component DOM/API contracts should be tested in a real browser runtime when Shadow DOM, Custom Elements, focus delegation, event composition, or slot projection matter. `@puzzlefactory/components` may use Playwright as dev-only test tooling; runtime dependencies must remain zero.
+- Component foundation direction is recorded in `docs/adr/0001-component-foundation.md`: keep `@puzzlefactory/components` as raw Custom Elements for simple display and native-backed proof components; do not build complex form or ARIA-heavy components until a dedicated foundation spike chooses between Lit/platform APIs, Lion, or another approved approach; React wrappers are a later consumer-ergonomics layer, not the core foundation.
 
 ## Superseded Decisions
 

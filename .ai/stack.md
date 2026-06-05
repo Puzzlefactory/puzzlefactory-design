@@ -86,7 +86,7 @@ Status: implemented TypeScript library/generator that consumes `EngineOutput`.
 
 ### `@puzzlefactory/components`
 
-Status: first Web Component proof with bounded state recipes and explicit API/accessibility contract. Target runtime is a TypeScript library of Custom Elements that consume semantic CSS custom properties from the v2 color-engine CSS contract.
+Status: first Web Component proof with bounded state recipes, explicit API/accessibility contract, and accepted foundation direction. Target runtime is a TypeScript library of Custom Elements that consume semantic CSS custom properties from the v2 color-engine CSS contract.
 
 - Package folder: `packages/components`
 - Package name: `@puzzlefactory/components`
@@ -102,7 +102,10 @@ Status: first Web Component proof with bounded state recipes and explicit API/ac
 - Components must not import or call `@puzzlefactory/color-engine` or `createColorEngineTheme`; they depend on generated CSS being loaded by the consumer.
 - Components should use semantic variables only. Primitive ramp variables such as `--ds-primary-light-solid-2`, `--ds-surface-light-1`, or `--ds-text-light-primary` remain out of component scope.
 - Component color recipes should not use whole-element opacity, filters, `color-mix()`, or local color derivation. Disabled state currently resolves directly to neutral/control semantics (`--ds-control-bg`, `--ds-control-border`, and `--ds-text-muted`).
-- Complex interactive components and form components require an explicit foundation decision before implementation. The current package does not yet choose Lit, Lion, Shoelace, Spectrum, Material Web, React wrappers, or form-associated custom element infrastructure.
+- Foundation direction: keep raw Custom Elements for simple display components and simple native-backed controls while the package remains small. Do not build complex form controls or ARIA-heavy interactions in raw Custom Elements by default.
+- Before implementing inputs, selects, comboboxes, dialogs, popovers, menus, tabs, tooltips, or similar components, run a dedicated foundation spike comparing Lit plus platform APIs versus a white-label foundation such as Lion.
+- React wrappers are a later consumer-ergonomics layer after core Custom Element APIs stabilize. React 19 support makes wrappers less urgent, but wrappers may still help with typed props, event names, and compatibility.
+- Do not adopt Shoelace, Spectrum Web Components, Material Web, or another full component library as the foundation; they may be references only unless a future ADR supersedes this decision.
 
 Build/test scripts:
 
@@ -138,7 +141,8 @@ Component distribution is still not fully decided. The current proof favors Web 
 
 ## Open Questions
 
-- Component API shape after the first proof — Web Components only, React wrappers, or both?
+- Timing and package shape for optional React wrappers after core Custom Element APIs stabilize.
+- Foundation choice for form controls and complex interactive components: Lit plus platform APIs, Lion, or another approved white-label foundation.
 - Distribution mechanism — npm, CDN, monorepo-only?
 - CSS fallback layer for browsers without `oklch()` support (explicitly out of scope for current phase, to be revisited)
 - Bundle mode for consumers who cannot control CSS load order (explicitly out of scope for current phase)

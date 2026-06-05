@@ -157,11 +157,15 @@ CE2-15 is implemented. The current `@puzzlefactory/components` proof now has an 
 
 CE2-16 is implemented. `@puzzlefactory/components` now has Chromium-backed DOM-runtime tests for the current `pf-button` and `pf-alert` proof contract. Tests register the custom elements in a browser `CustomElementRegistry`, verify `pf-button` disabled and variant reflection, internal native button disabled state, enabled/disabled `click()` behavior, focus delegation to the internal button, and slotted label projection. Tests also verify `pf-alert` status and variant reflection, internal `role="status"` rendering, and title/body slot projection. Playwright is a dev-only dependency; runtime dependencies remain zero. A `test:install-browsers` script documents the required one-time Chromium install for fresh environments. Independent review found one setup issue around fresh browser installation; it was addressed before closeout.
 
+CE2-17 is implemented. ADR 0001 records the accepted component foundation direction. `@puzzlefactory/components` stays raw Custom Elements for the near term, but only for simple display components and simple native-backed controls. The package should remain zero-runtime-dependency while the component set is small. Complex form controls and ARIA-heavy interactions should not be implemented in raw Custom Elements by default; before adding inputs, selects, comboboxes, dialogs, popovers, menus, tabs, tooltips, or similar components, run a dedicated foundation spike comparing Lit plus platform APIs versus a white-label foundation such as Lion. React wrappers remain a later consumer-ergonomics layer after core Custom Element APIs stabilize. Full external component libraries such as Shoelace, Spectrum Web Components, and Material Web are references only, not foundations.
+
 ## Next Actions
 
-- Evaluate component foundation direction before building form or complex interactive components: raw Custom Elements plus native controls, Lit for authoring ergonomics, a white-label foundation such as Lion, a full Web Component library, React wrappers, or a mix.
-- Decide whether the next component slice is a foundation decision, React wrappers, or another narrow proof component. Do not broaden into form/complex components until the foundation choice is explicit.
+- Continue with simple raw Custom Element proofs only where the UI behavior is low-risk, such as badge, card/panel, status indicator, or similar display/native-backed pieces.
+- Consider a React wrapper proof only after the core Custom Element API for a component is stable; wrappers must not duplicate styling or behavior.
+- Before form controls or complex interactions, create a dedicated foundation spike for Lit plus platform APIs versus Lion or another approved white-label foundation.
 - Keep reviewing whether `--ds-text-muted` is sufficient for disabled component foregrounds or whether a future dedicated `--ds-text-disabled` semantic alias should be added.
+- Keep a future Theme Authoring Tool as a separate workstream candidate, not a Kitchen Sink expansion or a single CE2 slice.
 - Treat later component work as strategic placeholders. Reorder or revise if Kitchen Sink visual feedback exposes a more important color/token issue.
 
 ## Seed Policy Plan
@@ -197,6 +201,27 @@ Future seed-classification exploration:
 - Do not implement this until the current explicit-seed API, CSS output, and preset story are stable.
 
 Kitchen-sink should make seed policy visible when implemented. Primitive ramps should clearly show whether the seed was adapted or anchored, so the generator feels honest during visual review.
+
+## Adjacent Future Workstreams
+
+### Theme Authoring Tool
+
+Status: future candidate; not part of the current CE2 implementation arc.
+
+Kitchen Sink should remain the diagnostic lab for engine and component verification. It should keep exposing primitives, semantics, assertions, raw output, and edge cases for engineering/design QA.
+
+A Theme Authoring Tool should be a separate app/workstream because its product needs are different:
+
+- A cohesive designer/admin workflow rather than a diagnostic surface.
+- Guided preset selection and tenant theme creation.
+- Color entry for hex, RGB, and OKLCH inputs.
+- OKLCH conversion and adjustment controls so designers can translate existing palette colors, inspect the resulting OKLCH values, and fine-tune intentionally.
+- Gamut and accessibility guidance presented as authoring feedback, not raw assertion diagnostics.
+- Live previews over real components and representative app surfaces.
+- Export or publish of both the durable theme input and generated CSS artifacts.
+- Future integration with tenant catalog and blob-hosted generated CSS, if/when authorized.
+
+Do not treat this as `CE2-23` or as a one-pass Kitchen Sink enhancement. When authorized, start a new `.ai/workstreams/theme-authoring-tool.md` workstream and define slices around product shape, app shell, color input/conversion, live preview, export/publish, and tenant storage integration.
 
 ## Strategic Roadmap
 
@@ -240,6 +265,17 @@ This roadmap is intentionally provisional. Kitchen-sink visual review and assert
    - Implemented: button plus alert/status panel proof exercises primary, status, surface, chrome, and APCA-relevant pairs.
    - Stopped before a broad component library.
 
+7. `CE2-17`: Component foundation decision.
+   - Implemented: keep raw Custom Elements for simple display/native-backed components.
+   - Implemented: defer complex form/interactive components until a dedicated foundation spike.
+   - Implemented: keep React wrappers as a later consumer-ergonomics layer, not the core foundation.
+   - Stopped before dependencies, wrappers, migrations, or new components.
+
+8. Next component slices after CE2-17.
+   - Recommended next narrow implementation: another simple raw Custom Element proof, such as badge/status indicator or card/panel, to validate semantic CSS consumption across more component shapes.
+   - Alternative next planning slice: React wrapper proof design if React consumer ergonomics becomes more urgent.
+   - Separate later spike: form/interactive foundation decision before any input, select, combobox, dialog, menu, popover, tabs, or tooltip work.
+
 ## Slice Backlog
 
 Use these IDs as shorthand for future work authorization prompts.
@@ -273,6 +309,10 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-14` | Component state recipes | Implemented. Refined `pf-button` disabled state to use neutral/control semantic tokens directly; added contract tests forbidding opacity, filters, `color-mix()`, primitive variables, and color-engine imports in component color recipes. | New components, local color derivation, new color-engine tokens unless existing semantics clearly fail |
 | `CE2-15` | Component API and accessibility contract | Implemented. Documented and tested the current `pf-button`/`pf-alert` API boundary; added reflected properties and native button focus/click delegation; explicitly deferred form-associated behavior. | New form components, complex interactive components, dependencies, full form-associated custom elements |
 | `CE2-16` | Component DOM-runtime tests | Implemented. Added Chromium-backed DOM-runtime tests for current `pf-button` and `pf-alert` registration, reflection, native delegation, click/focus behavior, and slot/status rendering. | New components, form-associated custom elements, React wrappers, runtime dependencies |
+| `CE2-17` | Component foundation decision | Implemented. ADR 0001 keeps raw Custom Elements for simple display/native-backed components, defers complex form/interactive components to a foundation spike, and positions React wrappers as a later ergonomics layer. | New dependencies, migrations, wrappers, new components |
+| `CE2-18` | Simple component expansion proof | Add one or two simple raw Custom Element components that validate semantic CSS consumption beyond button/alert, likely badge/status indicator and card/panel. | Form controls, complex ARIA widgets, new foundations, React wrappers |
+| `CE2-19` | React wrapper proof | Add optional React wrappers for stable core Custom Element APIs if React ergonomics becomes the next priority. Wrappers must not duplicate styling or component behavior. | New core component behavior, non-React framework wrappers, color-engine changes |
+| `CE2-20` | Form/interactive foundation spike | Compare Lit plus platform APIs against Lion or another approved white-label foundation before implementing inputs/selects/comboboxes/dialogs/menus/popovers/tabs/tooltips. | Implementing form or complex interactive components |
 
 ## Completion Shape
 
@@ -294,6 +334,7 @@ This workstream is substantially complete when:
 - Component state recipes consume semantic CSS variables directly, including disabled states that use neutral/control semantics instead of opacity, filters, `color-mix()`, or local color derivation.
 - Component API/accessibility contracts are explicit about supported native-backed behavior and deferred form/complex interaction behavior.
 - Component DOM/API contracts that depend on browser behavior are covered by DOM-runtime tests before the component set is broadened.
+- Component foundation direction is explicit: raw Custom Elements for simple pieces, dedicated foundation spike before form/complex interactions, React wrappers as optional ergonomics later.
 - Kitchen-sink shows primitives, semantic aliases, and real usage previews for each generated family.
 - Future agents can explain each generated token by the UI job it serves.
 
