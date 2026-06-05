@@ -22,6 +22,7 @@ This file is a rolling index of currently binding decisions. Use ADRs in `docs/a
 - Foreground/text primitives are independent from surface primitives in color-engine v2. Normal text semantics and primary/status solid on-color text must resolve from dedicated near-black/near-white text families, not from reused surface tokens.
 - Light and dark surface separation may use different named presets in color-engine v2. The shared `preset` remains the fallback for compatibility; `lightSurfacePreset` and `darkSurfacePreset` override it when provided.
 - V2 generated CSS is consumed directly from `@puzzlefactory/color-engine` for now. Consumers load `primitives.css`, then `theme-light.css`, then `theme-dark.css`, and select semantics with `data-theme-v2="light"` or `data-theme-v2="dark"`. `@puzzlefactory/tokens` remains v1/reference-backed until an explicit migration slice changes it.
+- The first component proof uses Web Components / Custom Elements in `@puzzlefactory/components`. Components consume semantic `--ds-*` custom properties only and must not import or call color-engine generation internals at runtime.
 
 ## Superseded Decisions
 

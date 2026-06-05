@@ -39,6 +39,7 @@ const navItems = [
   { to: "/primitives", label: "Primitives" },
   { to: "/semantic", label: "Semantic" },
   { to: "/themes", label: "Themes" },
+  { to: "/components", label: "Components" },
   { to: "/assertions", label: "Assertions" },
 ] as const;
 
@@ -395,6 +396,7 @@ export function App() {
           <Route path="/primitives" element={<Primitives engine={engine} />} />
           <Route path="/semantic" element={<SemanticPreview engine={engine} />} />
           <Route path="/themes" element={<ThemePreview engine={engine} />} />
+          <Route path="/components" element={<ComponentProof engine={engine} />} />
           <Route path="/assertions" element={<AssertionReport engine={engine} />} />
         </Routes>
       </main>
@@ -851,6 +853,57 @@ function ThemePreview({ engine }: { engine: EngineState }) {
       <ForegroundTextReview />
       <TextTreatmentReview output={engine.output} />
     </ViewFrame>
+  );
+}
+
+function ComponentProof({ engine }: { engine: EngineState }) {
+  if (engine.kind === "error") {
+    return <ErrorView engine={engine} />;
+  }
+
+  return (
+    <ViewFrame
+      title="Component Proof"
+      subtitle="Custom elements rendered from the generated semantic CSS contract in light and dark theme boundaries."
+    >
+      <section className="component-grid" aria-label="Web component proof">
+        {themeOptions.map((theme) => (
+          <ComponentSample key={theme.key} label={theme.label} theme={theme.key} />
+        ))}
+      </section>
+    </ViewFrame>
+  );
+}
+
+function ComponentSample({ label, theme }: { label: string; theme: SurfaceTheme }) {
+  return (
+    <article className="component-sample" data-theme-v2={theme}>
+      <header className="theme-sample-header">
+        <h3>{label}</h3>
+        <span>{theme}</span>
+      </header>
+      <div className="component-surface">
+        <div className="component-actions" aria-label={`${label} button proof`}>
+          <pf-button>Primary action</pf-button>
+          <pf-button variant="secondary">Secondary</pf-button>
+          <pf-button disabled>Disabled</pf-button>
+        </div>
+        <div className="component-alerts" aria-label={`${label} alert proof`}>
+          {statusIntents.map((intent) => (
+            <pf-alert key={`${intent.key}-soft`} status={intent.key}>
+              <span slot="title">{intent.label} soft</span>
+              Semantic status variables drive the container, border, and text.
+            </pf-alert>
+          ))}
+          {statusIntents.map((intent) => (
+            <pf-alert key={`${intent.key}-solid`} status={intent.key} variant="solid">
+              <span slot="title">{intent.label} solid</span>
+              Solid status variables drive the background and foreground.
+            </pf-alert>
+          ))}
+        </div>
+      </div>
+    </article>
   );
 }
 

@@ -149,11 +149,13 @@ CE2-12 is implemented. `packages/color-engine/README.md` now documents the v2 co
 
 Independent sub-agent review was not performed for CE2-01 through CE2-10 because the current tool policy requires explicit user authorization for sub-agent delegation. Local review plus focused and root verification passed. Independent sub-agent review was performed for CE2-11; two findings were addressed before closeout: preset buttons gained `aria-pressed`, and the Kitchen Sink default assertion test now uses the exported `evergreen` preset input. Re-review confirmed both findings were resolved. Independent sub-agent review was performed for CE2-11C; one P3 coverage finding was addressed before closeout by adding status soft hover assertion pairs and tests.
 
+CE2-13 is implemented. `packages/components` is now a bounded `@puzzlefactory/components` Web Component proof with zero runtime dependencies. It exports `definePuzzleFactoryComponents`, `PfButtonElement`, `PfAlertElement`, and small public types/constants. `pf-button` and `pf-alert` consume semantic CSS custom properties only and do not import or call `@puzzlefactory/color-engine` or `createColorEngineTheme`. Kitchen Sink registers the components and adds a `/components` route that renders primary/secondary buttons plus soft/solid danger/warning/success/info alerts in light and dark `data-theme-v2` boundaries. Browser smoke verified the route after restarting Vite: 6 `pf-button` elements, 16 `pf-alert` elements, both light/dark samples, upgraded shadow DOM for both elements, no horizontal overflow, no page-error event, and no Vite error overlay.
+
 ## Next Actions
 
-- Review the CE2-12 consumer integration contract for whether it is sufficient before first component work.
-- If acceptable, proceed to `CE2-13`: first component proof.
-- Treat `CE2-13` and later as strategic placeholders. Reorder or revise them if Kitchen Sink visual feedback exposes a more important issue.
+- Review CE2-13 visually in Kitchen Sink, especially whether `pf-alert` should remain the first status component or be renamed/refined before broader component work.
+- Decide the next component slice after visual review. Candidate: refine the component proof API and accessibility contract before adding more components.
+- Treat later component work as strategic placeholders. Reorder or revise if Kitchen Sink visual feedback exposes a more important color/token issue.
 
 ## Seed Policy Plan
 
@@ -227,9 +229,9 @@ This roadmap is intentionally provisional. Kitchen-sink visual review and assert
    - Stopped before full docs app or component package work.
 
 6. `CE2-13`: First component proof.
-   - Build the smallest useful Web Component proof only after color, semantic aliases, CSS output, and assertion diagnostics are credible.
-   - Candidate proof: button plus alert/status panel, because those exercise primary, status, surface, chrome, and APCA pairs.
-   - Stop before a broad component library.
+   - Implemented: built the smallest useful Web Component proof after color, semantic aliases, CSS output, and assertion diagnostics became credible.
+   - Implemented: button plus alert/status panel proof exercises primary, status, surface, chrome, and APCA-relevant pairs.
+   - Stopped before a broad component library.
 
 ## Slice Backlog
 
@@ -260,7 +262,7 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-11D` | Dedicated foreground/text ramps | Add independent `text-dark` and `text-light` primitive families, remap normal text semantics to those primitives, and resolve primary/status solid text from dedicated foreground candidates instead of surface tokens. | Broad per-token overrides, tenant override API, high-contrast theme output, threshold profiles |
 | `CE2-11E` | Theme-specific surface separation presets | Add optional `lightSurfacePreset` and `darkSurfacePreset` controls that fall back to `surfacePreset`; update generation, curated presets, Kitchen Sink controls, and tests so light and dark surface hierarchy can be tuned independently. | Sliders, new surface seed types, consumer integration, high-contrast theme output |
 | `CE2-12` | Consumer integration contract | Implemented. Defined app consumption, generated CSS loading, theme attributes, and build-once/runtime usage patterns. | Full docs app, component-library implementation |
-| `CE2-13` | First component proof | Build the smallest Web Component proof that exercises color semantics, likely button plus alert/status panel. | Broad component library |
+| `CE2-13` | First component proof | Implemented. Built `pf-button` and `pf-alert` Web Component proof consuming semantic CSS variables only, with Kitchen Sink visual verification. | Broad component library |
 
 ## Completion Shape
 
@@ -278,6 +280,7 @@ This workstream is substantially complete when:
 - Primary and status seed handling is explicit: either balanced/adapted or anchored/preserved.
 - V2 CSS output provides explicit load-order-ready primitive and theme files while preserving the bundled compatibility string.
 - Consumer integration is documented for direct v2 `@puzzlefactory/color-engine` CSS output, including build-once, persisted runtime, and blob-hosted CSS patterns.
+- First Web Component proof consumes semantic CSS variables without calling color-generation internals.
 - Kitchen-sink shows primitives, semantic aliases, and real usage previews for each generated family.
 - Future agents can explain each generated token by the UI job it serves.
 

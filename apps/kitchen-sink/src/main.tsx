@@ -1,8 +1,11 @@
+import { definePuzzleFactoryComponents } from "@puzzlefactory/components";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 import { App } from "./app";
 import "./styles.css";
+
+definePuzzleFactoryComponents();
 
 const root = document.getElementById("root");
 

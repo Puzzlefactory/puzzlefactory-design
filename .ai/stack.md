@@ -86,18 +86,34 @@ Status: implemented TypeScript library/generator that consumes `EngineOutput`.
 
 ### `@puzzlefactory/components`
 
-Not yet decided. Deferred until the color engine layer is complete. Web Components (Custom Elements) are a candidate for design system distribution — they present a clean attribute/slot/event API consumable by any framework.
+Status: first Web Component proof. Target runtime is a TypeScript library of Custom Elements that consume semantic CSS custom properties from the v2 color-engine CSS contract.
+
+- Package folder: `packages/components`
+- Package name: `@puzzlefactory/components`
+- Runtime dependencies: none
+- Current exports: `definePuzzleFactoryComponents`, `PfButtonElement`, `PfAlertElement`, `PUZZLEFACTORY_COMPONENT_TAG_NAMES`, and small public types for button variant, alert status, alert variant, and tag names
+- Current custom elements:
+  - `pf-button`: primary and secondary button proof using semantic variables such as `--ds-primary-action-bg`, `--ds-primary-action-text`, `--ds-control-bg`, `--ds-control-text`, and `--ds-primary-focus-ring`
+  - `pf-alert`: status alert proof using semantic status variables such as `--ds-danger-soft-bg`, `--ds-danger-soft-text`, `--ds-danger-solid-bg`, and matching warning/success/info roles
+- Components must not import or call `@puzzlefactory/color-engine` or `createColorEngineTheme`; they depend on generated CSS being loaded by the consumer.
+- Components should use semantic variables only. Primitive ramp variables such as `--ds-primary-light-solid-2`, `--ds-surface-light-1`, or `--ds-text-light-primary` remain out of component scope.
+
+Build/test scripts:
+
+- `build`: `tsc -p tsconfig.json`
+- `typecheck`: `tsc -p tsconfig.json --noEmit`
+- `test`: builds `dist`, then runs TypeScript API-shape checks plus Node test runner package-boundary and semantic-variable contract checks
 
 ## Apps
 
 ### `apps/kitchen-sink`
 
-Status: React + Vite + React Router 7 verification shell wired to v2 neutral/surface/chrome/primary/status color-engine output, curated theme presets, theme-specific surface separation presets, theme-specific dark seeds, seed policy, text treatment strategies, generated semantic aliases, and APCA assertion diagnostics.
+Status: React + Vite + React Router 7 verification shell wired to v2 neutral/surface/chrome/primary/status color-engine output, curated theme presets, theme-specific surface separation presets, theme-specific dark seeds, seed policy, text treatment strategies, generated semantic aliases, APCA assertion diagnostics, and the first component proof.
 
 - Package name: `@puzzlefactory/kitchen-sink`
 - Runtime stack: React 19, Vite 8, React Router 7
 - Purpose: visual verification surface for the color engine and later token/theme/component states
-- Current behavior: routed verification tool that consumes v2 `@puzzlefactory/color-engine`, injects generated CSS directly, switches `data-theme-v2`, and displays curated theme preset controls, shared/light/dark surface separation controls with inherited shared fallback support, neutral/surface/chrome/text controls, separate light/dark primary and status seed controls, per-family seed policy controls, text treatment strategy controls, compact primitive ramps with seed anchor markers and light/dark seed-source notes, semantic text/chrome/surface/primary/status roles, generated CSS output sections, light/dark nested surface previews, primary action/link/focus previews, status soft/solid cards, text treatment comparison cards, foreground text usage samples, and an APCA assertion report grouped by theme and role. Current Kitchen Sink defaults use the exported `evergreen` theme preset and show 76/76 assertion pairs passing. When anchored policy is active, the assertion report identifies linked failures as seed-preservation tradeoffs rather than silent tuning opportunities.
+- Current behavior: routed verification tool that consumes v2 `@puzzlefactory/color-engine`, injects generated CSS directly, switches `data-theme-v2`, registers `@puzzlefactory/components`, and displays curated theme preset controls, shared/light/dark surface separation controls with inherited shared fallback support, neutral/surface/chrome/text controls, separate light/dark primary and status seed controls, per-family seed policy controls, text treatment strategy controls, compact primitive ramps with seed anchor markers and light/dark seed-source notes, semantic text/chrome/surface/primary/status roles, generated CSS output sections, light/dark nested surface previews, primary action/link/focus previews, status soft/solid cards, text treatment comparison cards, foreground text usage samples, a Components route with `pf-button` and `pf-alert` rendered in light/dark theme boundaries, and an APCA assertion report grouped by theme and role. Current Kitchen Sink defaults use the exported `evergreen` theme preset and show 76/76 assertion pairs passing. When anchored policy is active, the assertion report identifies linked failures as seed-preservation tradeoffs rather than silent tuning opportunities.
 
 ### `apps/docs`
 
@@ -111,11 +127,11 @@ Figma MCP is available in Claude Code sessions and can read design files, inspec
 
 Generated color CSS v2 is distributed directly from `@puzzlefactory/color-engine` for now. The package documents the supported consumer contract for `cssOutput.files`, primitive/theme file load order, `data-theme-v2`, build-once generation, persisted runtime generation, and blob-hosted tenant CSS.
 
-Component distribution is not yet decided. Deferred until the component layer architecture is settled.
+Component distribution is still not fully decided. The current proof favors Web Components because they can consume the generated CSS contract from any framework, but broad packaging, CDN, and framework-wrapper decisions remain deferred.
 
 ## Open Questions
 
-- Component API shape — Web Components, React, or both?
+- Component API shape after the first proof — Web Components only, React wrappers, or both?
 - Distribution mechanism — npm, CDN, monorepo-only?
 - CSS fallback layer for browsers without `oklch()` support (explicitly out of scope for current phase, to be revisited)
 - Bundle mode for consumers who cannot control CSS load order (explicitly out of scope for current phase)

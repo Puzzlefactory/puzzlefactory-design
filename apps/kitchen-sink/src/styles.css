@@ -41,7 +41,8 @@ p {
 .theme-sample,
 .semantic-panel,
 .foreground-text-card,
-.text-treatment-card {
+.text-treatment-card,
+.component-sample {
   --app-text-primary: var(--ds-text-primary, #101820);
   --app-text-secondary: var(--ds-text-secondary, #536170);
   --app-border: var(--ds-border-default, color-mix(in oklch, var(--ds-surface-1, #eef2f7), #111827 18%));
@@ -59,7 +60,8 @@ p {
 .theme-sample[data-theme-v2="dark"],
 .semantic-panel[data-theme-v2="dark"],
 .foreground-text-card[data-theme-v2="dark"],
-.text-treatment-card[data-theme-v2="dark"] {
+.text-treatment-card[data-theme-v2="dark"],
+.component-sample[data-theme-v2="dark"] {
   --app-text-primary: var(--ds-text-primary, #f6f8fb);
   --app-text-secondary: var(--ds-text-secondary, #b7c0cc);
   --app-border: var(--ds-border-default, color-mix(in oklch, var(--ds-surface-1, #111827), #ffffff 18%));
@@ -165,6 +167,7 @@ h3 {
 .preset-grid,
 .metric-grid,
 .theme-grid,
+.component-grid,
 .semantic-layout,
 .ramp-stack,
 .foreground-text-review,
@@ -193,6 +196,7 @@ h3 {
 }
 
 .theme-grid,
+.component-grid,
 .semantic-layout {
   grid-template-columns: repeat(2, minmax(280px, 1fr));
 }
@@ -204,6 +208,7 @@ h3 {
 .ramp-panel,
 .semantic-panel,
 .theme-sample,
+.component-sample,
 .foreground-text-card,
 .text-treatment-card,
 .notice {
@@ -594,6 +599,37 @@ h3 {
   background: var(--ds-surface-1, #eef2f7);
 }
 
+.component-sample {
+  gap: 16px;
+  min-width: 0;
+  background: var(--ds-surface-1, #eef2f7);
+}
+
+.component-surface {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--ds-border-subtle);
+  border-radius: 7px;
+  background: var(--ds-surface-2);
+}
+
+.component-actions {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.component-alerts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
 .surface-demo {
   display: grid;
   gap: 8px;
@@ -981,6 +1017,7 @@ h3 {
   .preset-grid,
   .metric-grid,
   .theme-grid,
+  .component-grid,
   .foreground-text-grid,
   .text-treatment-grid,
   .semantic-layout,
@@ -1038,6 +1075,7 @@ h3 {
   .preset-grid,
   .metric-grid,
   .theme-grid,
+  .component-grid,
   .foreground-text-grid,
   .text-treatment-grid,
   .semantic-layout,
@@ -1047,6 +1085,7 @@ h3 {
   .assertion-summary-row,
   .state-row,
   .status-demo,
+  .component-alerts,
   .text-treatment-status-grid {
     grid-template-columns: 1fr;
   }
