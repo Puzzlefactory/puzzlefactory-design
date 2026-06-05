@@ -353,6 +353,7 @@ h3 {
 .ramp-panel,
 .semantic-panel,
 .theme-sample,
+.component-sample,
 .css-output,
 .assertion-panel {
   display: grid;
