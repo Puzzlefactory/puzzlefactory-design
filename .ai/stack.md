@@ -27,6 +27,8 @@ CSS output contract:
 - `COLOR_ENGINE_CSS_LOAD_ORDER`: canonical file load order.
 - `cssOutput.all` and `output.css`: compatibility bundle string equal to the ordered file CSS joined with blank lines.
 - No high-contrast v2 CSS file is emitted yet.
+- Consumer applications load `primitives.css`, then `theme-light.css`, then `theme-dark.css`, and select semantics with `data-theme-v2="light"` or `data-theme-v2="dark"`.
+- Build-once generated CSS is the recommended production path. Persisted runtime generation is acceptable for tenant/theme admin workflows; blob-hosted generated CSS is a supported deployment model.
 
 Theme preset contract:
 
@@ -107,7 +109,9 @@ Figma MCP is available in Claude Code sessions and can read design files, inspec
 
 ## Distribution
 
-Not yet decided. Deferred until the component layer architecture is settled.
+Generated color CSS v2 is distributed directly from `@puzzlefactory/color-engine` for now. The package documents the supported consumer contract for `cssOutput.files`, primitive/theme file load order, `data-theme-v2`, build-once generation, persisted runtime generation, and blob-hosted tenant CSS.
+
+Component distribution is not yet decided. Deferred until the component layer architecture is settled.
 
 ## Open Questions
 
