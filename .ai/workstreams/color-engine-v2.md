@@ -159,9 +159,16 @@ CE2-16 is implemented. `@puzzlefactory/components` now has Chromium-backed DOM-r
 
 CE2-17 is implemented. ADR 0001 records the accepted component foundation direction. `@puzzlefactory/components` stays raw Custom Elements for the near term, but only for simple display components and simple native-backed controls. The package should remain zero-runtime-dependency while the component set is small. Complex form controls and ARIA-heavy interactions should not be implemented in raw Custom Elements by default; before adding inputs, selects, comboboxes, dialogs, popovers, menus, tabs, tooltips, or similar components, run a dedicated foundation spike comparing Lit plus platform APIs versus a white-label foundation such as Lion. React wrappers remain a later consumer-ergonomics layer after core Custom Element APIs stabilize. Full external component libraries such as Shoelace, Spectrum Web Components, and Material Web are references only, not foundations.
 
+CE2-18 is implemented. `@puzzlefactory/components` now includes two additional simple raw Custom Element proofs:
+
+- `pf-badge`: a non-interactive compact status/label proof with `status` and `variant` reflected properties.
+- `pf-card`: a non-interactive surface composition proof with a `variant` reflected property and named slots for eyebrow, title, and footer content.
+
+Both components consume semantic CSS custom properties only, avoid primitive ramp variables, avoid `@puzzlefactory/color-engine` imports, and avoid component-local color derivation such as opacity, filters, or `color-mix()`. Package tests cover API shape, package boundary, semantic variable usage, DOM-runtime registration, reflected properties, and slot projection. Kitchen Sink renders badge and card examples in light and dark `data-theme-v2` boundaries on the Components route.
+
 ## Next Actions
 
-- Continue with simple raw Custom Element proofs only where the UI behavior is low-risk, such as badge, card/panel, status indicator, or similar display/native-backed pieces.
+- Continue with simple raw Custom Element proofs only where the UI behavior is low-risk, such as status indicator, divider, toolbar spacer, or similar display/native-backed pieces.
 - Consider a React wrapper proof only after the core Custom Element API for a component is stable; wrappers must not duplicate styling or behavior.
 - Before form controls or complex interactions, create a dedicated foundation spike for Lit plus platform APIs versus Lion or another approved white-label foundation.
 - Keep reviewing whether `--ds-text-muted` is sufficient for disabled component foregrounds or whether a future dedicated `--ds-text-disabled` semantic alias should be added.
@@ -272,7 +279,8 @@ This roadmap is intentionally provisional. Kitchen-sink visual review and assert
    - Stopped before dependencies, wrappers, migrations, or new components.
 
 8. Next component slices after CE2-17.
-   - Recommended next narrow implementation: another simple raw Custom Element proof, such as badge/status indicator or card/panel, to validate semantic CSS consumption across more component shapes.
+   - Implemented CE2-18: badge/status label and card/panel proofs validate semantic CSS consumption across more component shapes.
+   - Recommended next narrow implementation: either another low-risk display proof, a React wrapper proof for stable elements, or a foundation spike before any form/ARIA-heavy component.
    - Alternative next planning slice: React wrapper proof design if React consumer ergonomics becomes more urgent.
    - Separate later spike: form/interactive foundation decision before any input, select, combobox, dialog, menu, popover, tabs, or tooltip work.
 
@@ -310,7 +318,7 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-15` | Component API and accessibility contract | Implemented. Documented and tested the current `pf-button`/`pf-alert` API boundary; added reflected properties and native button focus/click delegation; explicitly deferred form-associated behavior. | New form components, complex interactive components, dependencies, full form-associated custom elements |
 | `CE2-16` | Component DOM-runtime tests | Implemented. Added Chromium-backed DOM-runtime tests for current `pf-button` and `pf-alert` registration, reflection, native delegation, click/focus behavior, and slot/status rendering. | New components, form-associated custom elements, React wrappers, runtime dependencies |
 | `CE2-17` | Component foundation decision | Implemented. ADR 0001 keeps raw Custom Elements for simple display/native-backed components, defers complex form/interactive components to a foundation spike, and positions React wrappers as a later ergonomics layer. | New dependencies, migrations, wrappers, new components |
-| `CE2-18` | Simple component expansion proof | Add one or two simple raw Custom Element components that validate semantic CSS consumption beyond button/alert, likely badge/status indicator and card/panel. | Form controls, complex ARIA widgets, new foundations, React wrappers |
+| `CE2-18` | Simple component expansion proof | Implemented. Added `pf-badge` and `pf-card` as simple raw Custom Element proofs consuming semantic CSS variables only, with package/DOM tests and Kitchen Sink light/dark examples. | Form controls, complex ARIA widgets, new foundations, React wrappers |
 | `CE2-19` | React wrapper proof | Add optional React wrappers for stable core Custom Element APIs if React ergonomics becomes the next priority. Wrappers must not duplicate styling or component behavior. | New core component behavior, non-React framework wrappers, color-engine changes |
 | `CE2-20` | Form/interactive foundation spike | Compare Lit plus platform APIs against Lion or another approved white-label foundation before implementing inputs/selects/comboboxes/dialogs/menus/popovers/tabs/tooltips. | Implementing form or complex interactive components |
 
@@ -335,6 +343,7 @@ This workstream is substantially complete when:
 - Component API/accessibility contracts are explicit about supported native-backed behavior and deferred form/complex interaction behavior.
 - Component DOM/API contracts that depend on browser behavior are covered by DOM-runtime tests before the component set is broadened.
 - Component foundation direction is explicit: raw Custom Elements for simple pieces, dedicated foundation spike before form/complex interactions, React wrappers as optional ergonomics later.
+- Simple component expansion has proven semantic CSS consumption beyond button/alert with display-only badge and card elements.
 - Kitchen-sink shows primitives, semantic aliases, and real usage previews for each generated family.
 - Future agents can explain each generated token by the UI job it serves.
 

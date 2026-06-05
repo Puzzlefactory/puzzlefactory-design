@@ -13,6 +13,13 @@ declare module "react" {
         disabled?: boolean;
         variant?: "primary" | "secondary";
       };
+      "pf-badge": CustomElementProps & {
+        status?: "danger" | "warning" | "success" | "info";
+        variant?: "soft" | "solid";
+      };
+      "pf-card": CustomElementProps & {
+        variant?: "default" | "raised";
+      };
     }
   }
 }

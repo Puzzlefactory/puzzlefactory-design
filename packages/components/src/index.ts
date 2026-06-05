@@ -1,12 +1,17 @@
 export const PUZZLEFACTORY_COMPONENT_TAG_NAMES = [
   "pf-button",
   "pf-alert",
+  "pf-badge",
+  "pf-card",
 ] as const;
 
 export type PuzzleFactoryComponentTagName = (typeof PUZZLEFACTORY_COMPONENT_TAG_NAMES)[number];
 export type PfButtonVariant = "primary" | "secondary";
 export type PfAlertStatus = "danger" | "warning" | "success" | "info";
 export type PfAlertVariant = "soft" | "solid";
+export type PfBadgeStatus = PfAlertStatus;
+export type PfBadgeVariant = "soft" | "solid";
+export type PfCardVariant = "default" | "raised";
 
 const HTMLElementBase = (
   globalThis.HTMLElement ?? class {}
@@ -178,6 +183,168 @@ const alertTemplate = documentSafeTemplate(`
   </div>
 `);
 
+const badgeTemplate = documentSafeTemplate(`
+  <style>
+    :host {
+      --pf-badge-bg: var(--ds-info-soft-bg);
+      --pf-badge-border: var(--ds-info-soft-border);
+      --pf-badge-text: var(--ds-info-soft-text);
+      display: inline-block;
+      min-width: 0;
+      vertical-align: middle;
+    }
+
+    :host([hidden]) {
+      display: none;
+    }
+
+    :host([status="danger"]) {
+      --pf-badge-bg: var(--ds-danger-soft-bg);
+      --pf-badge-border: var(--ds-danger-soft-border);
+      --pf-badge-text: var(--ds-danger-soft-text);
+    }
+
+    :host([status="warning"]) {
+      --pf-badge-bg: var(--ds-warning-soft-bg);
+      --pf-badge-border: var(--ds-warning-soft-border);
+      --pf-badge-text: var(--ds-warning-soft-text);
+    }
+
+    :host([status="success"]) {
+      --pf-badge-bg: var(--ds-success-soft-bg);
+      --pf-badge-border: var(--ds-success-soft-border);
+      --pf-badge-text: var(--ds-success-soft-text);
+    }
+
+    :host([variant="solid"]) {
+      --pf-badge-bg: var(--ds-info-solid-bg);
+      --pf-badge-border: var(--ds-info-solid-bg);
+      --pf-badge-text: var(--ds-info-solid-text);
+    }
+
+    :host([variant="solid"][status="danger"]) {
+      --pf-badge-bg: var(--ds-danger-solid-bg);
+      --pf-badge-border: var(--ds-danger-solid-bg);
+      --pf-badge-text: var(--ds-danger-solid-text);
+    }
+
+    :host([variant="solid"][status="warning"]) {
+      --pf-badge-bg: var(--ds-warning-solid-bg);
+      --pf-badge-border: var(--ds-warning-solid-bg);
+      --pf-badge-text: var(--ds-warning-solid-text);
+    }
+
+    :host([variant="solid"][status="success"]) {
+      --pf-badge-bg: var(--ds-success-solid-bg);
+      --pf-badge-border: var(--ds-success-solid-bg);
+      --pf-badge-text: var(--ds-success-solid-text);
+    }
+
+    .badge {
+      display: inline-flex;
+      min-width: 0;
+      max-width: 100%;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--pf-badge-border);
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: var(--pf-badge-bg);
+      color: var(--pf-badge-text);
+      font: inherit;
+      font-size: 0.78em;
+      font-weight: 800;
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <span class="badge" part="badge">
+    <slot>Badge</slot>
+  </span>
+`);
+
+const cardTemplate = documentSafeTemplate(`
+  <style>
+    :host {
+      --pf-card-bg: var(--ds-surface-2);
+      --pf-card-border: var(--ds-border-default);
+      --pf-card-title: var(--ds-text-primary);
+      --pf-card-text: var(--ds-text-secondary);
+      display: block;
+      min-width: 0;
+    }
+
+    :host([hidden]) {
+      display: none;
+    }
+
+    :host([variant="raised"]) {
+      --pf-card-bg: var(--ds-surface-3);
+      --pf-card-border: var(--ds-border-strong);
+    }
+
+    .card {
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+      border: 1px solid var(--pf-card-border);
+      border-radius: 8px;
+      padding: 14px;
+      background: var(--pf-card-bg);
+      color: var(--pf-card-text);
+    }
+
+    .eyebrow {
+      color: var(--ds-text-muted);
+      font-size: 0.72em;
+      font-weight: 800;
+      letter-spacing: 0;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .title {
+      color: var(--pf-card-title);
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .body {
+      color: var(--pf-card-text);
+      line-height: 1.45;
+    }
+
+    .footer {
+      color: var(--ds-text-muted);
+      line-height: 1.35;
+    }
+
+    [data-optional-slot][hidden] {
+      display: none;
+    }
+
+    slot[name="eyebrow"],
+    slot[name="title"],
+    slot[name="footer"] {
+      display: block;
+    }
+  </style>
+  <article class="card" part="card">
+    <div class="eyebrow" part="eyebrow" data-optional-slot hidden>
+      <slot name="eyebrow"></slot>
+    </div>
+    <div class="title" part="title" data-optional-slot hidden>
+      <slot name="title"></slot>
+    </div>
+    <div class="body" part="body">
+      <slot></slot>
+    </div>
+    <div class="footer" part="footer" data-optional-slot hidden>
+      <slot name="footer"></slot>
+    </div>
+  </article>
+	`);
+
 export class PfButtonElement extends HTMLElementBase {
   static get observedAttributes() {
     return ["disabled"] as const;
@@ -308,6 +475,111 @@ export class PfAlertElement extends HTMLElementBase {
   }
 }
 
+export class PfBadgeElement extends HTMLElementBase {
+  constructor() {
+    super();
+
+    if (!this.attachShadow || !badgeTemplate) {
+      return;
+    }
+
+    const shadowRoot = this.attachShadow({ mode: "open" });
+    shadowRoot.append(badgeTemplate.content.cloneNode(true));
+  }
+
+  get status(): PfBadgeStatus {
+    const status = this.getAttribute("status");
+
+    if (status === "danger" || status === "warning" || status === "success") {
+      return status;
+    }
+
+    return "info";
+  }
+
+  set status(value: PfBadgeStatus) {
+    if (value === "info") {
+      this.removeAttribute("status");
+      return;
+    }
+
+    this.setAttribute("status", value);
+  }
+
+  get variant(): PfBadgeVariant {
+    return this.getAttribute("variant") === "solid" ? "solid" : "soft";
+  }
+
+  set variant(value: PfBadgeVariant) {
+    if (value === "solid") {
+      this.setAttribute("variant", value);
+      return;
+    }
+
+    this.removeAttribute("variant");
+  }
+}
+
+export class PfCardElement extends HTMLElementBase {
+  readonly #optionalSlots: HTMLSlotElement[] = [];
+
+  constructor() {
+    super();
+
+    if (!this.attachShadow || !cardTemplate) {
+      return;
+    }
+
+    const shadowRoot = this.attachShadow({ mode: "open" });
+    shadowRoot.append(cardTemplate.content.cloneNode(true));
+    this.#optionalSlots = Array.from(
+      shadowRoot.querySelectorAll<HTMLSlotElement>(
+        'slot[name="eyebrow"], slot[name="title"], slot[name="footer"]',
+      ),
+    );
+
+    for (const slot of this.#optionalSlots) {
+      slot.addEventListener("slotchange", () => this.#syncOptionalSlots());
+    }
+  }
+
+  connectedCallback() {
+    this.#syncOptionalSlots();
+  }
+
+  get variant(): PfCardVariant {
+    return this.getAttribute("variant") === "raised" ? "raised" : "default";
+  }
+
+  set variant(value: PfCardVariant) {
+    if (value === "raised") {
+      this.setAttribute("variant", value);
+      return;
+    }
+
+    this.removeAttribute("variant");
+  }
+
+  #syncOptionalSlots() {
+    for (const slot of this.#optionalSlots) {
+      const wrapper = slot.parentElement;
+      if (!wrapper) {
+        continue;
+      }
+
+      const hasContent = slot.assignedNodes({ flatten: true }).some((node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          return Boolean(node.textContent?.trim());
+        }
+
+        return true;
+      });
+
+      wrapper.hidden = !hasContent;
+    }
+  }
+}
+
 export function definePuzzleFactoryComponents(
   registry: CustomElementRegistry | undefined = globalThis.customElements,
 ): void {
@@ -321,6 +593,14 @@ export function definePuzzleFactoryComponents(
 
   if (!registry.get("pf-alert")) {
     registry.define("pf-alert", PfAlertElement);
+  }
+
+  if (!registry.get("pf-badge")) {
+    registry.define("pf-badge", PfBadgeElement);
+  }
+
+  if (!registry.get("pf-card")) {
+    registry.define("pf-card", PfCardElement);
   }
 }
 

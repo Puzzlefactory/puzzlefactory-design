@@ -891,6 +891,32 @@ function ComponentSample({ label, theme }: { label: string; theme: SurfaceTheme 
             Disabled secondary
           </pf-button>
         </div>
+        <div className="component-badges" aria-label={`${label} badge proof`}>
+          {statusIntents.map((intent) => (
+            <pf-badge key={`${intent.key}-badge-soft`} status={intent.key}>
+              {intent.label}
+            </pf-badge>
+          ))}
+          {statusIntents.map((intent) => (
+            <pf-badge key={`${intent.key}-badge-solid`} status={intent.key} variant="solid">
+              {intent.label}
+            </pf-badge>
+          ))}
+        </div>
+        <div className="component-cards" aria-label={`${label} card proof`}>
+          <pf-card>
+            <span slot="eyebrow">Surface</span>
+            <span slot="title">Default card</span>
+            Surface, border, and text roles compose this proof without primitive variables.
+            <span slot="footer">Semantic CSS variables only</span>
+          </pf-card>
+          <pf-card variant="raised">
+            <span slot="eyebrow">Raised</span>
+            <span slot="title">Raised card</span>
+            The raised variant switches to stronger surface and chrome semantics.
+            <span slot="footer">No component-local color derivation</span>
+          </pf-card>
+        </div>
         <div className="component-alerts" aria-label={`${label} alert proof`}>
           {statusIntents.map((intent) => (
             <pf-alert key={`${intent.key}-soft`} status={intent.key}>

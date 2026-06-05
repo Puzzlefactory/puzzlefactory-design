@@ -13,7 +13,12 @@ const source = await readFile(new URL("../src/index.ts", import.meta.url), "utf8
 
 test("package exposes the component proof boundary", () => {
   assert.equal(packageJson.name, "@puzzlefactory/components");
-  assert.deepEqual(PUZZLEFACTORY_COMPONENT_TAG_NAMES, ["pf-button", "pf-alert"]);
+  assert.deepEqual(PUZZLEFACTORY_COMPONENT_TAG_NAMES, [
+    "pf-button",
+    "pf-alert",
+    "pf-badge",
+    "pf-card",
+  ]);
   assert.equal(typeof definePuzzleFactoryComponents, "function");
 });
 
@@ -29,9 +34,13 @@ test("components consume semantic CSS variables only", () => {
     "--ds-control-bg",
     "--ds-control-border",
     "--ds-control-text",
+    "--ds-border-default",
     "--ds-border-strong",
+    "--ds-surface-2",
+    "--ds-surface-3",
     "--ds-surface-2-pressed",
     "--ds-text-primary",
+    "--ds-text-secondary",
     "--ds-text-muted",
     "--ds-danger-soft-bg",
     "--ds-danger-soft-text",
@@ -94,4 +103,23 @@ test("alert exposes status and variant properties without becoming interactive",
   assert.match(source, /get variant\(\): PfAlertVariant/);
   assert.match(source, /set variant\(value: PfAlertVariant\)/);
   assert.match(source, /role="status"/);
+});
+
+test("badge exposes status and variant properties without becoming interactive", () => {
+  assert.match(source, /export class PfBadgeElement/);
+  assert.match(source, /get status\(\): PfBadgeStatus/);
+  assert.match(source, /set status\(value: PfBadgeStatus\)/);
+  assert.match(source, /get variant\(\): PfBadgeVariant/);
+  assert.match(source, /set variant\(value: PfBadgeVariant\)/);
+  assert.doesNotMatch(source, /PfBadgeElement[\s\S]*role="/);
+});
+
+test("card exposes a surface composition contract", () => {
+  assert.match(source, /export class PfCardElement/);
+  assert.match(source, /get variant\(\): PfCardVariant/);
+  assert.match(source, /set variant\(value: PfCardVariant\)/);
+  assert.match(source, /<slot name="eyebrow"><\/slot>/);
+  assert.match(source, /<slot name="title"><\/slot>/);
+  assert.match(source, /<slot name="footer"><\/slot>/);
+  assert.match(source, /\[data-optional-slot\]\[hidden\]/);
 });

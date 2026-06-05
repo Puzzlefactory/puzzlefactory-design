@@ -624,6 +624,21 @@ h3 {
   align-items: center;
 }
 
+.component-badges {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.component-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
 .component-alerts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1084,10 +1099,11 @@ h3 {
   .css-output-grid,
   .assertion-groups,
   .assertion-summary-row,
-  .state-row,
-  .status-demo,
-  .component-alerts,
-  .text-treatment-status-grid {
+    .state-row,
+    .status-demo,
+    .component-cards,
+    .component-alerts,
+    .text-treatment-status-grid {
     grid-template-columns: 1fr;
   }
 }
