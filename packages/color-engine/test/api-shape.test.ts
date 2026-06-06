@@ -14,12 +14,25 @@ import type {
   ContrastAssertionPair,
   ContrastAssertionReport,
   ContrastAssertionRole,
+  ContrastAssertionSemanticName,
   ContrastAssertionSeverity,
   ContrastAssertionSummary,
+  CustomColorRoleCssAliasName,
+  CustomColorRoleCssVariableName,
+  CustomColorRoleInput,
+  CustomColorRolePrimitiveOutput,
+  CustomColorRoleSemanticTokenName,
+  CustomColorRoleSemanticPart,
+  CustomColorRoleUsageFamilyName,
+  CustomUsageFamilyName,
+  ColorEngineThemeSemantics,
   NeutralSemanticTokenName,
   OklchValue,
   PrimarySemanticTokenName,
   ResolvedContrastAssertion,
+  ResolvedColorEngineInput,
+  ResolvedCustomColorRole,
+  ResolvedCustomColorRoleInput,
   SeedPolicy,
   SrgbColor,
   SurfacePreset,
@@ -39,8 +52,10 @@ import {
   COLOR_ENGINE_THEME_PRESET_NAMES,
   COLOR_ENGINE_THEME_PRESETS,
   CONTRAST_ASSERTION_THRESHOLDS,
+  CUSTOM_COLOR_ROLE_SEMANTIC_PARTS,
   NEUTRAL_SEMANTIC_TOKEN_NAMES,
   PRIMARY_SEMANTIC_TOKEN_NAMES,
+  RESERVED_CUSTOM_COLOR_ROLE_IDS,
   SEED_POLICY_NAMES,
   SEMANTIC_TOKEN_NAMES,
   SURFACE_PRESETS,
@@ -53,6 +68,10 @@ import {
   calculateApcaLcFromOklch,
   calculateApcaLcFromY,
   createContrastAssertionReport,
+  createCustomColorRoleCssAliasName,
+  createCustomColorRoleCssAliasNames,
+  createCustomColorRoleCssVariableName,
+  createCustomColorRoleCssVariableNames,
   createColorEngineTheme,
   srgbToApcaY,
 } from "../src/index.js";
@@ -84,10 +103,45 @@ const input: ColorEngineInput = {
   preset: presetName,
   lightSurfacePreset: "quiet",
   darkSurfacePreset: "layered",
+  customRoles: {
+    pending: {
+      seed: "oklch(0.62 0.12 280)",
+      darkSeed: "oklch(0.7 0.1 280)",
+      seedPolicy: "anchored",
+    },
+  },
   namespace: "pf",
 };
 const output: ColorEngineOutput = createColorEngineTheme(input);
+const resolvedInput: ResolvedColorEngineInput = output.input;
 const seedPolicy: SeedPolicy = "anchored";
+const customRoleInput: CustomColorRoleInput = {
+  seed: "#5b47d6",
+  seedPolicy,
+};
+const resolvedCustomRoleInput: ResolvedCustomColorRoleInput = output.input.customRoles.pending!;
+const customRole: ResolvedCustomColorRole | undefined = output.customRoles.pending;
+const customRolePart: CustomColorRoleSemanticPart = "solid-text";
+const customRoleFamilyName: CustomColorRoleUsageFamilyName = "role-pending-light-solid";
+const customUsageFamilyName: CustomUsageFamilyName = customRoleFamilyName;
+const customRoleSemanticName: CustomColorRoleSemanticTokenName = "role-pending-solid-bg";
+const customRolePrimitives: CustomColorRolePrimitiveOutput = {
+  [customRoleFamilyName]: output.primitives[customRoleFamilyName] ?? [],
+};
+const themeSemantics: ColorEngineThemeSemantics = output.semantics.light;
+const customRoleAlias: CustomColorRoleCssAliasName = createCustomColorRoleCssAliasName(
+  "pending",
+  customRolePart,
+);
+const customRoleAliases: Readonly<Record<CustomColorRoleSemanticPart, CustomColorRoleCssAliasName>> =
+  createCustomColorRoleCssAliasNames("pending");
+const customRoleVariable: CustomColorRoleCssVariableName = createCustomColorRoleCssVariableName(
+  output.namespace,
+  "pending",
+  customRolePart,
+);
+const customRoleVariables: Readonly<Record<CustomColorRoleSemanticPart, CustomColorRoleCssVariableName>> =
+  createCustomColorRoleCssVariableNames(output.namespace, "pending");
 const chromeLevel: ChromeLevel = "default";
 const textLevel: TextLevel = "strong";
 const token: ColorToken | undefined = output.primitives["primary-light-solid"][0];
@@ -126,6 +180,7 @@ const apcaYLc: number = calculateApcaLcFromY(0, 1);
 const apcaY: number = srgbToApcaY(srgbColor);
 const apcaAlgorithmVersion: string = APCA_ALGORITHM_VERSION;
 const assertionRole: ContrastAssertionRole = "body";
+const customAssertionSemanticName: ContrastAssertionSemanticName = customRoleSemanticName;
 const assertionSeverity: ContrastAssertionSeverity = "required";
 const assertionReport: ContrastAssertionReport = output.assertions;
 const assertionPair: ContrastAssertionPair | undefined = assertionReport.pairs[0];
@@ -141,6 +196,20 @@ const assertionReportFromHelper: ContrastAssertionReport = createContrastAsserti
 void preset;
 void lightStepDelta;
 void darkStepDelta;
+void resolvedInput;
+void customRoleInput;
+void resolvedCustomRoleInput;
+void customRole;
+void customRolePart;
+void customRoleFamilyName;
+void customUsageFamilyName;
+void customRoleSemanticName;
+void customRolePrimitives;
+void themeSemantics;
+void customRoleAlias;
+void customRoleAliases;
+void customRoleVariable;
+void customRoleVariables;
 void lightSurfacePreset;
 void darkSurfacePreset;
 void seedPolicy;
@@ -178,6 +247,8 @@ void NEUTRAL_SEMANTIC_TOKEN_NAMES;
 void SURFACE_SEMANTIC_TOKEN_NAMES;
 void PRIMARY_SEMANTIC_TOKEN_NAMES;
 void STATUS_SEMANTIC_TOKEN_NAMES;
+void CUSTOM_COLOR_ROLE_SEMANTIC_PARTS;
+void RESERVED_CUSTOM_COLOR_ROLE_IDS;
 void apcaConstants;
 void apcaLc;
 void apcaOklchLc;
@@ -185,6 +256,7 @@ void apcaYLc;
 void apcaY;
 void apcaAlgorithmVersion;
 void assertionRole;
+void customAssertionSemanticName;
 void assertionSeverity;
 void assertionReport;
 void assertionPair;

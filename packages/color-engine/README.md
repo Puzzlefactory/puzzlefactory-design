@@ -118,6 +118,88 @@ Application CSS should use semantic custom properties, not primitive ramp names,
 
 The default namespace is `ds`, producing variables such as `--ds-surface-1`. Pass `namespace` to `createColorEngineTheme` only when a consumer needs a different variable prefix.
 
+## Custom Roles
+
+Custom roles are planned tenant/theme-scoped color extensions for needs such as `pending`, `promo`, `billing`, or `onboarding`. They are separate from the stable built-in roles:
+
+- `primary`
+- `danger`
+- `warning`
+- `success`
+- `info`
+
+The current package accepts and validates `customRoles` input, returns normalized metadata on `output.customRoles`, generates compact light/dark soft and solid custom role families, emits semantic `--ds-role-*` aliases in the generated theme CSS, and includes custom role soft/solid pairs in the diagnostic APCA report.
+
+```ts
+const output = createColorEngineTheme({
+  customRoles: {
+    pending: {
+      seed: "oklch(0.62 0.12 280)",
+      darkSeed: "oklch(0.7 0.1 280)",
+      seedPolicy: "anchored",
+    },
+  },
+});
+
+console.log(output.customRoles.pending.cssVariables["solid-bg"]);
+// "--ds-role-pending-solid-bg"
+```
+
+This generates primitive families such as:
+
+```css
+--ds-role-pending-light-soft-1
+--ds-role-pending-light-solid-2
+--ds-role-pending-dark-soft-1
+--ds-role-pending-dark-solid-2
+```
+
+And semantic aliases such as:
+
+```css
+--ds-role-pending-soft-bg: var(--ds-role-pending-light-soft-1);
+--ds-role-pending-solid-bg: var(--ds-role-pending-light-solid-2);
+```
+
+The same alias names are emitted in light and dark theme files, with each theme pointing to its matching light or dark generated family.
+
+Custom role ids must be lowercase kebab-case names that start with a letter. Reserved built-in role and core namespace ids are rejected:
+
+- `primary`
+- `danger`
+- `warning`
+- `success`
+- `info`
+- `surface`
+- `text`
+- `chrome`
+- `border`
+
+The semantic aliases for each custom role are:
+
+```css
+--ds-role-{id}-soft-bg
+--ds-role-{id}-soft-bg-hover
+--ds-role-{id}-soft-border
+--ds-role-{id}-soft-text
+--ds-role-{id}-solid-bg
+--ds-role-{id}-solid-bg-hover
+--ds-role-{id}-solid-bg-pressed
+--ds-role-{id}-solid-text
+```
+
+Use `createCustomColorRoleCssAliasName`, `createCustomColorRoleCssAliasNames`, `createCustomColorRoleCssVariableName`, or `createCustomColorRoleCssVariableNames` when another package needs stable custom role alias names.
+
+Custom role APCA assertions are added only when custom roles are configured. Each role adds light and dark checks for:
+
+- `role-{id}-soft-text` on `role-{id}-soft-bg`
+- `role-{id}-soft-text` on `role-{id}-soft-bg-hover`
+- `role-{id}-solid-text` on `role-{id}-solid-bg`
+- `role-{id}-solid-text` on `role-{id}-solid-bg-hover`
+- `role-{id}-solid-text` on `role-{id}-solid-bg-pressed`
+
+These assertions use the existing soft and solid status thresholds and remain diagnostic; they do not enforce or auto-tune theme output.
+
 ## Generation Models
 
 ### Build Once
@@ -165,7 +247,8 @@ Use immutable or versioned paths for cache busting. This avoids redeploying the 
 - No high-contrast v2 CSS output is emitted yet.
 - No tenant storage API, caching layer, or deployment package is included.
 - No browser fallback CSS for consumers without `oklch()` support is emitted yet.
-- No component package consumes the v2 contract yet.
+- The component proof consumes the v2 semantic CSS contract, but broader component integration is still early.
+- Custom role CSS and diagnostic APCA assertions are emitted, but Kitchen Sink controls/previews are not included yet.
 - APCA assertions are diagnostic guidance, not hard enforcement.
 
 ## Scripts

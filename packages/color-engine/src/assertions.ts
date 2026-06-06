@@ -1,7 +1,10 @@
 import { APCA_ALGORITHM_VERSION, calculateApcaLcFromOklch } from "./apca.js";
 import type {
+  ColorEngineThemeSemantics,
   ColorToken,
+  CustomColorRoleSemanticTokenName,
   PrimitiveSurfaceOutput,
+  ResolvedCustomColorRole,
   SemanticTokenName,
   SurfaceTheme,
 } from "./index.js";
@@ -16,13 +19,15 @@ export type ContrastAssertionRole =
 
 export type ContrastAssertionSeverity = "required" | "diagnostic";
 
+export type ContrastAssertionSemanticName = SemanticTokenName | CustomColorRoleSemanticTokenName;
+
 export interface ContrastAssertionPair {
   readonly id: string;
   readonly theme: SurfaceTheme;
   readonly role: ContrastAssertionRole;
   readonly severity: ContrastAssertionSeverity;
-  readonly foreground: SemanticTokenName;
-  readonly background: SemanticTokenName;
+  readonly foreground: ContrastAssertionSemanticName;
+  readonly background: ContrastAssertionSemanticName;
   readonly threshold: number;
   readonly description: string;
 }
@@ -63,9 +68,10 @@ export const CONTRAST_ASSERTION_THRESHOLDS = {
 export function createContrastAssertionReport(options: {
   readonly namespace: string;
   readonly primitives: PrimitiveSurfaceOutput;
-  readonly semantics: Readonly<Record<SurfaceTheme, Readonly<Record<SemanticTokenName, `var(--${string})`>>>>;
+  readonly semantics: Readonly<Record<SurfaceTheme, ColorEngineThemeSemantics>>;
+  readonly customRoles?: Readonly<Record<string, ResolvedCustomColorRole>>;
 }): ContrastAssertionReport {
-  const pairs = createContrastAssertionPairs();
+  const pairs = createContrastAssertionPairs(options.customRoles ?? {});
   const results = pairs.map((pair) => {
     const foregroundToken = resolveSemanticToken({
       namespace: options.namespace,
@@ -111,7 +117,9 @@ export function createContrastAssertionReport(options: {
   };
 }
 
-function createContrastAssertionPairs(): readonly ContrastAssertionPair[] {
+function createContrastAssertionPairs(
+  customRoles: Readonly<Record<string, ResolvedCustomColorRole>>,
+): readonly ContrastAssertionPair[] {
   return [
     ...createSurfaceTextPairs("text-primary", "body", "required", "Body text"),
     ...createSurfaceTextPairs("text-secondary", "secondary", "required", "Secondary text"),
@@ -119,6 +127,7 @@ function createContrastAssertionPairs(): readonly ContrastAssertionPair[] {
     ...createUiPairs(),
     ...createPrimarySoftPairs(),
     ...createStatusPairs(),
+    ...createCustomRolePairs(customRoles),
   ];
 }
 
@@ -233,12 +242,53 @@ function createStatusPairs(): readonly ContrastAssertionPair[] {
   return pairs;
 }
 
+function createCustomRolePairs(
+  customRoles: Readonly<Record<string, ResolvedCustomColorRole>>,
+): readonly ContrastAssertionPair[] {
+  const pairs: ContrastAssertionPair[] = [];
+
+  for (const theme of ["light", "dark"] as const satisfies readonly SurfaceTheme[]) {
+    for (const role of Object.values(customRoles)) {
+      for (const background of [
+        role.cssAliases["soft-bg"],
+        role.cssAliases["soft-bg-hover"],
+      ] as const) {
+        pairs.push(createPair({
+          theme,
+          role: "status-soft",
+          severity: "required",
+          foreground: role.cssAliases["soft-text"],
+          background,
+          description: `${role.id} custom role soft text on ${background}`,
+        }));
+      }
+
+      for (const background of [
+        role.cssAliases["solid-bg"],
+        role.cssAliases["solid-bg-hover"],
+        role.cssAliases["solid-bg-pressed"],
+      ] as const) {
+        pairs.push(createPair({
+          theme,
+          role: "status-solid",
+          severity: "required",
+          foreground: role.cssAliases["solid-text"],
+          background,
+          description: `${role.id} custom role solid text on ${background}`,
+        }));
+      }
+    }
+  }
+
+  return pairs;
+}
+
 function createPair(options: {
   readonly theme: SurfaceTheme;
   readonly role: ContrastAssertionRole;
   readonly severity: ContrastAssertionSeverity;
-  readonly foreground: SemanticTokenName;
-  readonly background: SemanticTokenName;
+  readonly foreground: ContrastAssertionSemanticName;
+  readonly background: ContrastAssertionSemanticName;
   readonly description: string;
 }): ContrastAssertionPair {
   return {
@@ -251,11 +301,14 @@ function createPair(options: {
 function resolveSemanticToken(options: {
   readonly namespace: string;
   readonly primitives: PrimitiveSurfaceOutput;
-  readonly semantics: Readonly<Record<SurfaceTheme, Readonly<Record<SemanticTokenName, `var(--${string})`>>>>;
+  readonly semantics: Readonly<Record<SurfaceTheme, ColorEngineThemeSemantics>>;
   readonly theme: SurfaceTheme;
-  readonly semanticName: SemanticTokenName;
+  readonly semanticName: ContrastAssertionSemanticName;
 }): ColorToken {
   const semanticValue = options.semantics[options.theme][options.semanticName];
+  if (!semanticValue) {
+    throw new Error(`Could not resolve semantic token ${options.theme}.${options.semanticName}.`);
+  }
   const primitiveName = parseSemanticVariableName(options.namespace, semanticValue);
   const token = Object.values(options.primitives)
     .flatMap((tokens) => [...tokens])

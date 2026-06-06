@@ -2,7 +2,7 @@
 
 Status: active
 Created: 2026-06-02
-Last Updated: 2026-06-05
+Last Updated: 2026-06-06
 
 This workstream covers the second color-engine attempt. The v2 direction is visual-first and usage-first: generate compact, purpose-built color families with named presets and immediate kitchen-sink feedback instead of broad generic ramps that are mapped to semantics after the fact.
 
@@ -166,8 +166,23 @@ CE2-18 is implemented. `@puzzlefactory/components` now includes two additional s
 
 Both components consume semantic CSS custom properties only, avoid primitive ramp variables, avoid `@puzzlefactory/color-engine` imports, and avoid component-local color derivation such as opacity, filters, or `color-mix()`. Package tests cover API shape, package boundary, semantic variable usage, DOM-runtime registration, reflected properties, and slot projection. Kitchen Sink renders badge and card examples in light and dark `data-theme-v2` boundaries on the Components route.
 
+CE2-19 is planned. Custom color roles should provide flexible named color families without weakening the built-in semantic contract. Built-in roles stay first-class and stable:
+
+- `primary`: main action/link/focus role with dedicated action semantics.
+- `danger`, `warning`, `success`, and `info`: built-in status roles with stable semantic aliases and component support.
+
+Custom roles are separate generated extensions for theme/tenant needs such as `pending`, `promo`, `billing`, `onboarding`, or tenant-specific workflow states. They are not replacements for built-ins, and they must not directly redefine built-in semantic tokens such as `--ds-primary-action-bg` or `--ds-warning-solid-bg`.
+
+CE2-20A is implemented. `@puzzlefactory/color-engine` now accepts a `customRoles` input object keyed by lowercase kebab-case role id. It rejects invalid ids and reserved built-in/core ids: `primary`, `danger`, `warning`, `success`, `info`, `surface`, `text`, `chrome`, and `border`. Each custom role requires a seed, supports an optional dark seed that falls back to the light/default seed, and supports existing `balanced` or `anchored` seed policy with `balanced` as the default. The package returns normalized metadata on `output.customRoles`, including parsed light/dark seeds, resolved seed policy, alias names, and full variable names. It exports constants and helpers for stable custom role naming under `--ds-role-*`.
+
+CE2-20B is implemented. Custom roles now generate compact light/dark soft and solid primitive families: `role-{id}-light-soft`, `role-{id}-light-solid`, `role-{id}-dark-soft`, and `role-{id}-dark-solid`. Light families use the role seed; dark families use `darkSeed` when provided and fall back to `seed` when omitted. `balanced` adapts seeds for comfortable UI output, while `anchored` preserves the parsed theme-specific seed at solid level 2. Generated theme CSS now emits semantic custom role aliases under `--{namespace}-role-{id}-soft-bg`, `soft-bg-hover`, `soft-border`, `soft-text`, `solid-bg`, `solid-bg-hover`, `solid-bg-pressed`, and `solid-text`. Built-in primary/status semantic token names and behavior remain stable when `customRoles` is omitted. Custom role APCA assertions, Kitchen Sink controls/previews, component tone APIs, and tenant storage remain deferred.
+
+CE2-20C is implemented. Custom roles now add APCA diagnostic assertion pairs when configured. Each custom role contributes ten required diagnostic pairs: light and dark soft text on soft rest/hover backgrounds, plus light and dark solid text on solid rest/hover/pressed backgrounds. These pairs use the existing `status-soft` and `status-solid` thresholds and keep the assertion ids/semantic names under `role-{id}-*`. Built-in assertion output remains unchanged when `customRoles` is omitted. Kitchen Sink controls/previews, custom role assertion grouping UI, component tone APIs, enforcement, and auto-tuning remain deferred.
+
 ## Next Actions
 
+- Continue the custom role milestone with `CE2-20D`: add Kitchen Sink custom role controls, previews, and assertion grouping so generated roles can be visually judged.
+- Keep CE2-20D scoped to visualization and diagnostic review; component tone APIs, tenant storage, enforcement, and broad auto-tuning should remain later sub-slices unless explicitly reauthorized.
 - Continue with simple raw Custom Element proofs only where the UI behavior is low-risk, such as status indicator, divider, toolbar spacer, or similar display/native-backed pieces.
 - Consider a React wrapper proof only after the core Custom Element API for a component is stable; wrappers must not duplicate styling or behavior.
 - Before form controls or complex interactions, create a dedicated foundation spike for Lit plus platform APIs versus Lion or another approved white-label foundation.
@@ -208,6 +223,67 @@ Future seed-classification exploration:
 - Do not implement this until the current explicit-seed API, CSS output, and preset story are stable.
 
 Kitchen-sink should make seed policy visible when implemented. Primitive ramps should clearly show whether the seed was adapted or anchored, so the generator feels honest during visual review.
+
+## Custom Color Role Plan
+
+Custom roles should be generated from a named role collection on the theme input, not hardcoded into component implementations. A future input shape should be close to:
+
+```ts
+customRoles: {
+  pending: {
+    seed: "oklch(...)";
+    darkSeed?: "oklch(...)";
+    policy?: "balanced" | "anchored";
+  };
+}
+```
+
+The exact TypeScript shape can evolve during implementation, but the behavior should follow these rules:
+
+- Role identifiers must be sanitized lowercase kebab-case names suitable for CSS custom properties.
+- Reserved built-in names are not allowed as custom role identifiers: `primary`, `danger`, `warning`, `success`, `info`, `surface`, `text`, `chrome`, `border`, and future core namespaces.
+- Each role supports a required light/default seed and an optional dark seed.
+- Each role supports the existing seed policy model, defaulting to `balanced`.
+- Each role should generate compact light/dark soft and solid usage families, not a long generic ramp.
+- Soft output should include background, hover/alternate background, border, and text roles.
+- Solid output should include background, hover, pressed, and text roles.
+- Foreground/text resolution should use the existing dedicated foreground primitive strategy, not surface-derived text.
+- APCA diagnostics cover custom role soft and solid text/background pairs when roles are configured.
+- Custom roles are theme/tenant configuration and should be persisted with the theme input used to generate CSS.
+- Role classification such as `status`, `accent`, `identity`, or `workflow` is deferred. The first implementation should generate one consistent custom role shape rather than changing recipes based on an ambiguous `usage` field.
+
+Recommended CSS naming:
+
+```css
+--ds-role-pending-soft-bg
+--ds-role-pending-soft-bg-hover
+--ds-role-pending-soft-border
+--ds-role-pending-soft-text
+--ds-role-pending-solid-bg
+--ds-role-pending-solid-bg-hover
+--ds-role-pending-solid-bg-pressed
+--ds-role-pending-solid-text
+```
+
+Primitive names can mirror existing usage families internally, for example `role-pending-light-soft-1` and `role-pending-dark-solid-2`, but consumers should use the semantic `--ds-role-*` aliases. This preserves a clean distinction: built-ins use stable first-class names, while custom roles live under the generated role namespace.
+
+Kitchen Sink should visualize custom roles before broad adoption:
+
+- Provide a small editable custom role list with examples such as `pending`, `promo`, and `billing`.
+- Show light/default seed, optional dark seed, and seed policy per custom role.
+- Show primitive/semantic previews grouped under custom roles.
+- Show soft and solid cards in both light and dark theme boundaries.
+- Show APCA assertions grouped by custom role and make anchored seed tradeoffs visible.
+- Make generated CSS visible so users can see the exact `--ds-role-*` contract.
+
+Component consumption should be explicit and later:
+
+- Existing components continue to consume built-in semantic tokens by default.
+- Components should not silently accept arbitrary custom roles until a stable API is designed.
+- A future component tone API may support custom roles through an explicit convention, such as `tone="role:pending"` or documented CSS variable assignment, but that should be a separate implementation slice.
+- Components must not call the color engine or derive custom role colors locally.
+
+Custom roles are the controlled flexibility path for vibe-coding and tenant-specific needs: they let users add named role families without editing production CSS directly, mutating stable built-ins, or bypassing generated theme artifacts.
 
 ## Adjacent Future Workstreams
 
@@ -284,6 +360,17 @@ This roadmap is intentionally provisional. Kitchen-sink visual review and assert
    - Alternative next planning slice: React wrapper proof design if React consumer ergonomics becomes more urgent.
    - Separate later spike: form/interactive foundation decision before any input, select, combobox, dialog, menu, popover, tabs, or tooltip work.
 
+9. `CE2-19`: Custom color role planning.
+   - Implemented: planned custom roles as theme/tenant-scoped generated extensions under `--ds-role-*`.
+   - Implemented: built-in roles remain first-class and stable; custom roles do not redefine core semantic tokens.
+   - Implemented: future custom roles should support seed, optional dark seed, seed policy, soft/solid output, foreground resolution, APCA diagnostics, generated CSS, and Kitchen Sink visualization.
+   - Stopped before implementation, Kitchen Sink controls, component APIs, and tenant storage.
+
+10. `CE2-20`: Custom color role implementation milestone.
+    - Execute as focused sub-slices, not a single broad change.
+    - Start with package schema/validation and generated CSS naming before Kitchen Sink or component consumption.
+    - Stop before component tone APIs until generated roles and diagnostics are credible.
+
 ## Slice Backlog
 
 Use these IDs as shorthand for future work authorization prompts.
@@ -319,8 +406,14 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-16` | Component DOM-runtime tests | Implemented. Added Chromium-backed DOM-runtime tests for current `pf-button` and `pf-alert` registration, reflection, native delegation, click/focus behavior, and slot/status rendering. | New components, form-associated custom elements, React wrappers, runtime dependencies |
 | `CE2-17` | Component foundation decision | Implemented. ADR 0001 keeps raw Custom Elements for simple display/native-backed components, defers complex form/interactive components to a foundation spike, and positions React wrappers as a later ergonomics layer. | New dependencies, migrations, wrappers, new components |
 | `CE2-18` | Simple component expansion proof | Implemented. Added `pf-badge` and `pf-card` as simple raw Custom Element proofs consuming semantic CSS variables only, with package/DOM tests and Kitchen Sink light/dark examples. | Form controls, complex ARIA widgets, new foundations, React wrappers |
-| `CE2-19` | React wrapper proof | Add optional React wrappers for stable core Custom Element APIs if React ergonomics becomes the next priority. Wrappers must not duplicate styling or component behavior. | New core component behavior, non-React framework wrappers, color-engine changes |
-| `CE2-20` | Form/interactive foundation spike | Compare Lit plus platform APIs against Lion or another approved white-label foundation before implementing inputs/selects/comboboxes/dialogs/menus/popovers/tabs/tooltips. | Implementing form or complex interactive components |
+| `CE2-19` | Custom color role planning | Implemented. Planned custom roles as tenant/theme-scoped generated extensions under `--ds-role-*`, with built-ins remaining first-class stable semantics. | Implementation, Kitchen Sink controls, component APIs, tenant storage |
+| `CE2-20` | Custom color role milestone | Strategic milestone for custom role implementation. Execute as `CE2-20A` through later sub-slices. | Component tone APIs until generated roles and diagnostics are stable |
+| `CE2-20A` | Custom role schema and naming | Implemented. Added package input schema, validation, reserved-name handling, type exports, normalized metadata, and CSS naming helpers for custom roles without generation output. | Kitchen Sink controls, component consumption |
+| `CE2-20B` | Custom role generation | Implemented. Generated compact light/dark soft and solid custom role families, semantic `--ds-role-*` aliases, CSS output, namespace behavior, dark seed fallback/override, anchored preservation, and built-in output stability tests. | Component consumption, tenant storage |
+| `CE2-20C` | Custom role assertions | Implemented. Added APCA diagnostic pairs and representative custom-role regression cases for soft and solid custom role output while preserving built-in assertion output when custom roles are omitted. | Enforcement, broad auto-tuning |
+| `CE2-20D` | Kitchen Sink custom role visualization | Add custom role controls/previews/assertion grouping in Kitchen Sink so generated roles can be visually judged. | Component tone APIs, tenant storage |
+| `CE2-21` | React wrapper proof | Add optional React wrappers for stable core Custom Element APIs if React ergonomics becomes the next priority. Wrappers must not duplicate styling or behavior. | New core component behavior, non-React framework wrappers, color-engine changes |
+| `CE2-22` | Form/interactive foundation spike | Compare Lit plus platform APIs against Lion or another approved white-label foundation before implementing inputs/selects/comboboxes/dialogs/menus/popovers/tabs/tooltips. | Implementing form or complex interactive components |
 
 ## Completion Shape
 
@@ -336,6 +429,7 @@ This workstream is substantially complete when:
 - Foreground/text primitives are independent from surfaces and provide near-black/near-white candidates for colored fills.
 - Primary and status families are compact usage sets, not long universal ramps.
 - Primary and status seed handling is explicit: either balanced/adapted or anchored/preserved.
+- Custom color roles are generated, inspectable, tenant/theme-scoped role families under `--ds-role-*`, separate from stable built-in semantic aliases.
 - V2 CSS output provides explicit load-order-ready primitive and theme files while preserving the bundled compatibility string.
 - Consumer integration is documented for direct v2 `@puzzlefactory/color-engine` CSS output, including build-once, persisted runtime, and blob-hosted CSS patterns.
 - First Web Component proof consumes semantic CSS variables without calling color-generation internals.
@@ -366,6 +460,7 @@ This workstream is substantially complete when:
 - **Seed policy is per family:** Surfaces can use seeds as tonal guides; primary and status families need future `balanced` versus `anchored` behavior so approved colors can be preserved when required.
 - **Chrome is separate from surface states:** Borders and control edges should use a compact chrome family rather than recycled surface hover/pressed tokens.
 - **Foreground is separate from surfaces:** Text/on-color foregrounds should use dedicated near-black/near-white primitive families rather than borrowed surface colors.
+- **Custom roles extend, not replace, built-ins:** Flexible tenant/theme roles should be generated under a distinct namespace such as `--ds-role-*`; built-in roles stay stable and first-class.
 - **V1 status:** V1 is reference material, not the implementation path.
 
 ## Key Files

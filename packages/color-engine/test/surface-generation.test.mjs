@@ -5,9 +5,11 @@ import {
   COLOR_ENGINE_CSS_LOAD_ORDER,
   COLOR_ENGINE_THEME_PRESET_NAMES,
   COLOR_ENGINE_THEME_PRESETS,
+  CUSTOM_COLOR_ROLE_SEMANTIC_PARTS,
   ColorEngineValidationError,
   NEUTRAL_SEMANTIC_TOKEN_NAMES,
   PRIMARY_SEMANTIC_TOKEN_NAMES,
+  RESERVED_CUSTOM_COLOR_ROLE_IDS,
   SEED_POLICY_NAMES,
   SEMANTIC_TOKEN_NAMES,
   SURFACE_PRESET_NAMES,
@@ -15,6 +17,10 @@ import {
   STATUS_SEMANTIC_TOKEN_NAMES,
   TEXT_LEVELS,
   TEXT_TREATMENT_STRATEGY_NAMES,
+  createCustomColorRoleCssAliasName,
+  createCustomColorRoleCssAliasNames,
+  createCustomColorRoleCssVariableName,
+  createCustomColorRoleCssVariableNames,
   createColorEngineTheme,
   parseColorSeed,
 } from "../dist/index.js";
@@ -69,6 +75,8 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
   assert.equal(output.input.preset, "standard");
   assert.equal(output.input.lightSurfacePreset, "standard");
   assert.equal(output.input.darkSurfacePreset, "standard");
+  assert.deepEqual(output.input.customRoles, {});
+  assert.deepEqual(output.customRoles, {});
   assert.equal(output.seedPolicies.primary, "balanced");
   assert.equal(output.seedPolicies.status.danger, "balanced");
   assert.equal(output.textTreatment.name, "same-hue");
@@ -144,6 +152,150 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
   assert.match(output.css, /--ds-surface-1-hover: var\(--ds-surface-light-1-hover\);/);
   assert.match(output.css, /--ds-primary-action-bg: var\(--ds-primary-light-solid-2\);/);
   assert.match(output.css, /--ds-success-soft-border: var\(--ds-success-light-soft-4\);/);
+  assert.doesNotMatch(output.css, /--ds-role-/);
+});
+
+test("custom roles generate primitive families and semantic aliases", () => {
+  const output = createColorEngineTheme({
+    namespace: "pf",
+    customRoles: {
+      pending: {
+        seed: "#5b47d6",
+        darkSeed: "oklch(0.7 0.12 285)",
+        seedPolicy: "anchored",
+      },
+      "billing-alert": {
+        seed: "oklch(0.64 0.13 74)",
+      },
+    },
+  });
+
+  assert.deepEqual(CUSTOM_COLOR_ROLE_SEMANTIC_PARTS, [
+    "soft-bg",
+    "soft-bg-hover",
+    "soft-border",
+    "soft-text",
+    "solid-bg",
+    "solid-bg-hover",
+    "solid-bg-pressed",
+    "solid-text",
+  ]);
+  assert.deepEqual(Object.keys(output.customRoles), ["pending", "billing-alert"]);
+  assert.deepEqual(output.customRoles.pending.seed, parseColorSeed("#5b47d6"));
+  assert.deepEqual(output.customRoles.pending.darkSeed, parseColorSeed("oklch(0.7 0.12 285)"));
+  assert.equal(output.customRoles.pending.seedPolicy, "anchored");
+  assert.deepEqual(output.customRoles["billing-alert"].seed, parseColorSeed("oklch(0.64 0.13 74)"));
+  assert.deepEqual(output.customRoles["billing-alert"].darkSeed, parseColorSeed("oklch(0.64 0.13 74)"));
+  assert.equal(output.customRoles["billing-alert"].seedPolicy, "balanced");
+  assert.equal(output.input.customRoles.pending.seed, "#5b47d6");
+  assert.equal(output.input.customRoles.pending.darkSeed, "oklch(0.7 0.12 285)");
+  assert.equal(output.input.customRoles["billing-alert"].darkSeed, "oklch(0.64 0.13 74)");
+  assert.equal(output.customRoles.pending.cssAliases["soft-bg"], "role-pending-soft-bg");
+  assert.equal(output.customRoles.pending.cssAliases["solid-bg-pressed"], "role-pending-solid-bg-pressed");
+  assert.equal(output.customRoles.pending.cssVariables["soft-bg"], "--pf-role-pending-soft-bg");
+  assert.equal(output.customRoles.pending.cssVariables["solid-text"], "--pf-role-pending-solid-text");
+  assert.equal(createCustomColorRoleCssAliasName("promo", "solid-text"), "role-promo-solid-text");
+  assert.equal(createCustomColorRoleCssVariableName("ds", "promo", "solid-text"), "--ds-role-promo-solid-text");
+  assert.deepEqual(createCustomColorRoleCssAliasNames("promo"), {
+    "soft-bg": "role-promo-soft-bg",
+    "soft-bg-hover": "role-promo-soft-bg-hover",
+    "soft-border": "role-promo-soft-border",
+    "soft-text": "role-promo-soft-text",
+    "solid-bg": "role-promo-solid-bg",
+    "solid-bg-hover": "role-promo-solid-bg-hover",
+    "solid-bg-pressed": "role-promo-solid-bg-pressed",
+    "solid-text": "role-promo-solid-text",
+  });
+  assert.deepEqual(createCustomColorRoleCssVariableNames("ds", "promo"), {
+    "soft-bg": "--ds-role-promo-soft-bg",
+    "soft-bg-hover": "--ds-role-promo-soft-bg-hover",
+    "soft-border": "--ds-role-promo-soft-border",
+    "soft-text": "--ds-role-promo-soft-text",
+    "solid-bg": "--ds-role-promo-solid-bg",
+    "solid-bg-hover": "--ds-role-promo-solid-bg-hover",
+    "solid-bg-pressed": "--ds-role-promo-solid-bg-pressed",
+    "solid-text": "--ds-role-promo-solid-text",
+  });
+  assert.equal(output.primitives["role-pending-light-soft"].length, 4);
+  assert.equal(output.primitives["role-pending-light-solid"].length, 4);
+  assert.equal(output.primitives["role-pending-dark-soft"].length, 4);
+  assert.equal(output.primitives["role-pending-dark-solid"].length, 4);
+  assert.equal(output.primitives["role-billing-alert-light-soft"].length, 4);
+  assert.equal(output.primitives["role-pending-light-soft"][0]?.name, "role-pending-light-soft-1");
+  assert.equal(output.primitives["role-pending-dark-solid"][1]?.name, "role-pending-dark-solid-2");
+  assert.deepEqual(output.primitives["role-pending-light-solid"][1]?.oklch, parseColorSeed("#5b47d6"));
+  assert.deepEqual(output.primitives["role-pending-dark-solid"][1]?.oklch, parseColorSeed("oklch(0.7 0.12 285)"));
+  assert.equal(
+    output.primitives["role-billing-alert-dark-solid"][1]?.oklch.h,
+    output.primitives["role-billing-alert-light-solid"][1]?.oklch.h,
+  );
+  assert.notDeepEqual(output.primitives["role-billing-alert-dark-solid"], output.primitives["role-billing-alert-light-solid"]);
+  assert.equal(output.semantics.light["role-pending-soft-bg"], "var(--pf-role-pending-light-soft-1)");
+  assert.equal(output.semantics.light["role-pending-soft-bg-hover"], "var(--pf-role-pending-light-soft-2)");
+  assert.equal(output.semantics.light["role-pending-soft-border"], "var(--pf-role-pending-light-soft-4)");
+  assert.equal(output.semantics.light["role-pending-solid-bg"], "var(--pf-role-pending-light-solid-2)");
+  assert.equal(output.semantics.light["role-pending-solid-bg-hover"], "var(--pf-role-pending-light-solid-3)");
+  assert.equal(output.semantics.light["role-pending-solid-bg-pressed"], "var(--pf-role-pending-light-solid-4)");
+  assert.equal(output.semantics.dark["role-pending-soft-bg"], "var(--pf-role-pending-dark-soft-1)");
+  assert.equal(output.semantics.dark["role-pending-solid-bg"], "var(--pf-role-pending-dark-solid-2)");
+  assert.equal(Object.keys(output.semantics.light).length, SEMANTIC_TOKEN_NAMES.length + 16);
+  assert.match(output.cssOutput.primitives, /--pf-role-pending-light-soft-1: oklch\(/);
+  assert.match(output.cssOutput.primitives, /--pf-role-pending-dark-solid-2: oklch\(0.7 0.12 285\);/);
+  assert.match(output.cssOutput.themes.light, /--pf-role-pending-soft-bg: var\(--pf-role-pending-light-soft-1\);/);
+  assert.match(output.cssOutput.themes.dark, /--pf-role-pending-soft-bg: var\(--pf-role-pending-dark-soft-1\);/);
+  assert.match(output.cssOutput.themes.light, /--pf-role-billing-alert-solid-bg: var\(--pf-role-billing-alert-light-solid-2\);/);
+  assert.doesNotMatch(output.cssOutput.themes.light, /--pf-primary-action-bg: var\(--pf-role-/);
+  assert.equal(output.primitives["primary-light-solid"].length, 4);
+  assert.equal(output.semantics.light["primary-action-bg"], "var(--pf-primary-light-solid-2)");
+});
+
+test("omitted, empty, and populated custom roles preserve built-in output", () => {
+  const omitted = createColorEngineTheme();
+  const empty = createColorEngineTheme({ customRoles: {} });
+  const populated = createColorEngineTheme({
+    customRoles: {
+      pending: {
+        seed: "oklch(0.62 0.12 280)",
+        darkSeed: "oklch(0.72 0.1 280)",
+      },
+    },
+  });
+
+  assert.deepEqual(empty.input.customRoles, {});
+  assert.deepEqual(empty.customRoles, {});
+  assert.deepEqual(empty.primitives, omitted.primitives);
+  assert.deepEqual(empty.semantics, omitted.semantics);
+  assert.deepEqual(empty.assertions, omitted.assertions);
+  assert.deepEqual(empty.cssOutput, omitted.cssOutput);
+  assert.equal(empty.css, omitted.css);
+  assert.deepEqual(populated.primitives["primary-light-solid"], omitted.primitives["primary-light-solid"]);
+  assert.deepEqual(populated.primitives["danger-dark-soft"], omitted.primitives["danger-dark-soft"]);
+  assert.deepEqual(populated.semantics.light["primary-action-bg"], omitted.semantics.light["primary-action-bg"]);
+  assert.deepEqual(populated.semantics.dark["warning-solid-bg"], omitted.semantics.dark["warning-solid-bg"]);
+  assert.deepEqual(
+    SEMANTIC_TOKEN_NAMES.map((name) => [name, populated.semantics.light[name]]),
+    SEMANTIC_TOKEN_NAMES.map((name) => [name, omitted.semantics.light[name]]),
+  );
+});
+
+test("custom role state CSS detects theme from the family suffix", () => {
+  const output = createColorEngineTheme({
+    namespace: "pf",
+    customRoles: {
+      "traffic-light": {
+        seed: "oklch(0.5 0.12 145)",
+        darkSeed: "oklch(0.7 0.1 145)",
+        seedPolicy: "anchored",
+      },
+    },
+  });
+  const lightBase = extractCssLightness(output.cssOutput.primitives, "--pf-role-traffic-light-light-solid-2");
+  const lightHover = extractCssLightness(output.cssOutput.primitives, "--pf-role-traffic-light-light-solid-2-hover");
+  const darkBase = extractCssLightness(output.cssOutput.primitives, "--pf-role-traffic-light-dark-solid-2");
+  const darkHover = extractCssLightness(output.cssOutput.primitives, "--pf-role-traffic-light-dark-solid-2-hover");
+
+  assert.ok(lightHover < lightBase);
+  assert.ok(darkHover > darkBase);
 });
 
 test("chrome ramps separate structural borders from surface states", () => {
@@ -647,6 +799,34 @@ test("createColorEngineTheme rejects invalid seeds", () => {
       error.code === "INVALID_SEED" &&
       error.field === "warningSeed",
   );
+  assert.throws(
+    () => createColorEngineTheme({ customRoles: { pending: { seed: "rebeccapurple" } } }),
+    (error) =>
+      error instanceof ColorEngineValidationError &&
+      error.code === "INVALID_SEED" &&
+      error.field === "customRoles.pending.seed",
+  );
+  assert.throws(
+    () => createColorEngineTheme({
+      customRoles: {
+        pending: {
+          seed: "oklch(0.6 0.1 270)",
+          darkSeed: "blue",
+        },
+      },
+    }),
+    (error) =>
+      error instanceof ColorEngineValidationError &&
+      error.code === "INVALID_SEED" &&
+      error.field === "customRoles.pending.darkSeed",
+  );
+  assert.throws(
+    () => createColorEngineTheme({ customRoles: { pending: {} } }),
+    (error) =>
+      error instanceof ColorEngineValidationError &&
+      error.code === "INVALID_SEED" &&
+      error.field === "customRoles.pending.seed",
+  );
 });
 
 test("createColorEngineTheme rejects invalid seed policies", () => {
@@ -656,6 +836,15 @@ test("createColorEngineTheme rejects invalid seed policies", () => {
       error instanceof ColorEngineValidationError &&
       error.code === "INVALID_SEED_POLICY" &&
       error.field === "primarySeedPolicy",
+  );
+  assert.throws(
+    () => createColorEngineTheme({
+      customRoles: { pending: { seed: "#5b47d6", seedPolicy: "strict" } },
+    }),
+    (error) =>
+      error instanceof ColorEngineValidationError &&
+      error.code === "INVALID_SEED_POLICY" &&
+      error.field === "customRoles.pending.seedPolicy",
   );
 });
 
@@ -683,6 +872,73 @@ test("createColorEngineTheme rejects invalid theme-specific surface presets", ()
       error instanceof ColorEngineValidationError &&
       error.code === "INVALID_PRESET" &&
       error.field === "darkSurfacePreset",
+  );
+});
+
+test("createColorEngineTheme rejects invalid or reserved custom role ids", () => {
+  for (const roleId of [
+    "",
+    "Pending",
+    "pending_role",
+    "pending--role",
+    "pending-",
+    "-pending",
+    "pending.role",
+    "pénding",
+    "1pending",
+  ]) {
+    assert.throws(
+      () => createColorEngineTheme({
+        customRoles: { [roleId]: { seed: "#5b47d6" } },
+      }),
+      (error) =>
+        error instanceof ColorEngineValidationError &&
+        error.code === "INVALID_CUSTOM_ROLE_ID" &&
+        error.field === `customRoles.${roleId}`,
+      roleId,
+    );
+  }
+
+  assert.deepEqual(RESERVED_CUSTOM_COLOR_ROLE_IDS, [
+    "primary",
+    "danger",
+    "warning",
+    "success",
+    "info",
+    "surface",
+    "text",
+    "chrome",
+    "border",
+  ]);
+
+  for (const roleId of RESERVED_CUSTOM_COLOR_ROLE_IDS) {
+    assert.throws(
+      () => createColorEngineTheme({
+        customRoles: { [roleId]: { seed: "#5b47d6" } },
+      }),
+      (error) =>
+        error instanceof ColorEngineValidationError &&
+        error.code === "RESERVED_CUSTOM_ROLE_ID" &&
+        error.field === `customRoles.${roleId}`,
+      roleId,
+    );
+  }
+});
+
+test("createColorEngineTheme rejects malformed custom role objects", () => {
+  assert.throws(
+    () => createColorEngineTheme({ customRoles: [] }),
+    (error) =>
+      error instanceof ColorEngineValidationError &&
+      error.code === "INVALID_CUSTOM_ROLE" &&
+      error.field === "customRoles",
+  );
+  assert.throws(
+    () => createColorEngineTheme({ customRoles: { pending: "#5b47d6" } }),
+    (error) =>
+      error instanceof ColorEngineValidationError &&
+      error.code === "INVALID_CUSTOM_ROLE" &&
+      error.field === "customRoles.pending",
   );
 });
 

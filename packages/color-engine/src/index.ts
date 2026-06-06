@@ -13,6 +13,7 @@ export type {
   ContrastAssertionPair,
   ContrastAssertionReport,
   ContrastAssertionRole,
+  ContrastAssertionSemanticName,
   ContrastAssertionSeverity,
   ContrastAssertionSummary,
   ResolvedContrastAssertion,
@@ -62,6 +63,27 @@ export type SeedPolicy = "balanced" | "anchored";
 
 export type TextTreatmentStrategyName = "same-hue" | "neutral" | "adaptive";
 
+export type CustomColorRoleSemanticPart =
+  | "soft-bg"
+  | "soft-bg-hover"
+  | "soft-border"
+  | "soft-text"
+  | "solid-bg"
+  | "solid-bg-hover"
+  | "solid-bg-pressed"
+  | "solid-text";
+
+export type CustomColorRoleCssAliasName =
+  `role-${string}-${CustomColorRoleSemanticPart}`;
+
+export type CustomColorRoleCssVariableName =
+  `--${string}-role-${string}-${CustomColorRoleSemanticPart}`;
+
+export type CustomColorRoleUsageFamilyName =
+  `role-${string}-${"light" | "dark"}-${"soft" | "solid"}`;
+
+export type CustomColorRoleSemanticTokenName = CustomColorRoleCssAliasName;
+
 export type PrimaryUsageFamilyName =
   | "primary-light-soft"
   | "primary-light-solid"
@@ -80,6 +102,7 @@ export type SeedPrimitiveFamilyName =
   | `${StatusIntent}-seed`;
 
 export type UsageFamilyName = PrimaryUsageFamilyName | StatusUsageFamilyName;
+export type CustomUsageFamilyName = UsageFamilyName | CustomColorRoleUsageFamilyName;
 
 export type TextPrimitiveFamilyName = "text-dark" | "text-light";
 
@@ -91,7 +114,7 @@ export type PrimitiveFamilyName =
   | "surface-dark"
   | "chrome-light"
   | "chrome-dark"
-  | UsageFamilyName
+  | CustomUsageFamilyName
   | SeedPrimitiveFamilyName;
 
 export type NeutralSemanticTokenName =
@@ -139,6 +162,11 @@ export type SemanticTokenName =
   | PrimarySemanticTokenName
   | StatusSemanticTokenName;
 
+export type ColorEngineThemeSemantics = Readonly<
+  Record<SemanticTokenName, `var(--${string})`> &
+  Partial<Record<CustomColorRoleSemanticTokenName, `var(--${string})`>>
+>;
+
 export interface OklchValue {
   readonly l: number;
   readonly c: number;
@@ -160,6 +188,27 @@ export interface TextTreatmentStrategy {
   readonly name: TextTreatmentStrategyName;
   readonly label: string;
   readonly description: string;
+}
+
+export interface CustomColorRoleInput {
+  readonly seed: ColorSeed | string;
+  readonly darkSeed?: ColorSeed | string;
+  readonly seedPolicy?: SeedPolicy;
+}
+
+export interface ResolvedCustomColorRoleInput {
+  readonly seed: ColorSeed | string;
+  readonly darkSeed: ColorSeed | string;
+  readonly seedPolicy: SeedPolicy;
+}
+
+export interface ResolvedCustomColorRole {
+  readonly id: string;
+  readonly seed: OklchValue;
+  readonly darkSeed: OklchValue;
+  readonly seedPolicy: SeedPolicy;
+  readonly cssAliases: Readonly<Record<CustomColorRoleSemanticPart, CustomColorRoleCssAliasName>>;
+  readonly cssVariables: Readonly<Record<CustomColorRoleSemanticPart, CustomColorRoleCssVariableName>>;
 }
 
 export interface ColorEngineInput {
@@ -186,9 +235,17 @@ export interface ColorEngineInput {
   readonly lightSurfacePreset?: SurfacePresetName;
   readonly darkSurfacePreset?: SurfacePresetName;
   readonly namespace?: string;
+  readonly customRoles?: Readonly<Record<string, CustomColorRoleInput>>;
 }
 
-export type ColorEngineThemePresetInput = Readonly<Required<Omit<ColorEngineInput, "namespace">>>;
+export type ResolvedColorEngineInput = Readonly<
+  Required<Omit<ColorEngineInput, "namespace" | "customRoles">> & {
+    readonly namespace: string;
+    readonly customRoles: Readonly<Record<string, ResolvedCustomColorRoleInput>>;
+  }
+>;
+
+export type ColorEngineThemePresetInput = Readonly<Required<Omit<ColorEngineInput, "namespace" | "customRoles">>>;
 
 export interface ColorEngineThemePreset {
   readonly name: ColorEngineThemePresetName;
@@ -204,7 +261,7 @@ export interface ColorToken {
   readonly description: string;
 }
 
-export interface PrimitiveSurfaceOutput {
+export interface BuiltInPrimitiveSurfaceOutput {
   readonly "neutral-light": readonly ColorToken[];
   readonly "neutral-dark": readonly ColorToken[];
   readonly "text-dark": readonly ColorToken[];
@@ -240,11 +297,17 @@ export interface PrimitiveSurfaceOutput {
   readonly "info-dark-solid": readonly ColorToken[];
 }
 
+export type CustomColorRolePrimitiveOutput =
+  Readonly<Partial<Record<CustomColorRoleUsageFamilyName, readonly ColorToken[]>>>;
+
+export type PrimitiveSurfaceOutput = BuiltInPrimitiveSurfaceOutput & CustomColorRolePrimitiveOutput;
+
 export interface ColorEngineOutput {
   readonly namespace: string;
   readonly preset: SurfacePreset;
   readonly surfacePresets: Readonly<Record<SurfaceTheme, SurfacePreset>>;
-  readonly input: Required<ColorEngineInput>;
+  readonly input: ResolvedColorEngineInput;
+  readonly customRoles: Readonly<Record<string, ResolvedCustomColorRole>>;
   readonly seeds: {
     readonly neutral: OklchValue;
     readonly surfaceLight: OklchValue;
@@ -260,7 +323,7 @@ export interface ColorEngineOutput {
   };
   readonly textTreatment: TextTreatmentStrategy;
   readonly primitives: PrimitiveSurfaceOutput;
-  readonly semantics: Readonly<Record<SurfaceTheme, Readonly<Record<SemanticTokenName, `var(--${string})`>>>>;
+  readonly semantics: Readonly<Record<SurfaceTheme, ColorEngineThemeSemantics>>;
   readonly assertions: ContrastAssertionReportType;
   readonly cssOutput: ColorEngineCssOutput;
   readonly css: string;
@@ -285,7 +348,10 @@ export type ValidationErrorCode =
   | "INVALID_SEED_POLICY"
   | "INVALID_TEXT_TREATMENT"
   | "INVALID_PRESET"
-  | "INVALID_NAMESPACE";
+  | "INVALID_NAMESPACE"
+  | "INVALID_CUSTOM_ROLE_ID"
+  | "RESERVED_CUSTOM_ROLE_ID"
+  | "INVALID_CUSTOM_ROLE";
 
 export class ColorEngineValidationError extends Error {
   readonly code: ValidationErrorCode;
@@ -368,6 +434,31 @@ export const TEXT_LEVELS = ["strong", "primary", "secondary", "muted", "disabled
 export const STATUS_INTENTS = ["danger", "warning", "success", "info"] as const satisfies readonly StatusIntent[];
 
 export const SEED_POLICY_NAMES = ["balanced", "anchored"] as const satisfies readonly SeedPolicy[];
+
+export const CUSTOM_COLOR_ROLE_SEMANTIC_PARTS = [
+  "soft-bg",
+  "soft-bg-hover",
+  "soft-border",
+  "soft-text",
+  "solid-bg",
+  "solid-bg-hover",
+  "solid-bg-pressed",
+  "solid-text",
+] as const satisfies readonly CustomColorRoleSemanticPart[];
+
+export const RESERVED_CUSTOM_COLOR_ROLE_IDS = [
+  "primary",
+  "danger",
+  "warning",
+  "success",
+  "info",
+  "surface",
+  "text",
+  "chrome",
+  "border",
+] as const;
+
+export const CUSTOM_COLOR_ROLE_ID_PATTERN = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 
 export const TEXT_TREATMENT_STRATEGIES = {
   "same-hue": {
@@ -626,7 +717,7 @@ const DEFAULT_INPUT = {
   lightSurfacePreset: "standard",
   darkSurfacePreset: "standard",
   namespace: "ds",
-} as const satisfies Required<ColorEngineInput>;
+} as const satisfies Required<Omit<ColorEngineInput, "customRoles">>;
 
 export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngineOutput {
   const resolvedInput = resolveInput(input);
@@ -652,6 +743,10 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     success: parseColorSeed(resolvedInput.successDarkSeed, "successDarkSeed"),
     info: parseColorSeed(resolvedInput.infoDarkSeed, "infoDarkSeed"),
   } as const satisfies Readonly<Record<StatusIntent, OklchValue>>;
+  const customRoles = resolveCustomColorRoleMetadata(
+    resolvedInput.customRoles,
+    resolvedInput.namespace,
+  );
   const seedPolicies = {
     primary: resolvedInput.primarySeedPolicy,
     status: {
@@ -725,6 +820,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     darkSeeds: statusDarkSeeds,
     policies: seedPolicies.status,
   });
+  const customRolePrimitives = createCustomColorRoleUsageFamilies(customRoles);
   const primitives: PrimitiveSurfaceOutput = {
     "neutral-light": neutralLight,
     "neutral-dark": neutralDark,
@@ -741,13 +837,20 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     "success-seed": createSeedPrimitiveFamily("success-seed", statusSeeds.success),
     "info-seed": createSeedPrimitiveFamily("info-seed", statusSeeds.info),
     ...status,
+    ...customRolePrimitives,
   };
   const textTreatment = TEXT_TREATMENT_STRATEGIES[resolvedInput.textTreatment];
-  const semantics = createSemantics(resolvedInput.namespace, primitives, textTreatment.name);
+  const semantics = createSemantics(
+    resolvedInput.namespace,
+    primitives,
+    textTreatment.name,
+    customRoles,
+  );
   const assertions = createContrastAssertionReport({
     namespace: resolvedInput.namespace,
     primitives,
     semantics,
+    customRoles,
   });
   const cssOutput = createCssOutput(resolvedInput.namespace, primitives, semantics, surfacePresets);
 
@@ -756,6 +859,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     preset,
     surfacePresets,
     input: resolvedInput,
+    customRoles,
     seeds: {
       neutral: neutralSeed,
       surfaceLight: surfaceLightSeed,
@@ -800,7 +904,7 @@ export function parseColorSeed(seed: string, field = "seed"): OklchValue {
   });
 }
 
-function resolveInput(input: ColorEngineInput): Required<ColorEngineInput> {
+function resolveInput(input: ColorEngineInput): ResolvedColorEngineInput {
   const preset = input.preset ?? DEFAULT_INPUT.preset;
   const lightSurfacePreset = input.lightSurfacePreset ?? preset;
   const darkSurfacePreset = input.darkSurfacePreset ?? preset;
@@ -810,14 +914,7 @@ function resolveInput(input: ColorEngineInput): Required<ColorEngineInput> {
   validateSurfacePreset(lightSurfacePreset, "lightSurfacePreset");
   validateSurfacePreset(darkSurfacePreset, "darkSurfacePreset");
 
-  if (!/^[a-z][a-z0-9-]*$/i.test(namespace)) {
-    throw new ColorEngineValidationError({
-      code: "INVALID_NAMESPACE",
-      field: "namespace",
-      value: namespace,
-      message: "Namespace must start with a letter and contain only letters, numbers, or hyphens.",
-    });
-  }
+  validateNamespace(namespace);
 
   const primarySeedPolicy = resolveSeedPolicy(input.primarySeedPolicy, "primarySeedPolicy");
   const dangerSeedPolicy = resolveSeedPolicy(input.dangerSeedPolicy, "dangerSeedPolicy");
@@ -855,7 +952,53 @@ function resolveInput(input: ColorEngineInput): Required<ColorEngineInput> {
     lightSurfacePreset,
     darkSurfacePreset,
     namespace,
+    customRoles: resolveCustomColorRoleInputs(input.customRoles),
   };
+}
+
+export function createCustomColorRoleCssAliasName(
+  roleId: string,
+  part: CustomColorRoleSemanticPart,
+): CustomColorRoleCssAliasName {
+  validateCustomColorRoleId(roleId, `customRoles.${roleId}`);
+  validateCustomColorRoleSemanticPart(part, "part");
+
+  return `role-${roleId}-${part}`;
+}
+
+export function createCustomColorRoleCssAliasNames(
+  roleId: string,
+): Readonly<Record<CustomColorRoleSemanticPart, CustomColorRoleCssAliasName>> {
+  return CUSTOM_COLOR_ROLE_SEMANTIC_PARTS.reduce(
+    (aliases, part) => ({
+      ...aliases,
+      [part]: createCustomColorRoleCssAliasName(roleId, part),
+    }),
+    {} as Record<CustomColorRoleSemanticPart, CustomColorRoleCssAliasName>,
+  );
+}
+
+export function createCustomColorRoleCssVariableName(
+  namespace: string,
+  roleId: string,
+  part: CustomColorRoleSemanticPart,
+): CustomColorRoleCssVariableName {
+  validateNamespace(namespace);
+
+  return `--${namespace}-${createCustomColorRoleCssAliasName(roleId, part)}`;
+}
+
+export function createCustomColorRoleCssVariableNames(
+  namespace: string,
+  roleId: string,
+): Readonly<Record<CustomColorRoleSemanticPart, CustomColorRoleCssVariableName>> {
+  return CUSTOM_COLOR_ROLE_SEMANTIC_PARTS.reduce(
+    (variables, part) => ({
+      ...variables,
+      [part]: createCustomColorRoleCssVariableName(namespace, roleId, part),
+    }),
+    {} as Record<CustomColorRoleSemanticPart, CustomColorRoleCssVariableName>,
+  );
 }
 
 function validateSurfacePreset(preset: SurfacePresetName, field: string): void {
@@ -869,11 +1012,138 @@ function validateSurfacePreset(preset: SurfacePresetName, field: string): void {
   }
 }
 
-function resolveSeedPolicy(policy: SeedPolicy | undefined, field: string): SeedPolicy {
+function resolveCustomColorRoleInputs(
+  customRoles: ColorEngineInput["customRoles"],
+): ResolvedColorEngineInput["customRoles"] {
+  if (customRoles === undefined) {
+    return {};
+  }
+
+  if (!isRecord(customRoles)) {
+    throw new ColorEngineValidationError({
+      code: "INVALID_CUSTOM_ROLE",
+      field: "customRoles",
+      value: customRoles,
+      message: "Custom roles must be an object keyed by lowercase kebab-case role id.",
+    });
+  }
+
+  const resolved: Record<string, ResolvedCustomColorRoleInput> = {};
+
+  for (const [roleId, roleInput] of Object.entries(customRoles)) {
+    validateCustomColorRoleId(roleId, `customRoles.${roleId}`);
+
+    if (!isRecord(roleInput)) {
+      throw new ColorEngineValidationError({
+        code: "INVALID_CUSTOM_ROLE",
+        field: `customRoles.${roleId}`,
+        value: roleInput,
+        message: "Custom role configuration must be an object with a seed.",
+      });
+    }
+
+    const seed = validateSeedInput(roleInput.seed, `customRoles.${roleId}.seed`);
+    const darkSeed = roleInput.darkSeed === undefined
+      ? seed
+      : validateSeedInput(roleInput.darkSeed, `customRoles.${roleId}.darkSeed`);
+
+    resolved[roleId] = {
+      seed,
+      darkSeed,
+      seedPolicy: resolveSeedPolicy(roleInput.seedPolicy, `customRoles.${roleId}.seedPolicy`),
+    };
+  }
+
+  return resolved;
+}
+
+function resolveCustomColorRoleMetadata(
+  customRoles: ResolvedColorEngineInput["customRoles"],
+  namespace: string,
+): ColorEngineOutput["customRoles"] {
+  const resolved: Record<string, ResolvedCustomColorRole> = {};
+
+  for (const [roleId, roleInput] of Object.entries(customRoles)) {
+    resolved[roleId] = {
+      id: roleId,
+      seed: parseColorSeed(roleInput.seed, `customRoles.${roleId}.seed`),
+      darkSeed: parseColorSeed(roleInput.darkSeed, `customRoles.${roleId}.darkSeed`),
+      seedPolicy: roleInput.seedPolicy,
+      cssAliases: createCustomColorRoleCssAliasNames(roleId),
+      cssVariables: createCustomColorRoleCssVariableNames(namespace, roleId),
+    };
+  }
+
+  return resolved;
+}
+
+function validateNamespace(namespace: string): void {
+  if (!/^[a-z][a-z0-9-]*$/i.test(namespace)) {
+    throw new ColorEngineValidationError({
+      code: "INVALID_NAMESPACE",
+      field: "namespace",
+      value: namespace,
+      message: "Namespace must start with a letter and contain only letters, numbers, or hyphens.",
+    });
+  }
+}
+
+function validateCustomColorRoleId(roleId: string, field: string): void {
+  if (!CUSTOM_COLOR_ROLE_ID_PATTERN.test(roleId)) {
+    throw new ColorEngineValidationError({
+      code: "INVALID_CUSTOM_ROLE_ID",
+      field,
+      value: roleId,
+      message: "Custom role id must be lowercase kebab-case and start with a letter.",
+    });
+  }
+
+  if ((RESERVED_CUSTOM_COLOR_ROLE_IDS as readonly string[]).includes(roleId)) {
+    throw new ColorEngineValidationError({
+      code: "RESERVED_CUSTOM_ROLE_ID",
+      field,
+      value: roleId,
+      message: "Custom role id is reserved by a built-in role or core namespace.",
+    });
+  }
+}
+
+function validateCustomColorRoleSemanticPart(
+  part: CustomColorRoleSemanticPart,
+  field: string,
+): void {
+  if (!CUSTOM_COLOR_ROLE_SEMANTIC_PARTS.includes(part)) {
+    throw new ColorEngineValidationError({
+      code: "INVALID_CUSTOM_ROLE",
+      field,
+      value: part,
+      message: "Custom role semantic part is not supported.",
+    });
+  }
+}
+
+function validateSeedInput(seed: unknown, field: string): ColorSeed | string {
+  if (typeof seed === "string") {
+    return seed;
+  }
+
+  throw new ColorEngineValidationError({
+    code: "INVALID_SEED",
+    field,
+    value: seed,
+    message: "Seed must be #rgb, #rrggbb, or oklch(L C H).",
+  });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function resolveSeedPolicy(policy: unknown, field: string): SeedPolicy {
   const resolved = policy ?? DEFAULT_INPUT.primarySeedPolicy;
 
-  if (SEED_POLICY_NAMES.includes(resolved)) {
-    return resolved;
+  if (typeof resolved === "string" && (SEED_POLICY_NAMES as readonly string[]).includes(resolved)) {
+    return resolved as SeedPolicy;
   }
 
   throw new ColorEngineValidationError({
@@ -1126,6 +1396,66 @@ function createStatusIntentFamilies(
   } as Record<StatusUsageFamilyName, readonly ColorToken[]>;
 }
 
+function createCustomColorRoleUsageFamilies(
+  customRoles: ColorEngineOutput["customRoles"],
+): CustomColorRolePrimitiveOutput {
+  const families: Record<CustomColorRoleUsageFamilyName, readonly ColorToken[]> = {};
+
+  for (const role of Object.values(customRoles)) {
+    Object.assign(families, createCustomColorRoleFamilies(role));
+  }
+
+  return families;
+}
+
+function createCustomColorRoleFamilies(
+  role: ResolvedCustomColorRole,
+): Record<CustomColorRoleUsageFamilyName, readonly ColorToken[]> {
+  const lightHue = normalizeHue(role.seed.h);
+  const darkHue = normalizeHue(role.darkSeed.h);
+  const lightChroma = clampNumber(role.seed.c, 0.06, 0.18);
+  const darkChroma = clampNumber(role.darkSeed.c, 0.06, 0.18);
+  const lightSolidBase = clampNumber(role.seed.l, 0.42, 0.6);
+  const darkSolidBase = clampNumber(role.darkSeed.l + 0.2, 0.66, 0.78);
+  const lightSoftFamily = `role-${role.id}-light-soft` as const;
+  const lightSolidFamily = `role-${role.id}-light-solid` as const;
+  const darkSoftFamily = `role-${role.id}-dark-soft` as const;
+  const darkSolidFamily = `role-${role.id}-dark-solid` as const;
+
+  return {
+    [lightSoftFamily]: createUsageRamp({
+      family: lightSoftFamily,
+      hue: lightHue,
+      lightness: [0.968, 0.944, 0.916, 0.882],
+      chroma: [lightChroma * 0.15, lightChroma * 0.22, lightChroma * 0.3, lightChroma * 0.42],
+      description: `custom role ${role.id} light soft`,
+    }),
+    [lightSolidFamily]: createUsageRamp({
+      family: lightSolidFamily,
+      hue: lightHue,
+      lightness: createSolidLightness(role.seed, lightSolidBase, "light", role.seedPolicy),
+      chroma: createSolidChroma(role.seed, lightChroma, "light", role.seedPolicy, 0.86),
+      description: `custom role ${role.id} light solid`,
+      ...anchoredUsageBounds(role.seedPolicy),
+    }),
+    [darkSoftFamily]: createUsageRamp({
+      family: darkSoftFamily,
+      hue: darkHue,
+      lightness: [0.16, 0.2, 0.242, 0.288],
+      chroma: [darkChroma * 0.26, darkChroma * 0.33, darkChroma * 0.41, darkChroma * 0.5],
+      description: `custom role ${role.id} dark soft`,
+    }),
+    [darkSolidFamily]: createUsageRamp({
+      family: darkSolidFamily,
+      hue: darkHue,
+      lightness: createSolidLightness(role.darkSeed, darkSolidBase, "dark", role.seedPolicy, "status"),
+      chroma: createSolidChroma(role.darkSeed, darkChroma, "dark", role.seedPolicy, 0.72),
+      description: `custom role ${role.id} dark solid`,
+      ...anchoredUsageBounds(role.seedPolicy),
+    }),
+  } as Record<CustomColorRoleUsageFamilyName, readonly ColorToken[]>;
+}
+
 function createSolidLightness(
   seed: OklchValue,
   balancedBase: number,
@@ -1216,7 +1546,7 @@ function createSeedPrimitiveFamily(
 }
 
 function createUsageRamp(options: {
-  readonly family: UsageFamilyName;
+  readonly family: CustomUsageFamilyName;
   readonly hue: number;
   readonly lightness: readonly [number, number, number, number];
   readonly chroma: readonly [number, number, number, number];
@@ -1247,6 +1577,7 @@ function createSemantics(
   namespace: string,
   primitives: PrimitiveSurfaceOutput,
   textTreatment: TextTreatmentStrategyName,
+  customRoles: ColorEngineOutput["customRoles"],
 ): ColorEngineOutput["semantics"] {
   return {
     light: {
@@ -1254,12 +1585,14 @@ function createSemantics(
       ...createSurfaceSemantics(namespace, "surface-light"),
       ...createPrimarySemantics(namespace, "light", primitives, textTreatment),
       ...createStatusSemantics(namespace, "light", primitives, textTreatment),
+      ...createCustomColorRoleSemantics(namespace, "light", primitives, textTreatment, customRoles),
     },
     dark: {
       ...createNeutralSemantics(namespace, "dark"),
       ...createSurfaceSemantics(namespace, "surface-dark"),
       ...createPrimarySemantics(namespace, "dark", primitives, textTreatment),
       ...createStatusSemantics(namespace, "dark", primitives, textTreatment),
+      ...createCustomColorRoleSemantics(namespace, "dark", primitives, textTreatment, customRoles),
     },
   };
 }
@@ -1410,6 +1743,47 @@ function createStatusSemantics(
   return Object.fromEntries(entries) as Record<StatusSemanticTokenName, `var(--${string})`>;
 }
 
+function createCustomColorRoleSemantics(
+  namespace: string,
+  theme: SurfaceTheme,
+  primitives: PrimitiveSurfaceOutput,
+  textTreatment: TextTreatmentStrategyName,
+  customRoles: ColorEngineOutput["customRoles"],
+): Readonly<Partial<Record<CustomColorRoleSemanticTokenName, `var(--${string})`>>> {
+  const entries: [CustomColorRoleSemanticTokenName, `var(--${string})`][] = [];
+  const themePrefix = theme === "light" ? "light" : "dark";
+
+  for (const role of Object.values(customRoles)) {
+    const softFamily = `role-${role.id}-${themePrefix}-soft`;
+    const solidFamily = `role-${role.id}-${themePrefix}-solid`;
+    const softTextToken = resolveSoftTextToken({
+      primitives,
+      softBackgrounds: [`${softFamily}-1`, `${softFamily}-2`],
+      sameHueToken: `${solidFamily}-${theme === "light" ? 4 : 1}`,
+      strategy: textTreatment,
+      theme,
+    });
+    const solidTextToken = resolveSolidForegroundToken({
+      primitives,
+      backgrounds: getSolidBackgroundTokenNames(solidFamily, theme),
+      preferredToken: theme === "light" ? "text-light-strong" : "text-dark-strong",
+      threshold: CONTRAST_ASSERTION_THRESHOLDS["status-solid"],
+      theme,
+    });
+
+    entries.push([role.cssAliases["soft-bg"], cssVar(namespace, `${softFamily}-1`)]);
+    entries.push([role.cssAliases["soft-bg-hover"], cssVar(namespace, `${softFamily}-2`)]);
+    entries.push([role.cssAliases["soft-border"], cssVar(namespace, `${softFamily}-4`)]);
+    entries.push([role.cssAliases["soft-text"], cssVar(namespace, softTextToken)]);
+    entries.push([role.cssAliases["solid-bg"], cssVar(namespace, `${solidFamily}-2`)]);
+    entries.push([role.cssAliases["solid-bg-hover"], cssVar(namespace, `${solidFamily}-${theme === "light" ? 3 : 1}`)]);
+    entries.push([role.cssAliases["solid-bg-pressed"], cssVar(namespace, `${solidFamily}-${theme === "light" ? 4 : 3}`)]);
+    entries.push([role.cssAliases["solid-text"], cssVar(namespace, solidTextToken)]);
+  }
+
+  return Object.fromEntries(entries) as Partial<Record<CustomColorRoleSemanticTokenName, `var(--${string})`>>;
+}
+
 function resolveSoftTextToken(options: {
   readonly primitives: PrimitiveSurfaceOutput;
   readonly softBackgrounds: readonly string[];
@@ -1509,6 +1883,13 @@ function getStatusSolidBackgroundTokenNames(
   solidFamily: `${StatusIntent}-${"light" | "dark"}-solid`,
   theme: SurfaceTheme,
 ): readonly string[] {
+  return getSolidBackgroundTokenNames(solidFamily, theme);
+}
+
+function getSolidBackgroundTokenNames(
+  solidFamily: string,
+  theme: SurfaceTheme,
+): readonly string[] {
   return theme === "light"
     ? [`${solidFamily}-2`, `${solidFamily}-3`, `${solidFamily}-4`]
     : [`${solidFamily}-2`, `${solidFamily}-1`, `${solidFamily}-3`];
@@ -1579,7 +1960,7 @@ function createPrimitiveCss(
     for (const token of tokens) {
       declarations.push([`--${namespace}-${token.name}`, token.value]);
       if (!token.name.endsWith("-seed") && !token.name.startsWith("text-")) {
-        const theme = token.name.includes("-light-") ? "light" : "dark";
+        const theme = getPrimitiveTokenTheme(token.name);
         for (const state of SURFACE_STATES) {
           declarations.push([
             `--${namespace}-${token.name}-${state}`,
@@ -1593,14 +1974,26 @@ function createPrimitiveCss(
   return createCssRule(":root", declarations);
 }
 
+function getPrimitiveTokenTheme(tokenName: string): SurfaceTheme {
+  if (tokenName.startsWith("role-")) {
+    const match = /^role-[a-z][a-z0-9-]*-(light|dark)-(?:soft|solid)-\d+$/.exec(tokenName);
+    if (match?.[1] === "light" || match?.[1] === "dark") {
+      return match[1];
+    }
+  }
+
+  return tokenName.includes("-light-") ? "light" : "dark";
+}
+
 function createThemeCss(
   namespace: string,
   theme: SurfaceTheme,
-  semantics: Readonly<Record<SemanticTokenName, `var(--${string})`>>,
+  semantics: ColorEngineThemeSemantics,
 ): string {
   return createCssRule(
     `[data-theme-v2="${theme}"]`,
-    Object.entries(semantics).map(([name, value]) => [`--${namespace}-${name}`, value]),
+    Object.entries(semantics)
+      .flatMap(([name, value]) => value === undefined ? [] : [[`--${namespace}-${name}`, value] as const]),
   );
 }
 
