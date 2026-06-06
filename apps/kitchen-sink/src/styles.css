@@ -188,7 +188,7 @@ h3 {
 }
 
 .assertion-summary-row {
-  grid-template-columns: repeat(7, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 
 .preset-grid {
@@ -336,6 +336,67 @@ h3 {
   padding: 3px 7px;
   color: var(--app-text-secondary);
   font-size: 0.72rem;
+}
+
+.custom-role-list {
+  display: grid;
+  gap: 12px;
+}
+
+.custom-role-control {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--ds-surface-2, #f2f5f9);
+}
+
+.custom-role-heading,
+.custom-role-actions {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.custom-role-enable {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--app-text-primary);
+  font-weight: 800;
+}
+
+.custom-role-enable input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--app-focus);
+}
+
+.custom-role-heading button,
+.custom-role-actions button {
+  min-height: 36px;
+  border: 1px solid var(--app-control-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  background: var(--app-control-bg);
+  color: var(--app-control-text);
+  font-weight: 800;
+}
+
+.custom-role-heading button:hover,
+.custom-role-actions button:hover {
+  background: var(--app-control-bg-hover);
+}
+
+.custom-role-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 10px;
 }
 
 .metric {
@@ -969,6 +1030,63 @@ h3 {
   background: var(--status-solid-bg-pressed);
 }
 
+.custom-role-demo {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.custom-role-card {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.custom-role-soft {
+  display: grid;
+  gap: 6px;
+  min-height: 92px;
+  padding: 12px;
+  border: 1px solid var(--custom-role-soft-border);
+  border-radius: 7px;
+  background: var(--custom-role-soft-bg);
+  color: var(--custom-role-soft-text);
+}
+
+.custom-role-soft p {
+  color: var(--custom-role-soft-text);
+  line-height: 1.35;
+}
+
+.custom-role-card button {
+  min-height: 40px;
+  border: 1px solid var(--custom-role-solid-bg);
+  border-radius: 6px;
+  padding: 0 12px;
+  background: var(--custom-role-solid-bg);
+  color: var(--custom-role-solid-text);
+  font-weight: 800;
+}
+
+.custom-role-card button:hover {
+  border-color: var(--custom-role-solid-bg-hover);
+  background: var(--custom-role-solid-bg-hover);
+}
+
+.custom-role-card button:active {
+  border-color: var(--custom-role-solid-bg-pressed);
+  background: var(--custom-role-solid-bg-pressed);
+}
+
+.custom-role-card code {
+  justify-self: start;
+  border: 1px solid var(--app-border);
+  border-radius: 999px;
+  padding: 3px 7px;
+  color: var(--app-text-secondary);
+  font-size: 0.72rem;
+}
+
 .text-treatment-review {
   gap: 14px;
 }
@@ -1039,7 +1157,9 @@ h3 {
   .semantic-layout,
   .css-output-grid,
   .assertion-groups,
-  .assertion-summary-row {
+  .assertion-summary-row,
+  .custom-role-grid,
+  .custom-role-demo {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1101,6 +1221,8 @@ h3 {
   .assertion-summary-row,
     .state-row,
     .status-demo,
+    .custom-role-grid,
+    .custom-role-demo,
     .component-cards,
     .component-alerts,
     .text-treatment-status-grid {

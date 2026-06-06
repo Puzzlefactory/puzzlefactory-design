@@ -2,6 +2,7 @@ import {
   ColorEngineValidationError,
   COLOR_ENGINE_THEME_PRESET_NAMES,
   COLOR_ENGINE_THEME_PRESETS,
+  CUSTOM_COLOR_ROLE_SEMANTIC_PARTS,
   NEUTRAL_SEMANTIC_TOKEN_NAMES,
   PRIMARY_SEMANTIC_TOKEN_NAMES,
   SEED_POLICY_NAMES,
@@ -21,6 +22,9 @@ import {
   type ColorEngineThemePresetInput,
   type ColorToken,
   type ContrastAssertionRole,
+  type CustomColorRoleInput,
+  type CustomColorRoleSemanticPart,
+  type CustomColorRoleSemanticTokenName,
   type ResolvedContrastAssertion,
   type PrimitiveFamilyName,
   type SeedPolicy,
@@ -29,7 +33,8 @@ import {
   type SurfaceTheme,
   type TextTreatmentStrategyName,
 } from "@puzzlefactory/color-engine";
-import type { ReactNode } from "react";
+import { PfAlert, PfBadge, PfButton, PfCard } from "@puzzlefactory/react-components";
+import type { CSSProperties, ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { NavLink, Navigate, Route, Routes } from "react-router";
 
@@ -79,6 +84,30 @@ const primitiveFamilies = [
   "info-dark-solid",
 ] as const satisfies readonly PrimitiveFamilyName[];
 
+const defaultCustomRoleControls = [
+  {
+    enabled: true,
+    id: "pending",
+    seed: "oklch(0.62 0.17 48)",
+    darkSeed: "oklch(0.74 0.14 48)",
+    seedPolicy: "balanced",
+  },
+  {
+    enabled: true,
+    id: "promo",
+    seed: "oklch(0.6 0.22 326)",
+    darkSeed: "oklch(0.76 0.18 326)",
+    seedPolicy: "balanced",
+  },
+  {
+    enabled: true,
+    id: "billing",
+    seed: "oklch(0.42 0.17 150)",
+    darkSeed: "oklch(0.62 0.15 150)",
+    seedPolicy: "balanced",
+  },
+] as const satisfies readonly CustomRoleControl[];
+
 const statusIntents = [
   { key: "danger", label: "Danger" },
   { key: "warning", label: "Warning" },
@@ -112,10 +141,17 @@ const assertionRoleLabels = {
 const defaultInput = {
   ...COLOR_ENGINE_THEME_PRESETS.evergreen.input,
   namespace: "ds",
-} as const satisfies Required<ColorEngineInput>;
+} as const satisfies Required<Omit<ColorEngineInput, "customRoles">>;
 
 type ActiveThemePresetName = ColorEngineThemePresetName | "custom";
 type SurfacePresetSelection = SurfacePresetName | "inherit";
+type CustomRoleControl = {
+  readonly enabled: boolean;
+  readonly id: string;
+  readonly seed: string;
+  readonly darkSeed: string;
+  readonly seedPolicy: SeedPolicy;
+};
 
 export function App() {
   const [neutralSeed, setNeutralSeed] = useState<string>(defaultInput.neutralSeed);
@@ -143,6 +179,9 @@ export function App() {
   );
   const [darkSurfacePreset, setDarkSurfacePreset] = useState<SurfacePresetSelection>(
     toSurfacePresetSelection(defaultInput.preset, defaultInput.darkSurfacePreset),
+  );
+  const [customRoleControls, setCustomRoleControls] = useState<CustomRoleControl[]>(() =>
+    defaultCustomRoleControls.map((role) => ({ ...role })),
   );
   const [activeTheme, setActiveTheme] = useState<SurfaceTheme>("light");
   const [activeThemePresetName, setActiveThemePresetName] = useState<ActiveThemePresetName>("evergreen");
@@ -181,13 +220,23 @@ export function App() {
     setActiveThemePresetName("custom");
   }
 
-  const engine = useMemo(
+  const engine = useMemo<EngineState>(
     () => {
       const resolvedPrimaryDarkSeed = optionalSeed(primaryDarkSeed);
       const resolvedDangerDarkSeed = optionalSeed(dangerDarkSeed);
       const resolvedWarningDarkSeed = optionalSeed(warningDarkSeed);
       const resolvedSuccessDarkSeed = optionalSeed(successDarkSeed);
       const resolvedInfoDarkSeed = optionalSeed(infoDarkSeed);
+      const customRolesState = createCustomRolesInput(customRoleControls);
+
+      if (customRolesState.kind === "error") {
+        return {
+          kind: "error",
+          code: "INVALID_CUSTOM_ROLE_ID",
+          field: customRolesState.field,
+          message: customRolesState.message,
+        } as const;
+      }
 
       return createEngineState({
         neutralSeed,
@@ -212,10 +261,12 @@ export function App() {
         preset,
         ...(lightSurfacePreset === "inherit" ? {} : { lightSurfacePreset }),
         ...(darkSurfacePreset === "inherit" ? {} : { darkSurfacePreset }),
+        ...(customRolesState.customRoles ? { customRoles: customRolesState.customRoles } : {}),
         namespace: defaultInput.namespace,
       });
     },
     [
+      customRoleControls,
       dangerSeed,
       dangerDarkSeed,
       dangerSeedPolicy,
@@ -277,6 +328,7 @@ export function App() {
               <Controls
                 activeTheme={activeTheme}
                 activeThemePresetName={activeThemePresetName}
+                customRoleControls={customRoleControls}
                 dangerSeed={dangerSeed}
                 dangerDarkSeed={dangerDarkSeed}
                 dangerSeedPolicy={dangerSeedPolicy}
@@ -302,6 +354,35 @@ export function App() {
                 warningSeedPolicy={warningSeedPolicy}
                 onThemePresetApply={applyThemePreset}
                 onActiveThemeChange={setActiveTheme}
+                onCustomRoleAdd={() => {
+                  setCustomRoleControls((roles) => [
+                    ...roles,
+                    {
+                      enabled: true,
+                      id: nextCustomRoleId(roles),
+                      seed: "oklch(0.55 0.12 260)",
+                      darkSeed: "oklch(0.7 0.1 260)",
+                      seedPolicy: "balanced",
+                    },
+                  ]);
+                  markCustom();
+                }}
+                onCustomRoleChange={(index, patch) => {
+                  setCustomRoleControls((roles) =>
+                    roles.map((role, roleIndex) =>
+                      roleIndex === index ? { ...role, ...patch } : role,
+                    ),
+                  );
+                  markCustom();
+                }}
+                onCustomRoleRemove={(index) => {
+                  setCustomRoleControls((roles) => roles.filter((_, roleIndex) => roleIndex !== index));
+                  markCustom();
+                }}
+                onCustomRoleReset={() => {
+                  setCustomRoleControls(defaultCustomRoleControls.map((role) => ({ ...role })));
+                  markCustom();
+                }}
                 onDangerSeedChange={(value) => {
                   setDangerSeed(value);
                   markCustom();
@@ -447,6 +528,7 @@ function Overview({
 function Controls({
   activeTheme,
   activeThemePresetName,
+  customRoleControls,
   dangerSeed,
   dangerDarkSeed,
   dangerSeedPolicy,
@@ -472,6 +554,10 @@ function Controls({
   warningSeedPolicy,
   onThemePresetApply,
   onActiveThemeChange,
+  onCustomRoleAdd,
+  onCustomRoleChange,
+  onCustomRoleRemove,
+  onCustomRoleReset,
   onDangerSeedChange,
   onDangerDarkSeedChange,
   onDangerSeedPolicyChange,
@@ -497,6 +583,7 @@ function Controls({
 }: {
   activeTheme: SurfaceTheme;
   activeThemePresetName: ActiveThemePresetName;
+  customRoleControls: readonly CustomRoleControl[];
   dangerSeed: string;
   dangerDarkSeed: string;
   dangerSeedPolicy: SeedPolicy;
@@ -522,6 +609,10 @@ function Controls({
   warningSeedPolicy: SeedPolicy;
   onThemePresetApply: (value: ColorEngineThemePresetName) => void;
   onActiveThemeChange: (value: SurfaceTheme) => void;
+  onCustomRoleAdd: () => void;
+  onCustomRoleChange: (index: number, patch: Partial<CustomRoleControl>) => void;
+  onCustomRoleRemove: (index: number) => void;
+  onCustomRoleReset: () => void;
   onDangerSeedChange: (value: string) => void;
   onDangerDarkSeedChange: (value: string) => void;
   onDangerSeedPolicyChange: (value: SeedPolicy) => void;
@@ -737,6 +828,59 @@ function Controls({
           })}
         </div>
       </section>
+      <section className="control-section" aria-label="Custom color role controls">
+        <div className="section-heading">
+          <h3>Custom Color Roles</h3>
+          <span>{customRoleControls.filter((role) => role.enabled).length} enabled</span>
+        </div>
+        <div className="custom-role-list">
+          {customRoleControls.map((role, index) => (
+            <article className="custom-role-control" key={`${role.id}-${index}`}>
+              <div className="custom-role-heading">
+                <label className="custom-role-enable">
+                  <input
+                    checked={role.enabled}
+                    type="checkbox"
+                    onChange={(event) => onCustomRoleChange(index, { enabled: event.target.checked })}
+                  />
+                  <span>{role.enabled ? "Enabled" : "Disabled"}</span>
+                </label>
+                <button type="button" onClick={() => onCustomRoleRemove(index)}>
+                  Remove
+                </button>
+              </div>
+              <div className="custom-role-grid">
+                <label className="field">
+                  <span>Role id</span>
+                  <input
+                    value={role.id}
+                    onChange={(event) => onCustomRoleChange(index, { id: event.target.value })}
+                  />
+                </label>
+                <SeedField
+                  label="Light seed"
+                  value={role.seed}
+                  onChange={(value) => onCustomRoleChange(index, { seed: value })}
+                />
+                <SeedField
+                  label="Dark seed (optional)"
+                  value={role.darkSeed}
+                  onChange={(value) => onCustomRoleChange(index, { darkSeed: value })}
+                />
+                <PolicyField
+                  label="Policy"
+                  value={role.seedPolicy}
+                  onChange={(value) => onCustomRoleChange(index, { seedPolicy: value })}
+                />
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="custom-role-actions">
+          <button type="button" onClick={onCustomRoleAdd}>Add role</button>
+          <button type="button" onClick={onCustomRoleReset}>Reset examples</button>
+        </div>
+      </section>
       {engine.kind === "error" ? <ErrorNotice engine={engine} /> : <EngineMetadata output={engine.output} />}
     </ViewFrame>
   );
@@ -747,18 +891,23 @@ function Primitives({ engine }: { engine: EngineState }) {
     return <ErrorView engine={engine} />;
   }
 
+  const families = [
+    ...primitiveFamilies,
+    ...getCustomRolePrimitiveFamilies(engine.output),
+  ] as const;
+
   return (
     <ViewFrame
       title="Primitive Ramps"
-      subtitle="Compact primitive families keep neutral, text, surface, primary, and status concerns split by UI job."
+      subtitle="Compact primitive families keep neutral, text, surface, primary, status, and custom role concerns split by UI job."
     >
       <section className="ramp-stack" aria-label="Primitive ramps">
-        {primitiveFamilies.map((family) => (
+        {families.map((family) => (
           <RampPanel
             family={family}
             key={family}
             output={engine.output}
-            tokens={engine.output.primitives[family]}
+            tokens={engine.output.primitives[family] ?? []}
           />
         ))}
       </section>
@@ -770,6 +919,8 @@ function SemanticPreview({ engine }: { engine: EngineState }) {
   if (engine.kind === "error") {
     return <ErrorView engine={engine} />;
   }
+
+  const customRoles = Object.values(engine.output.customRoles);
 
   return (
     <ViewFrame
@@ -829,6 +980,24 @@ function SemanticPreview({ engine }: { engine: EngineState }) {
             </div>
           </article>
         ))}
+        {customRoles.length > 0 ? themeOptions.map((theme) => (
+          <article className="semantic-panel" data-theme-v2={theme.key} key={`${theme.key}-custom-roles`}>
+            <header className="panel-header">
+              <h3>{theme.label} Custom Roles</h3>
+              <span>{customRoles.length * CUSTOM_COLOR_ROLE_SEMANTIC_PARTS.length} roles</span>
+            </header>
+            <div className="semantic-grid">
+              {customRoles.flatMap((role) =>
+                CUSTOM_COLOR_ROLE_SEMANTIC_PARTS.map((part) => (
+                  <SemanticSwatch
+                    key={`${role.id}-${part}`}
+                    token={role.cssAliases[part]}
+                  />
+                )),
+              )}
+            </div>
+          </article>
+        )) : null}
       </section>
       <CssOutputSummary output={engine.output} />
     </ViewFrame>
@@ -847,7 +1016,12 @@ function ThemePreview({ engine }: { engine: EngineState }) {
     >
       <section className="theme-grid" aria-label="Theme surface previews">
         {themeOptions.map((theme) => (
-          <ThemeSample key={theme.key} label={theme.label} theme={theme.key} />
+          <ThemeSample
+            key={theme.key}
+            label={theme.label}
+            output={engine.output}
+            theme={theme.key}
+          />
         ))}
       </section>
       <ForegroundTextReview />
@@ -864,7 +1038,7 @@ function ComponentProof({ engine }: { engine: EngineState }) {
   return (
     <ViewFrame
       title="Component Proof"
-      subtitle="Custom elements rendered from the generated semantic CSS contract in light and dark theme boundaries."
+      subtitle="React wrappers rendering Custom Elements from the generated semantic CSS contract in light and dark theme boundaries."
     >
       <section className="component-grid" aria-label="Web component proof">
         {themeOptions.map((theme) => (
@@ -884,51 +1058,61 @@ function ComponentSample({ label, theme }: { label: string; theme: SurfaceTheme 
       </header>
       <div className="component-surface">
         <div className="component-actions" aria-label={`${label} button proof`}>
-          <pf-button>Primary action</pf-button>
-          <pf-button variant="secondary">Secondary</pf-button>
-          <pf-button disabled>Disabled</pf-button>
-          <pf-button variant="secondary" disabled>
+          <PfButton>Primary action</PfButton>
+          <PfButton variant="secondary">Secondary</PfButton>
+          <PfButton disabled>Disabled</PfButton>
+          <PfButton variant="secondary" disabled>
             Disabled secondary
-          </pf-button>
+          </PfButton>
         </div>
         <div className="component-badges" aria-label={`${label} badge proof`}>
           {statusIntents.map((intent) => (
-            <pf-badge key={`${intent.key}-badge-soft`} status={intent.key}>
+            <PfBadge key={`${intent.key}-badge-soft`} status={intent.key}>
               {intent.label}
-            </pf-badge>
+            </PfBadge>
           ))}
           {statusIntents.map((intent) => (
-            <pf-badge key={`${intent.key}-badge-solid`} status={intent.key} variant="solid">
+            <PfBadge key={`${intent.key}-badge-solid`} status={intent.key} variant="solid">
               {intent.label}
-            </pf-badge>
+            </PfBadge>
           ))}
         </div>
         <div className="component-cards" aria-label={`${label} card proof`}>
-          <pf-card>
-            <span slot="eyebrow">Surface</span>
-            <span slot="title">Default card</span>
+          <PfCard
+            eyebrow="Surface"
+            footer="Semantic CSS variables only"
+            title="Default card"
+          >
             Surface, border, and text roles compose this proof without primitive variables.
-            <span slot="footer">Semantic CSS variables only</span>
-          </pf-card>
-          <pf-card variant="raised">
-            <span slot="eyebrow">Raised</span>
-            <span slot="title">Raised card</span>
+          </PfCard>
+          <PfCard
+            eyebrow="Raised"
+            footer="No component-local color derivation"
+            title="Raised card"
+            variant="raised"
+          >
             The raised variant switches to stronger surface and chrome semantics.
-            <span slot="footer">No component-local color derivation</span>
-          </pf-card>
+          </PfCard>
         </div>
         <div className="component-alerts" aria-label={`${label} alert proof`}>
           {statusIntents.map((intent) => (
-            <pf-alert key={`${intent.key}-soft`} status={intent.key}>
-              <span slot="title">{intent.label} soft</span>
+            <PfAlert
+              key={`${intent.key}-soft`}
+              status={intent.key}
+              title={`${intent.label} soft`}
+            >
               Semantic status variables drive the container, border, and text.
-            </pf-alert>
+            </PfAlert>
           ))}
           {statusIntents.map((intent) => (
-            <pf-alert key={`${intent.key}-solid`} status={intent.key} variant="solid">
-              <span slot="title">{intent.label} solid</span>
+            <PfAlert
+              key={`${intent.key}-solid`}
+              status={intent.key}
+              title={`${intent.label} solid`}
+              variant="solid"
+            >
               Solid status variables drive the background and foreground.
-            </pf-alert>
+            </PfAlert>
           ))}
         </div>
       </div>
@@ -1063,6 +1247,7 @@ function AssertionReport({ engine }: { engine: EngineState }) {
 
   const report = engine.output.assertions;
   const failed = report.results.filter((result) => !result.passed);
+  const builtInResults = report.results.filter((result) => !isCustomRoleAssertion(result));
 
   return (
     <ViewFrame
@@ -1076,6 +1261,7 @@ function AssertionReport({ engine }: { engine: EngineState }) {
         <Metric label="Diagnostic failed" value={report.summary.diagnosticFailed.toString()} />
       </section>
       <AnchoredPolicyDiagnostics output={engine.output} failures={failed} />
+      <CustomRoleAssertionSummary output={engine.output} />
       <section className="assertion-summary-row" aria-label="Assertion metadata">
         <Metric label="Algorithm" value={report.apcaAlgorithmVersion} />
         {assertionRoles.map((role) => (
@@ -1104,7 +1290,7 @@ function AssertionReport({ engine }: { engine: EngineState }) {
       <section className="assertion-groups" aria-label="Assertions grouped by theme and role">
         {themeOptions.flatMap((theme) =>
           assertionRoles.map((role) => {
-            const results = report.results.filter(
+            const results = builtInResults.filter(
               (result) => result.theme === theme.key && result.role === role,
             );
             const failures = results.filter((result) => !result.passed).length;
@@ -1125,6 +1311,7 @@ function AssertionReport({ engine }: { engine: EngineState }) {
           }),
         )}
       </section>
+      <CustomRoleAssertionGroups output={engine.output} />
     </ViewFrame>
   );
 }
@@ -1163,6 +1350,70 @@ function AnchoredPolicyDiagnostics({
   );
 }
 
+function CustomRoleAssertionSummary({ output }: { output: ColorEngineOutput }) {
+  const customRoles = Object.values(output.customRoles);
+
+  if (customRoles.length === 0) {
+    return null;
+  }
+
+  const results = output.assertions.results.filter((result) => isCustomRoleAssertion(result));
+  const failures = results.filter((result) => !result.passed).length;
+
+  return (
+    <section className="assertion-panel" aria-label="Custom role assertion summary">
+      <header className="panel-header">
+        <h3>Custom Role Assertions</h3>
+        <span>{failures} failed / {results.length}</span>
+      </header>
+      <p className="assertion-note">
+        Custom role assertions use the status soft and status solid thresholds. They are generated extensions
+        under the <code>role-*</code> namespace, not changes to built-in primary or status semantics.
+      </p>
+      <div className="policy-chip-row" aria-label="Active custom roles">
+        {customRoles.map((role) => (
+          <span className="policy-chip" key={role.id}>{role.id}</span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CustomRoleAssertionGroups({ output }: { output: ColorEngineOutput }) {
+  const customRoles = Object.values(output.customRoles);
+
+  if (customRoles.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="assertion-groups" aria-label="Custom role assertions grouped by theme and role">
+      {themeOptions.flatMap((theme) =>
+        customRoles.map((role) => {
+          const results = output.assertions.results.filter((result) =>
+            result.theme === theme.key && isAssertionForCustomRole(result, role),
+          );
+          const failures = results.filter((result) => !result.passed).length;
+
+          return (
+            <article className="assertion-panel" key={`${theme.key}-${role.id}`}>
+              <header className="panel-header">
+                <h3>{theme.label} {labelize(role.id)} Custom Role</h3>
+                <span>{failures} failed / {results.length}</span>
+              </header>
+              <div className="assertion-list">
+                {results.map((result) => (
+                  <AssertionResultRow key={result.id} output={output} result={result} />
+                ))}
+              </div>
+            </article>
+          );
+        }),
+      )}
+    </section>
+  );
+}
+
 function AssertionResultRow({
   output,
   result,
@@ -1193,7 +1444,17 @@ function AssertionResultRow({
   );
 }
 
-function ThemeSample({ label, theme }: { label: string; theme: SurfaceTheme }) {
+function ThemeSample({
+  label,
+  output,
+  theme,
+}: {
+  label: string;
+  output: ColorEngineOutput;
+  theme: SurfaceTheme;
+}) {
+  const customRoles = Object.values(output.customRoles);
+
   return (
     <article className="theme-sample" data-theme-v2={theme}>
       <header className="theme-sample-header">
@@ -1244,6 +1505,18 @@ function ThemeSample({ label, theme }: { label: string; theme: SurfaceTheme }) {
           <StatusCard key={intent.key} intent={intent.key} label={intent.label} />
         ))}
       </div>
+      {customRoles.length > 0 ? (
+        <div className="custom-role-demo" aria-label={`${label} custom role usage preview`}>
+          {customRoles.map((role) => (
+            <CustomRoleCard
+              key={role.id}
+              id={role.id}
+              roleCssAliases={role.cssAliases}
+              seedPolicy={role.seedPolicy}
+            />
+          ))}
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -1262,6 +1535,30 @@ function StatusCard({
         <p>Soft status surface, border, and text.</p>
       </div>
       <button type="button">{label} solid</button>
+    </div>
+  );
+}
+
+function CustomRoleCard({
+  id,
+  roleCssAliases,
+  seedPolicy,
+}: {
+  id: string;
+  roleCssAliases: Readonly<Record<CustomColorRoleSemanticPart, CustomColorRoleSemanticTokenName>>;
+  seedPolicy: SeedPolicy;
+}) {
+  return (
+    <div
+      className="custom-role-card"
+      style={customRoleStyle(roleCssAliases)}
+    >
+      <div className="custom-role-soft">
+        <strong>{labelize(id)} soft</strong>
+        <p>Generated custom role surface, border, and text.</p>
+      </div>
+      <button type="button">{labelize(id)} solid</button>
+      <code>{seedPolicy}</code>
     </div>
   );
 }
@@ -1424,7 +1721,7 @@ function SurfacePresetPicker({
   );
 }
 
-function SemanticSwatch({ token }: { token: SemanticTokenName }) {
+function SemanticSwatch({ token }: { token: SemanticTokenName | CustomColorRoleSemanticTokenName }) {
   return (
     <div className="semantic-swatch">
       <span className="semantic-chip" style={{ background: cssVar(token) }} aria-hidden="true" />
@@ -1457,6 +1754,7 @@ function EngineMetadata({ output }: { output: ColorEngineOutput }) {
   return (
     <section className="metric-grid" aria-label="Generated output metadata">
       <Metric label="Namespace" value={output.namespace} />
+      <Metric label="Custom roles" value={Object.keys(output.customRoles).length.toString()} />
       <Metric label="Text treatment" value={output.textTreatment.label} />
       <Metric label="Neutral LCH" value={formatOklchSummary(output.seeds.neutral)} />
       <Metric label="Primary light LCH" value={formatOklchSummary(output.seeds.primary)} />
@@ -1555,6 +1853,71 @@ function optionalSeed(value: string): string | undefined {
   return trimmed.length > 0 ? value : undefined;
 }
 
+function createCustomRolesInput(
+  roles: readonly CustomRoleControl[],
+):
+  | {
+      readonly kind: "ready";
+      readonly customRoles?: Readonly<Record<string, CustomColorRoleInput>>;
+    }
+  | {
+      readonly kind: "error";
+      readonly field: string;
+      readonly message: string;
+    } {
+  const enabledRoles = roles
+    .filter((role) => role.enabled)
+    .map((role) => ({
+      ...role,
+      id: role.id.trim(),
+    }));
+  const seen = new Set<string>();
+  const entries: [string, CustomColorRoleInput][] = [];
+
+  for (const role of enabledRoles) {
+    if (seen.has(role.id)) {
+      return {
+        kind: "error",
+        field: `customRoles.${role.id}`,
+        message: `Custom role id "${role.id}" is duplicated. Role ids must be unique.`,
+      };
+    }
+
+    seen.add(role.id);
+
+    const darkSeed = optionalSeed(role.darkSeed);
+    entries.push([
+      role.id,
+      {
+        seed: role.seed,
+        ...(darkSeed ? { darkSeed } : {}),
+        seedPolicy: role.seedPolicy,
+      },
+    ]);
+  }
+
+  if (entries.length === 0) {
+    return { kind: "ready" };
+  }
+
+  return {
+    kind: "ready",
+    customRoles: Object.fromEntries(entries),
+  };
+}
+
+function nextCustomRoleId(roles: readonly CustomRoleControl[]): string {
+  const ids = new Set(roles.map((role) => role.id.trim()));
+
+  for (let index = 1; ; index += 1) {
+    const id = `custom-${index}`;
+
+    if (!ids.has(id)) {
+      return id;
+    }
+  }
+}
+
 function toSurfacePresetSelection(
   sharedPreset: SurfacePresetName,
   themePreset: SurfacePresetName,
@@ -1583,6 +1946,27 @@ function labelize(value: string): string {
     .join(" ");
 }
 
+function customRoleStyle(
+  aliases: Readonly<Record<CustomColorRoleSemanticPart, CustomColorRoleSemanticTokenName>>,
+): CSSProperties {
+  return {
+    "--custom-role-soft-bg": cssVar(aliases["soft-bg"]),
+    "--custom-role-soft-bg-hover": cssVar(aliases["soft-bg-hover"]),
+    "--custom-role-soft-border": cssVar(aliases["soft-border"]),
+    "--custom-role-soft-text": cssVar(aliases["soft-text"]),
+    "--custom-role-solid-bg": cssVar(aliases["solid-bg"]),
+    "--custom-role-solid-bg-hover": cssVar(aliases["solid-bg-hover"]),
+    "--custom-role-solid-bg-pressed": cssVar(aliases["solid-bg-pressed"]),
+    "--custom-role-solid-text": cssVar(aliases["solid-text"]),
+  } as CSSProperties;
+}
+
+function getCustomRolePrimitiveFamilies(output: ColorEngineOutput): readonly PrimitiveFamilyName[] {
+  return Object.keys(output.primitives)
+    .filter((family) => family.startsWith("role-"))
+    .sort((a, b) => a.localeCompare(b)) as PrimitiveFamilyName[];
+}
+
 function levelLabel(name: string): string {
   if (name.endsWith("-seed")) {
     return "Seed";
@@ -1592,6 +1976,25 @@ function levelLabel(name: string): string {
 }
 
 function getFamilyPolicyLabel(family: PrimitiveFamilyName, output: ColorEngineOutput): string | null {
+  const customRoleFamily = parseCustomRolePrimitiveFamily(family);
+
+  if (customRoleFamily) {
+    const role = output.customRoles[customRoleFamily.roleId];
+
+    if (!role) {
+      return null;
+    }
+
+    const themeLabel = labelize(customRoleFamily.theme);
+    const modeLabel = labelize(customRoleFamily.mode);
+
+    if (customRoleFamily.mode === "solid") {
+      return `${labelize(role.seedPolicy)} ${labelize(role.id)} custom role policy. ${role.seedPolicy === "anchored" ? `Level 2 preserves the ${customRoleFamily.theme} seed.` : `${themeLabel} seed adapted into a balanced ${modeLabel.toLowerCase()} ramp.`}`;
+    }
+
+    return `${labelize(role.seedPolicy)} ${labelize(role.id)} custom role policy. Soft ramp derives from the ${customRoleFamily.theme} seed for usable custom role containers.`;
+  }
+
   if (family === "primary-seed") {
     return "Exact parsed primary light seed. Dark output can use a separate dark seed.";
   }
@@ -1654,6 +2057,12 @@ function isSeedAnchor(
     return true;
   }
 
+  const customRoleFamily = parseCustomRolePrimitiveFamily(family);
+
+  if (customRoleFamily?.mode === "solid") {
+    return output.customRoles[customRoleFamily.roleId]?.seedPolicy === "anchored" && tokenName.endsWith("-2");
+  }
+
   if (
     output.seedPolicies.primary === "anchored" &&
     (family === "primary-light-solid" || family === "primary-dark-solid")
@@ -1686,6 +2095,12 @@ function getActiveAnchoredPolicyLabels(output: ColorEngineOutput): readonly stri
     }
   }
 
+  for (const role of Object.values(output.customRoles)) {
+    if (role.seedPolicy === "anchored") {
+      labels.push(labelize(role.id));
+    }
+  }
+
   return labels;
 }
 
@@ -1713,7 +2128,48 @@ function getAnchoredPolicyNote(
     }
   }
 
+  for (const role of Object.values(output.customRoles)) {
+    if (role.seedPolicy === "anchored" && isAssertionForCustomRole(result, role)) {
+      return `Anchored ${role.id} preserves the theme-specific seed in its custom role solid ramp; this failure is the contrast cost of that preservation.`;
+    }
+  }
+
   return null;
+}
+
+function parseCustomRolePrimitiveFamily(family: string): {
+  readonly roleId: string;
+  readonly theme: SurfaceTheme;
+  readonly mode: "soft" | "solid";
+} | null {
+  const match = /^role-(.+)-(light|dark)-(soft|solid)$/.exec(family);
+  const roleId = match?.[1];
+  const theme = match?.[2];
+  const mode = match?.[3];
+
+  if (!roleId || (theme !== "light" && theme !== "dark") || (mode !== "soft" && mode !== "solid")) {
+    return null;
+  }
+
+  return {
+    roleId,
+    theme,
+    mode,
+  };
+}
+
+function isCustomRoleAssertion(result: ResolvedContrastAssertion): boolean {
+  return result.foreground.startsWith("role-") || result.background.startsWith("role-");
+}
+
+function isAssertionForCustomRole(
+  result: ResolvedContrastAssertion,
+  role: ColorEngineOutput["customRoles"][string],
+): boolean {
+  const aliases = Object.values(role.cssAliases);
+
+  return aliases.includes(result.foreground as CustomColorRoleSemanticTokenName) ||
+    aliases.includes(result.background as CustomColorRoleSemanticTokenName);
 }
 
 function formatOklchSummary(color: { readonly l: number; readonly c: number; readonly h: number }): string {
