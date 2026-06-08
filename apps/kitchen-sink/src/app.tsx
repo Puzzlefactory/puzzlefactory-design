@@ -88,22 +88,22 @@ const defaultCustomRoleControls = [
   {
     enabled: true,
     id: "pending",
-    seed: "oklch(0.62 0.17 48)",
-    darkSeed: "oklch(0.74 0.14 48)",
+    seed: "oklch(0.6 0.19 42)",
+    darkSeed: "oklch(0.72 0.16 42)",
     seedPolicy: "balanced",
   },
   {
     enabled: true,
     id: "promo",
-    seed: "oklch(0.6 0.22 326)",
-    darkSeed: "oklch(0.76 0.18 326)",
+    seed: "oklch(0.62 0.26 326)",
+    darkSeed: "oklch(0.78 0.22 326)",
     seedPolicy: "balanced",
   },
   {
     enabled: true,
     id: "billing",
-    seed: "oklch(0.42 0.17 150)",
-    darkSeed: "oklch(0.62 0.15 150)",
+    seed: "oklch(0.38 0.19 162)",
+    darkSeed: "oklch(0.58 0.17 162)",
     seedPolicy: "balanced",
   },
 ] as const satisfies readonly CustomRoleControl[];

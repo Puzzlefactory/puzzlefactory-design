@@ -2,7 +2,7 @@
 
 Status: active
 Created: 2026-06-02
-Last Updated: 2026-06-06
+Last Updated: 2026-06-07
 
 This workstream covers the second color-engine attempt. The v2 direction is visual-first and usage-first: generate compact, purpose-built color families with named presets and immediate kitchen-sink feedback instead of broad generic ramps that are mapped to semantics after the fact.
 
@@ -183,17 +183,22 @@ CE2-20D is implemented. Kitchen Sink now visualizes custom color roles from the 
 
 CE2-21 is implemented. `packages/react-components` now provides `@puzzlefactory/react-components`, a typed React wrapper proof for the stable `pf-button`, `pf-alert`, `pf-badge`, and `pf-card` Custom Elements. Wrappers register the underlying elements, forward refs, pass through normal React props, normalize default attributes, and provide small named-slot conveniences for alert/card content. The package has React and `@puzzlefactory/components` as peers/dev-only build inputs and has no runtime dependencies, color-engine imports, duplicated CSS recipes, primitive ramp variables, or local color derivation. Kitchen Sink's Components route now renders the wrapper components while the underlying `pf-*` elements still own styling and behavior. Browser smoke verified the route renders upgraded `pf-*` elements in light and dark theme boundaries with no console/page errors. Independent review found no blocking issues; residual risk is that wrapper runtime behavior is covered by Kitchen Sink browser smoke rather than a dedicated React DOM browser-runtime package test.
 
+CE2-22 is implemented. ADR 0002 records the form/interactive component foundation decision. Existing/simple display and native-backed components may remain raw Custom Elements, but the first new form control or complex interactive component should use Lit plus platform APIs as the preferred implementation candidate. Lit is not installed yet; adopting it requires a future explicit dependency/implementation slice. Lion remains a fallback/benchmark if Lit plus platform APIs exposes too much form-system burden. React wrappers remain a consumer-ergonomics layer over Custom Elements rather than the source of behavior, styling, or accessibility semantics. Full component libraries such as Shoelace, Spectrum Web Components, and Material Web remain references only.
+
+CE2-23 is implemented. Curated preset status seeds now vary across the example themes instead of reusing one generic danger/warning/success/info palette. `civic-blue` uses cooler civic-blue status choices with a more orange warning, `plum` uses berry/orange/jade/violet status choices, and `teal` uses coral/ochre/mint/cyan status variation while `evergreen` keeps the familiar baseline status palette. Kitchen Sink default custom role examples were also tuned: `pending` is orange/amber-orange, `promo` is vivid magenta and intentionally attention-seeking, and `billing` is a richer, darker green distinct from built-in success. Presets and default custom roles remain plain existing input bundles; no generation architecture, built-in roles, component APIs, tenant storage, or runtime dependencies were added. Defaults still produce 106/106 passing APCA assertion pairs.
+
 ## Next Actions
 
-- Continue to CE2-22 only if the next goal is the form/interactive foundation spike; otherwise pause for visual review or preset-quality discussion as needed.
+- Pause for direction selection. The planned CE2 arc is now complete enough to choose the next larger path: generated CSS/token inspection and export, Theme Authoring Tool planning, v2 token package migration, high-contrast v2, or a Lit form-control prototype.
+- If component work is prioritized instead, use ADR 0002 to scope a future Lit form-control prototype before adding inputs, selects, comboboxes, dialogs, menus, popovers, tabs, tooltips, or similar components.
 - Keep future custom role component APIs scoped and explicit; tenant storage, enforcement, and broad auto-tuning remain later sub-slices unless explicitly reauthorized.
 - Continue with simple raw Custom Element proofs only where the UI behavior is low-risk, such as status indicator, divider, toolbar spacer, or similar display/native-backed pieces.
 - React wrapper proof exists for stable simple components. Before moving wrappers beyond proof status, consider adding dedicated React DOM browser-runtime tests for prop/attribute transitions, ref forwarding, slot output, and default-prop normalization.
-- Before form controls or complex interactions, create a dedicated foundation spike for Lit plus platform APIs versus Lion or another approved white-label foundation.
+- Before form controls or complex interactions, follow ADR 0002: prefer a Lit plus platform APIs prototype first, keep Lion as a fallback/benchmark, and require explicit dependency approval before implementation.
 - Keep reviewing whether `--ds-text-muted` is sufficient for disabled component foregrounds or whether a future dedicated `--ds-text-disabled` semantic alias should be added.
 - Keep a future Theme Authoring Tool as a separate workstream candidate, not a Kitchen Sink expansion or a single CE2 slice.
 - Treat later component work as strategic placeholders. Reorder or revise if Kitchen Sink visual feedback exposes a more important color/token issue.
-- After CE2-21 and CE2-22, revisit the curated example themes. The current presets prove the preset mechanism, but they read too similar visually. Add a dedicated preset quality pass that aims to replicate theme directions someone might actually use, with clearer differences in neutral temperature, primary/status/custom role choices, light/dark surface treatment, and overall product feel.
+- CE2-23 completed the first preset/custom-role differentiation pass. Future preset work should be driven by visual review or a dedicated Theme Authoring Tool workstream, not by the original samey-preset backlog item.
 
 ## Seed Policy Plan
 
@@ -355,15 +360,15 @@ This roadmap is intentionally provisional. Kitchen-sink visual review and assert
 
 7. `CE2-17`: Component foundation decision.
    - Implemented: keep raw Custom Elements for simple display/native-backed components.
-   - Implemented: defer complex form/interactive components until a dedicated foundation spike.
+   - Implemented: defer complex form/interactive components until the CE2-22 foundation spike.
    - Implemented: keep React wrappers as a later consumer-ergonomics layer, not the core foundation.
    - Stopped before dependencies, wrappers, migrations, or new components.
 
 8. Next component slices after CE2-17.
    - Implemented CE2-18: badge/status label and card/panel proofs validate semantic CSS consumption across more component shapes.
-   - Recommended next narrow implementation: either another low-risk display proof, a React wrapper proof for stable elements, or a foundation spike before any form/ARIA-heavy component.
-   - Alternative next planning slice: React wrapper proof design if React consumer ergonomics becomes more urgent.
-   - Separate later spike: form/interactive foundation decision before any input, select, combobox, dialog, menu, popover, tabs, or tooltip work.
+   - Implemented CE2-21: React wrapper proof for stable elements.
+   - Implemented CE2-22: form/interactive foundation decision. ADR 0002 recommends a Lit plus platform APIs prototype before any input, select, combobox, dialog, menu, popover, tabs, or tooltip implementation.
+   - Recommended next component implementation, if component work is prioritized: a narrow Lit form-control prototype with explicit dependency approval.
 
 9. `CE2-19`: Custom color role planning.
    - Implemented: planned custom roles as theme/tenant-scoped generated extensions under `--ds-role-*`.
@@ -416,10 +421,12 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-20A` | Custom role schema and naming | Implemented. Added package input schema, validation, reserved-name handling, type exports, normalized metadata, and CSS naming helpers for custom roles without generation output. | Kitchen Sink controls, component consumption |
 | `CE2-20B` | Custom role generation | Implemented. Generated compact light/dark soft and solid custom role families, semantic `--ds-role-*` aliases, CSS output, namespace behavior, dark seed fallback/override, anchored preservation, and built-in output stability tests. | Component consumption, tenant storage |
 | `CE2-20C` | Custom role assertions | Implemented. Added APCA diagnostic pairs and representative custom-role regression cases for soft and solid custom role output while preserving built-in assertion output when custom roles are omitted. | Enforcement, broad auto-tuning |
-| `CE2-20D` | Kitchen Sink custom role visualization | Add custom role controls/previews/assertion grouping in Kitchen Sink so generated roles can be visually judged. | Component tone APIs, tenant storage |
+| `CE2-20D` | Kitchen Sink custom role visualization | Implemented. Added custom role controls, primitive/semantic/theme previews, and assertion grouping in Kitchen Sink so generated roles can be visually judged. | Component tone APIs, tenant storage |
 | `CE2-21` | React wrapper proof | Implemented. Added `@puzzlefactory/react-components` typed wrappers for stable Custom Elements and wired Kitchen Sink Components route through the wrappers. | New core component behavior, non-React framework wrappers, color-engine changes |
-| `CE2-22` | Form/interactive foundation spike | Compare Lit plus platform APIs against Lion or another approved white-label foundation before implementing inputs/selects/comboboxes/dialogs/menus/popovers/tabs/tooltips. | Implementing form or complex interactive components |
-| `CE2-23` | Preset quality and realistic theme directions | Rework curated example themes so they represent plausible, differentiated product UI directions rather than several presets in the same visual range. Use Kitchen Sink visual review across controls, primitives, themes, custom roles, and assertions. | Broad theme marketplace, Theme Authoring Tool, new generation architecture |
+| `CE2-22` | Form/interactive foundation spike | Implemented. ADR 0002 recommends Lit plus platform APIs as the preferred first candidate for future form or moderately interactive components, keeps raw Custom Elements for simple pieces, and keeps Lion as a fallback/benchmark. | Implementing form or complex interactive components |
+| `CE2-23` | Preset quality and custom role differentiation | Implemented. Varied preset status seed palettes and tuned Kitchen Sink custom role defaults so `pending`, `promo`, and `billing` are visually distinct from built-in statuses. | Broad theme marketplace, Theme Authoring Tool, new generation architecture |
+| `CE2-24` | Lit form-control prototype | If component work resumes, explicitly add Lit as an approved dependency and build one narrow native-like form-control proof using platform form APIs and semantic CSS variables. | Broad form suite, combobox/select/dialog/menu/tabs work, Lion adoption |
+| `CE2-25` | React wrapper runtime tests | Add dedicated React DOM browser-runtime coverage for wrapper prop/attribute transitions, ref forwarding, slot output, and default-prop normalization if wrappers move beyond proof status. | New wrapper APIs, non-React wrappers, component behavior changes |
 
 ## Completion Shape
 
@@ -442,7 +449,8 @@ This workstream is substantially complete when:
 - Component state recipes consume semantic CSS variables directly, including disabled states that use neutral/control semantics instead of opacity, filters, `color-mix()`, or local color derivation.
 - Component API/accessibility contracts are explicit about supported native-backed behavior and deferred form/complex interaction behavior.
 - Component DOM/API contracts that depend on browser behavior are covered by DOM-runtime tests before the component set is broadened.
-- Component foundation direction is explicit: raw Custom Elements for simple pieces, dedicated foundation spike before form/complex interactions, React wrappers as optional ergonomics later.
+- Component foundation direction is explicit: raw Custom Elements for simple pieces, ADR 0002 for form/complex interactions, React wrappers as optional ergonomics later.
+- Form/interactive foundation direction is explicit: Lit plus platform APIs is the preferred first candidate for future form or moderately interactive components; Lion is a fallback/benchmark; full component libraries are references only.
 - React wrapper proof exists as a typed consumer ergonomics layer over stable Custom Elements without duplicating styling, behavior, or color generation.
 - Simple component expansion has proven semantic CSS consumption beyond button/alert with display-only badge and card elements.
 - Kitchen-sink shows primitives, semantic aliases, and real usage previews for each generated family.

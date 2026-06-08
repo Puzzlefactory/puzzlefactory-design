@@ -35,7 +35,7 @@ Theme preset contract:
 - `COLOR_ENGINE_THEME_PRESETS`: curated example input bundles for `evergreen`, `civic-blue`, `plum`, and `teal`.
 - `COLOR_ENGINE_THEME_PRESET_NAMES`: canonical display order for theme presets.
 - `ColorEngineThemePresetName`, `ColorEngineThemePresetInput`, and `ColorEngineThemePreset`: public types for preset consumers.
-- Presets use existing `ColorEngineInput` fields, explicit dark primary/status seeds where useful, and balanced seed policies; they do not add new generation concepts.
+- Presets use existing `ColorEngineInput` fields, explicit dark primary/status seeds where useful, varied built-in status palettes across presets, and balanced seed policies; they do not add new generation concepts.
 - Balanced example presets must have zero required APCA assertion failures.
 - Text treatment strategies are named presets, not free-form overrides: `same-hue`, `neutral`, and `adaptive`. The default remains `same-hue`; `adaptive` selects from approved same-hue/neutral candidates by APCA coverage for soft colored surfaces.
 
@@ -86,7 +86,7 @@ Status: implemented TypeScript library/generator that consumes `EngineOutput`.
 
 ### `@puzzlefactory/components`
 
-Status: first Web Component proof with bounded state recipes, explicit API/accessibility contract, and accepted foundation direction. Target runtime is a TypeScript library of Custom Elements that consume semantic CSS custom properties from the v2 color-engine CSS contract.
+Status: first Web Component proof with bounded state recipes, explicit API/accessibility contract, accepted simple-component foundation direction, and accepted form/interactive foundation direction. Target runtime is a TypeScript library of Custom Elements that consume semantic CSS custom properties from the v2 color-engine CSS contract.
 
 - Package folder: `packages/components`
 - Package name: `@puzzlefactory/components`
@@ -107,7 +107,7 @@ Status: first Web Component proof with bounded state recipes, explicit API/acces
 - Components should use semantic variables only. Primitive ramp variables such as `--ds-primary-light-solid-2`, `--ds-surface-light-1`, or `--ds-text-light-primary` remain out of component scope.
 - Component color recipes should not use whole-element opacity, filters, `color-mix()`, or local color derivation. Disabled state currently resolves directly to neutral/control semantics (`--ds-control-bg`, `--ds-control-border`, and `--ds-text-muted`).
 - Foundation direction: keep raw Custom Elements for simple display components and simple native-backed controls while the package remains small. Do not build complex form controls or ARIA-heavy interactions in raw Custom Elements by default.
-- Before implementing inputs, selects, comboboxes, dialogs, popovers, menus, tabs, tooltips, or similar components, run a dedicated foundation spike comparing Lit plus platform APIs versus a white-label foundation such as Lion.
+- Form/interactive direction: ADR 0002 recommends Lit plus platform APIs as the preferred first implementation candidate for future form or moderately interactive PuzzleFactory-owned components. Lit is not installed yet; a future implementation slice must explicitly approve and add the dependency. Lion remains a fallback/benchmark if Lit plus platform APIs exposes too much form-system burden.
 - React wrappers are a later consumer-ergonomics layer after core Custom Element APIs stabilize. React 19 support makes wrappers less urgent, but wrappers may still help with typed props, event names, and compatibility.
 - Do not adopt Shoelace, Spectrum Web Components, Material Web, or another full component library as the foundation; they may be references only unless a future ADR supersedes this decision.
 
@@ -151,7 +151,7 @@ Status: React + Vite + React Router 7 verification shell wired to v2 neutral/sur
 - Package name: `@puzzlefactory/kitchen-sink`
 - Runtime stack: React 19, Vite 8, React Router 7
 - Purpose: visual verification surface for the color engine and later token/theme/component states
-- Current behavior: routed verification tool that consumes v2 `@puzzlefactory/color-engine`, injects generated CSS directly, switches `data-theme-v2`, consumes `@puzzlefactory/react-components` wrappers over `@puzzlefactory/components`, and displays curated theme preset controls, shared/light/dark surface separation controls with inherited shared fallback support, neutral/surface/chrome/text controls, separate light/dark primary and status seed controls, editable custom color role example controls, per-family seed policy controls, text treatment strategy controls, compact primitive ramps with seed anchor markers and light/dark seed-source notes, dynamic custom role primitive ramps, semantic text/chrome/surface/primary/status/custom-role roles, generated CSS output sections, light/dark nested surface previews, primary action/link/focus previews, status soft/solid cards, custom role soft/solid cards, text treatment comparison cards, foreground text usage samples, a Components route with wrapper-rendered `pf-button`, `pf-alert`, `pf-badge`, and `pf-card` in light/dark theme boundaries, and an APCA assertion report grouped by built-in theme/role plus custom role groups. Current Kitchen Sink defaults use the exported `evergreen` theme preset plus `pending`, `promo`, and `billing` custom role examples and show 106/106 assertion pairs passing. When anchored policy is active, the assertion report identifies linked failures as seed-preservation tradeoffs rather than silent tuning opportunities.
+- Current behavior: routed verification tool that consumes v2 `@puzzlefactory/color-engine`, injects generated CSS directly, switches `data-theme-v2`, consumes `@puzzlefactory/react-components` wrappers over `@puzzlefactory/components`, and displays curated theme preset controls, shared/light/dark surface separation controls with inherited shared fallback support, neutral/surface/chrome/text controls, separate light/dark primary and status seed controls, editable custom color role example controls, per-family seed policy controls, text treatment strategy controls, compact primitive ramps with seed anchor markers and light/dark seed-source notes, dynamic custom role primitive ramps, semantic text/chrome/surface/primary/status/custom-role roles, generated CSS output sections, light/dark nested surface previews, primary action/link/focus previews, status soft/solid cards, custom role soft/solid cards, text treatment comparison cards, foreground text usage samples, a Components route with wrapper-rendered `pf-button`, `pf-alert`, `pf-badge`, and `pf-card` in light/dark theme boundaries, and an APCA assertion report grouped by built-in theme/role plus custom role groups. Current Kitchen Sink defaults use the exported `evergreen` theme preset plus `pending`, `promo`, and `billing` custom role examples; `pending` is orange/amber-orange, `promo` is vivid magenta, and `billing` is a richer/darker green. Defaults show 106/106 assertion pairs passing. When anchored policy is active, the assertion report identifies linked failures as seed-preservation tradeoffs rather than silent tuning opportunities.
 
 ### `apps/docs`
 
@@ -170,7 +170,7 @@ Component distribution is still not fully decided. The current proof favors Web 
 ## Open Questions
 
 - Whether React wrappers need dedicated React DOM browser-runtime tests before moving beyond proof status.
-- Foundation choice for form controls and complex interactive components: Lit plus platform APIs, Lion, or another approved white-label foundation.
+- Exact first Lit form/interactive prototype and dependency-adoption slice.
 - Distribution mechanism — npm, CDN, monorepo-only?
 - CSS fallback layer for browsers without `oklch()` support (explicitly out of scope for current phase, to be revisited)
 - Bundle mode for consumers who cannot control CSS load order (explicitly out of scope for current phase)

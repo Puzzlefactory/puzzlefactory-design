@@ -628,6 +628,47 @@ test("example theme presets are valid balanced starting points", () => {
   }
 });
 
+test("example theme presets vary built-in status seed palettes", () => {
+  const statuses = ["danger", "warning", "success", "info"];
+
+  for (const status of statuses) {
+    const lightHueBuckets = new Set(
+      COLOR_ENGINE_THEME_PRESET_NAMES.map((name) =>
+        hueBucket(COLOR_ENGINE_THEME_PRESETS[name].input[`${status}Seed`]),
+      ),
+    );
+    const darkHueBuckets = new Set(
+      COLOR_ENGINE_THEME_PRESET_NAMES.map((name) =>
+        hueBucket(COLOR_ENGINE_THEME_PRESETS[name].input[`${status}DarkSeed`]),
+      ),
+    );
+
+    assert.ok(
+      lightHueBuckets.size >= 3,
+      `${status} light seeds should vary across curated presets`,
+    );
+    assert.ok(
+      darkHueBuckets.size >= 3,
+      `${status} dark seeds should vary across curated presets`,
+    );
+  }
+
+  assert.ok(
+    hueDistance(
+      COLOR_ENGINE_THEME_PRESETS.evergreen.input.warningSeed,
+      COLOR_ENGINE_THEME_PRESETS["civic-blue"].input.warningSeed,
+    ) >= 15,
+    "civic-blue warning should read more orange than evergreen warning",
+  );
+  assert.ok(
+    hueDistance(
+      COLOR_ENGINE_THEME_PRESETS.plum.input.dangerSeed,
+      COLOR_ENGINE_THEME_PRESETS.evergreen.input.dangerSeed,
+    ) >= 30,
+    "plum danger should read berry-toned rather than default red",
+  );
+});
+
 test("surface states move toward interactive feedback without reversing theme direction", () => {
   const output = createColorEngineTheme({ preset: "standard" });
   const css = output.css;
@@ -960,4 +1001,14 @@ function extractCssLightness(css, propertyName) {
   assert.ok(match, `${propertyName} should be present in generated CSS`);
 
   return Number(match[1]);
+}
+
+function hueBucket(seed) {
+  return Math.round((parseColorSeed(seed).h ?? 0) / 5) * 5;
+}
+
+function hueDistance(a, b) {
+  const difference = Math.abs(hueBucket(a) - hueBucket(b));
+
+  return Math.min(difference, 360 - difference);
 }
