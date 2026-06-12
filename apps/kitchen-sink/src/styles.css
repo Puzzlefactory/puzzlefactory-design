@@ -168,8 +168,10 @@ h3 {
 .metric-grid,
 .theme-grid,
 .component-grid,
+.token-inspection-grid,
 .semantic-layout,
 .ramp-stack,
+.css-file-stack,
 .foreground-text-review,
 .text-treatment-review,
 .assertion-groups,
@@ -197,6 +199,7 @@ h3 {
 
 .theme-grid,
 .component-grid,
+.token-inspection-grid,
 .semantic-layout {
   grid-template-columns: repeat(2, minmax(280px, 1fr));
 }
@@ -211,6 +214,8 @@ h3 {
 .component-sample,
 .foreground-text-card,
 .text-treatment-card,
+.token-panel,
+.css-code-panel,
 .notice {
   border: 1px solid var(--app-border);
   border-radius: 8px;
@@ -415,6 +420,8 @@ h3 {
 .semantic-panel,
 .theme-sample,
 .component-sample,
+.token-panel,
+.css-code-panel,
 .css-output,
 .assertion-panel {
   display: grid;
@@ -523,6 +530,91 @@ h3 {
 
 .css-output-card strong {
   font-size: 0.9rem;
+}
+
+.token-panel {
+  min-width: 0;
+}
+
+.token-panel p,
+.token-empty {
+  color: var(--app-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.token-table {
+  display: grid;
+  max-height: 520px;
+  overflow: auto;
+  border: 1px solid var(--app-border);
+  border-radius: 7px;
+  background: var(--ds-surface-1, #eef2f7);
+}
+
+.token-table-row {
+  display: grid;
+  grid-template-columns: minmax(230px, 1fr) minmax(260px, 1.2fr) minmax(110px, 0.4fr);
+  gap: 10px;
+  min-width: 720px;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--app-border);
+  align-items: start;
+}
+
+.token-table-row:last-child {
+  border-bottom: 0;
+}
+
+.token-table-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--ds-surface-2, #f2f5f9);
+  color: var(--app-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.token-table code {
+  color: var(--app-text-primary);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.token-table-row span {
+  color: var(--app-text-secondary);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.css-file-stack {
+  min-width: 0;
+}
+
+.css-code-panel {
+  min-width: 0;
+}
+
+.css-code-block {
+  max-height: 520px;
+  min-width: 0;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid var(--app-border);
+  border-radius: 7px;
+  padding: 12px;
+  background: var(--ds-surface-1, #eef2f7);
+  color: var(--app-text-primary);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.css-code-block code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  white-space: pre;
 }
 
 .assertion-groups {
@@ -1156,6 +1248,7 @@ h3 {
   .text-treatment-grid,
   .semantic-layout,
   .css-output-grid,
+  .token-inspection-grid,
   .assertion-groups,
   .assertion-summary-row,
   .custom-role-grid,
@@ -1215,6 +1308,7 @@ h3 {
   .foreground-text-grid,
   .text-treatment-grid,
   .semantic-layout,
+  .token-inspection-grid,
   .semantic-grid,
   .css-output-grid,
   .assertion-groups,

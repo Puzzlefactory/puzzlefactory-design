@@ -2,7 +2,7 @@
 
 Status: active
 Created: 2026-06-02
-Last Updated: 2026-06-07
+Last Updated: 2026-06-12
 
 This workstream covers the second color-engine attempt. The v2 direction is visual-first and usage-first: generate compact, purpose-built color families with named presets and immediate kitchen-sink feedback instead of broad generic ramps that are mapped to semantics after the fact.
 
@@ -187,9 +187,11 @@ CE2-22 is implemented. ADR 0002 records the form/interactive component foundatio
 
 CE2-23 is implemented. Curated preset status seeds now vary across the example themes instead of reusing one generic danger/warning/success/info palette. `civic-blue` uses cooler civic-blue status choices with a more orange warning, `plum` uses berry/orange/jade/violet status choices, and `teal` uses coral/ochre/mint/cyan status variation while `evergreen` keeps the familiar baseline status palette. Kitchen Sink default custom role examples were also tuned: `pending` is orange/amber-orange, `promo` is vivid magenta and intentionally attention-seeking, and `billing` is a richer, darker green distinct from built-in success. Presets and default custom roles remain plain existing input bundles; no generation architecture, built-in roles, component APIs, tenant storage, or runtime dependencies were added. Defaults still produce 106/106 passing APCA assertion pairs.
 
+CE2-24 is implemented. Kitchen Sink now has a `/tokens` route for inspecting the generated v2 CSS/token contract from the active engine output. The view shows summary counts, primitive variables, light and dark semantic aliases, custom role variables, theme selector output, ordered generated CSS files, and the full `cssOutput.all` / `output.css` bundle. The inspection view remains read-only and dynamic: changing controls, presets, or custom roles updates the inspected CSS through the existing `ColorEngineOutput`. No generated files are written to disk, no export/download pipeline was added, and no color-engine generation behavior or `@puzzlefactory/tokens` behavior changed.
+
 ## Next Actions
 
-- Pause for direction selection. The planned CE2 arc is now complete enough to choose the next larger path: generated CSS/token inspection and export, Theme Authoring Tool planning, v2 token package migration, high-contrast v2, or a Lit form-control prototype.
+- Pause for direction selection. The planned CE2 arc is now complete enough to choose the next larger path: static CSS/token artifact export, Theme Authoring Tool planning, v2 token package migration, high-contrast v2, or a Lit form-control prototype.
 - If component work is prioritized instead, use ADR 0002 to scope a future Lit form-control prototype before adding inputs, selects, comboboxes, dialogs, menus, popovers, tabs, tooltips, or similar components.
 - Keep future custom role component APIs scoped and explicit; tenant storage, enforcement, and broad auto-tuning remain later sub-slices unless explicitly reauthorized.
 - Continue with simple raw Custom Element proofs only where the UI behavior is low-risk, such as status indicator, divider, toolbar spacer, or similar display/native-backed pieces.
@@ -198,6 +200,7 @@ CE2-23 is implemented. Curated preset status seeds now vary across the example t
 - Keep reviewing whether `--ds-text-muted` is sufficient for disabled component foregrounds or whether a future dedicated `--ds-text-disabled` semantic alias should be added.
 - Keep a future Theme Authoring Tool as a separate workstream candidate, not a Kitchen Sink expansion or a single CE2 slice.
 - Treat later component work as strategic placeholders. Reorder or revise if Kitchen Sink visual feedback exposes a more important color/token issue.
+- CE2-24 completed Kitchen Sink CSS/token inspection. Future generated CSS work should move to static artifact export, package-level helpers, or a separate authoring/publish workflow rather than adding more read-only inspection to Kitchen Sink.
 - CE2-23 completed the first preset/custom-role differentiation pass. Future preset work should be driven by visual review or a dedicated Theme Authoring Tool workstream, not by the original samey-preset backlog item.
 
 ## Seed Policy Plan
@@ -425,8 +428,9 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-21` | React wrapper proof | Implemented. Added `@puzzlefactory/react-components` typed wrappers for stable Custom Elements and wired Kitchen Sink Components route through the wrappers. | New core component behavior, non-React framework wrappers, color-engine changes |
 | `CE2-22` | Form/interactive foundation spike | Implemented. ADR 0002 recommends Lit plus platform APIs as the preferred first candidate for future form or moderately interactive components, keeps raw Custom Elements for simple pieces, and keeps Lion as a fallback/benchmark. | Implementing form or complex interactive components |
 | `CE2-23` | Preset quality and custom role differentiation | Implemented. Varied preset status seed palettes and tuned Kitchen Sink custom role defaults so `pending`, `promo`, and `billing` are visually distinct from built-in statuses. | Broad theme marketplace, Theme Authoring Tool, new generation architecture |
-| `CE2-24` | Lit form-control prototype | If component work resumes, explicitly add Lit as an approved dependency and build one narrow native-like form-control proof using platform form APIs and semantic CSS variables. | Broad form suite, combobox/select/dialog/menu/tabs work, Lion adoption |
-| `CE2-25` | React wrapper runtime tests | Add dedicated React DOM browser-runtime coverage for wrapper prop/attribute transitions, ref forwarding, slot output, and default-prop normalization if wrappers move beyond proof status. | New wrapper APIs, non-React wrappers, component behavior changes |
+| `CE2-24` | CSS/token inspection in Kitchen Sink | Implemented. Added `/tokens` inspection for primitive variables, semantic aliases, custom role variables, theme selector CSS, ordered CSS files, and full generated CSS from current dynamic engine output. | Static export/download, writing generated artifacts, CLI, v2 token package migration |
+| `CE2-25` | Lit form-control prototype | If component work resumes, explicitly add Lit as an approved dependency and build one narrow native-like form-control proof using platform form APIs and semantic CSS variables. | Broad form suite, combobox/select/dialog/menu/tabs work, Lion adoption |
+| `CE2-26` | React wrapper runtime tests | Add dedicated React DOM browser-runtime coverage for wrapper prop/attribute transitions, ref forwarding, slot output, and default-prop normalization if wrappers move beyond proof status. | New wrapper APIs, non-React wrappers, component behavior changes |
 
 ## Completion Shape
 
@@ -444,6 +448,7 @@ This workstream is substantially complete when:
 - Primary and status seed handling is explicit: either balanced/adapted or anchored/preserved.
 - Custom color roles are generated, inspectable, tenant/theme-scoped role families under `--ds-role-*`, separate from stable built-in semantic aliases.
 - V2 CSS output provides explicit load-order-ready primitive and theme files while preserving the bundled compatibility string.
+- Kitchen Sink exposes generated v2 CSS/token inspection for primitive variables, semantic aliases, custom role variables, theme selector CSS, ordered files, and bundled CSS.
 - Consumer integration is documented for direct v2 `@puzzlefactory/color-engine` CSS output, including build-once, persisted runtime, and blob-hosted CSS patterns.
 - First Web Component proof consumes semantic CSS variables without calling color-generation internals.
 - Component state recipes consume semantic CSS variables directly, including disabled states that use neutral/control semantics instead of opacity, filters, `color-mix()`, or local color derivation.

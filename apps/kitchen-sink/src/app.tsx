@@ -45,6 +45,7 @@ const navItems = [
   { to: "/semantic", label: "Semantic" },
   { to: "/themes", label: "Themes" },
   { to: "/components", label: "Components" },
+  { to: "/tokens", label: "Tokens" },
   { to: "/assertions", label: "Assertions" },
 ] as const;
 
@@ -478,6 +479,7 @@ export function App() {
           <Route path="/semantic" element={<SemanticPreview engine={engine} />} />
           <Route path="/themes" element={<ThemePreview engine={engine} />} />
           <Route path="/components" element={<ComponentProof engine={engine} />} />
+          <Route path="/tokens" element={<TokenInspection engine={engine} />} />
           <Route path="/assertions" element={<AssertionReport engine={engine} />} />
         </Routes>
       </main>
@@ -1116,6 +1118,152 @@ function ComponentSample({ label, theme }: { label: string; theme: SurfaceTheme 
           ))}
         </div>
       </div>
+    </article>
+  );
+}
+
+function TokenInspection({ engine }: { engine: EngineState }) {
+  if (engine.kind === "error") {
+    return <ErrorView engine={engine} />;
+  }
+
+  const output = engine.output;
+  const primitiveDeclarations = parseCssDeclarations(output.cssOutput.primitives, "primitives.css");
+  const lightThemeDeclarations = parseCssDeclarations(output.cssOutput.themes.light, "theme-light.css");
+  const darkThemeDeclarations = parseCssDeclarations(output.cssOutput.themes.dark, "theme-dark.css");
+  const semanticDeclarations = [...lightThemeDeclarations, ...darkThemeDeclarations];
+  const customRoleDeclarations = output.cssOutput.files
+    .flatMap((file) => parseCssDeclarations(file.css, file.fileName))
+    .filter((declaration) => declaration.name.startsWith(`--${output.namespace}-role-`));
+
+  return (
+    <ViewFrame
+      title="CSS / Token Inspection"
+      subtitle="Inspect the generated v2 CSS contract exactly as consumers would load it."
+    >
+      <section className="metric-grid" aria-label="CSS output summary">
+        <Metric label="CSS files" value={output.cssOutput.files.length.toString()} />
+        <Metric label="Primitive variables" value={primitiveDeclarations.length.toString()} />
+        <Metric label="Light aliases" value={lightThemeDeclarations.length.toString()} />
+        <Metric label="Dark aliases" value={darkThemeDeclarations.length.toString()} />
+        <Metric label="Custom role variables" value={customRoleDeclarations.length.toString()} />
+        <Metric label="Full declarations" value={declarationCount(output.cssOutput.all).toString()} />
+      </section>
+
+      <section className="token-inspection-grid" aria-label="Generated token variable groups">
+        <CssVariablePanel
+          declarations={primitiveDeclarations}
+          description="Root primitive variables include neutral, surface, chrome, foreground, primary, status, custom role, and state values."
+          title="Primitive Variables"
+        />
+        <CssVariablePanel
+          declarations={semanticDeclarations}
+          description="Theme-scoped semantic aliases are the variables consumers and components should prefer."
+          title="Semantic Variables"
+        />
+        <CssVariablePanel
+          declarations={customRoleDeclarations}
+          description="Custom role variables are generated extensions under the role namespace."
+          emptyLabel="No custom color roles are enabled."
+          title="Custom Color Role Variables"
+        />
+      </section>
+
+      <section className="css-file-stack" aria-label="Theme selector output">
+        <header className="panel-header">
+          <h3>Theme Selector Output</h3>
+          <span>data-theme-v2</span>
+        </header>
+        {themeOptions.map((theme) => (
+          <CssCodePanel
+            css={output.cssOutput.themes[theme.key]}
+            key={theme.key}
+            label={`${theme.label} Theme CSS`}
+            meta={`[data-theme-v2="${theme.key}"]`}
+          />
+        ))}
+      </section>
+
+      <section className="css-file-stack" aria-label="Generated CSS files">
+        <header className="panel-header">
+          <h3>Generated CSS Files</h3>
+          <span>Load order</span>
+        </header>
+        {output.cssOutput.files.map((file, index) => (
+          <CssCodePanel
+            css={file.css}
+            key={file.fileName}
+            label={`${index + 1}. ${file.fileName}`}
+            meta={file.kind === "theme" && file.theme ? `${file.kind} / ${file.theme}` : file.kind}
+          />
+        ))}
+      </section>
+
+      <CssCodePanel
+        css={output.cssOutput.all}
+        label="Full Generated CSS"
+        meta="cssOutput.all / output.css"
+      />
+    </ViewFrame>
+  );
+}
+
+function CssVariablePanel({
+  declarations,
+  description,
+  emptyLabel = "No variables found.",
+  title,
+}: {
+  declarations: readonly CssDeclaration[];
+  description: string;
+  emptyLabel?: string;
+  title: string;
+}) {
+  return (
+    <article className="token-panel">
+      <header className="panel-header">
+        <h3>{title}</h3>
+        <span>{declarations.length} variables</span>
+      </header>
+      <p>{description}</p>
+      {declarations.length > 0 ? (
+        <div className="token-table" role="table" aria-label={title}>
+          <div className="token-table-row token-table-header" role="row">
+            <span role="columnheader">Variable</span>
+            <span role="columnheader">Value</span>
+            <span role="columnheader">Source</span>
+          </div>
+          {declarations.map((declaration) => (
+            <div className="token-table-row" role="row" key={`${declaration.source}-${declaration.name}`}>
+              <code role="cell">{declaration.name}</code>
+              <code role="cell">{declaration.value}</code>
+              <span role="cell">{declaration.source}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="token-empty">{emptyLabel}</p>
+      )}
+    </article>
+  );
+}
+
+function CssCodePanel({
+  css,
+  label,
+  meta,
+}: {
+  css: string;
+  label: string;
+  meta: string;
+}) {
+  return (
+    <article className="css-code-panel">
+      <header className="panel-header">
+        <h3>{label}</h3>
+        <span>{meta}</span>
+      </header>
+      <pre className="css-code-block"><code>{css}</code></pre>
     </article>
   );
 }
@@ -1939,6 +2087,26 @@ function declarationCount(css: string): number {
     .filter((line) => line.trim().startsWith("--")).length;
 }
 
+function parseCssDeclarations(css: string, source: string): readonly CssDeclaration[] {
+  return css
+    .split("\n")
+    .flatMap((line) => {
+      const match = /^\s*(--[a-zA-Z0-9-]+):\s*(.+);$/.exec(line);
+      const name = match?.[1];
+      const value = match?.[2];
+
+      if (!name || !value) {
+        return [];
+      }
+
+      return [{
+        name,
+        value,
+        source,
+      }];
+    });
+}
+
 function labelize(value: string): string {
   return value
     .split("-")
@@ -2191,3 +2359,9 @@ type EngineState =
       readonly field: string;
       readonly message: string;
     };
+
+type CssDeclaration = {
+  readonly name: string;
+  readonly value: string;
+  readonly source: string;
+};
