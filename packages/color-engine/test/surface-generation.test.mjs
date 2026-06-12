@@ -38,6 +38,8 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
     "danger-light-soft",
     "danger-light-solid",
     "danger-seed",
+    "hc-dark",
+    "hc-light",
     "info-dark-soft",
     "info-dark-solid",
     "info-light-soft",
@@ -86,6 +88,8 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
   assert.equal(output.primitives["chrome-dark"].length, 3);
   assert.equal(output.primitives["text-dark"].length, 5);
   assert.equal(output.primitives["text-light"].length, 5);
+  assert.equal(output.primitives["hc-light"].length, 66);
+  assert.equal(output.primitives["hc-dark"].length, 66);
   assert.equal(output.primitives["text-dark"][0]?.name, "text-dark-strong");
   assert.equal(output.primitives["text-light"][0]?.name, "text-light-strong");
   assert.ok((output.primitives["text-dark"][0]?.oklch.l ?? 1) < 0.05);
@@ -103,6 +107,8 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
   assert.equal(SEMANTIC_TOKEN_NAMES.length, 69);
   assert.equal(Object.keys(output.semantics.light).length, SEMANTIC_TOKEN_NAMES.length);
   assert.equal(Object.keys(output.semantics.dark).length, SEMANTIC_TOKEN_NAMES.length);
+  assert.equal(Object.keys(output.semantics["high-contrast"]).length, SEMANTIC_TOKEN_NAMES.length);
+  assert.equal(Object.keys(output.semantics["high-contrast-dark"]).length, SEMANTIC_TOKEN_NAMES.length);
   assert.equal(output.semantics.light["text-primary"], "var(--ds-text-dark-primary)");
   assert.equal(output.semantics.dark["text-primary"], "var(--ds-text-light-primary)");
   assert.equal(output.semantics.light["border-subtle"], "var(--ds-chrome-light-subtle)");
@@ -119,29 +125,40 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
   assert.equal(output.semantics.light["danger-soft-bg"], "var(--ds-danger-light-soft-1)");
   assert.equal(output.semantics.light["danger-soft-text"], "var(--ds-danger-light-solid-4)");
   assert.equal(output.semantics.dark["warning-solid-bg"], "var(--ds-warning-dark-solid-2)");
+  assert.equal(output.semantics["high-contrast"]["text-primary"], "var(--ds-hc-light-text-primary)");
+  assert.equal(output.semantics["high-contrast-dark"]["text-primary"], "var(--ds-hc-dark-text-primary)");
+  assert.equal(output.semantics["high-contrast"]["primary-action-bg"], "var(--ds-hc-light-primary-action-bg)");
+  assert.equal(output.semantics["high-contrast-dark"]["warning-solid-text"], "var(--ds-hc-dark-warning-solid-text)");
   assert.match(output.cssOutput.primitives, /^:root \{/);
   assert.match(output.cssOutput.themes.light, /^\[data-theme-v2="light"\] \{/);
   assert.match(output.cssOutput.themes.dark, /^\[data-theme-v2="dark"\] \{/);
+  assert.match(output.cssOutput.themes["high-contrast"], /^\[data-theme-v2="high-contrast"\] \{/);
+  assert.match(output.cssOutput.themes["high-contrast-dark"], /^\[data-theme-v2="high-contrast-dark"\] \{/);
   assert.deepEqual(
     output.cssOutput.files.map((file) => file.fileName),
     [...COLOR_ENGINE_CSS_LOAD_ORDER],
   );
   assert.deepEqual(
     output.cssOutput.files.map((file) => file.kind),
-    ["primitives", "theme", "theme"],
+    ["primitives", "theme", "theme", "theme", "theme"],
   );
   assert.deepEqual(
     output.cssOutput.files.map((file) => file.theme ?? null),
-    [null, "light", "dark"],
+    [null, "light", "dark", "high-contrast", "high-contrast-dark"],
   );
   assert.equal(output.cssOutput.files[0].css, output.cssOutput.primitives);
   assert.equal(output.cssOutput.files[1].css, output.cssOutput.themes.light);
   assert.equal(output.cssOutput.files[2].css, output.cssOutput.themes.dark);
+  assert.equal(output.cssOutput.files[3].css, output.cssOutput.themes["high-contrast"]);
+  assert.equal(output.cssOutput.files[4].css, output.cssOutput.themes["high-contrast-dark"]);
   assert.equal(output.cssOutput.all, output.cssOutput.files.map((file) => file.css).join("\n\n"));
   assert.equal(output.css, output.cssOutput.all);
   assert.match(output.css, /\[data-theme-v2="light"\]/);
-  assert.doesNotMatch(output.css, /\[data-theme-v2="high-contrast/);
+  assert.match(output.css, /\[data-theme-v2="high-contrast"\]/);
+  assert.match(output.css, /\[data-theme-v2="high-contrast-dark"\]/);
   assert.match(output.css, /--ds-chrome-light-default: oklch\(/);
+  assert.match(output.css, /--ds-hc-light-surface-1: oklch\(/);
+  assert.match(output.css, /--ds-hc-dark-primary-action-bg: oklch\(/);
   assert.match(output.css, /--ds-border-default: var\(--ds-chrome-light-default\);/);
   assert.match(output.css, /--ds-primary-seed: oklch\(/);
   assert.doesNotMatch(output.css, /--ds-primary-seed-hover:/);
@@ -239,10 +256,13 @@ test("custom roles generate primitive families and semantic aliases", () => {
   assert.equal(output.semantics.dark["role-pending-soft-bg"], "var(--pf-role-pending-dark-soft-1)");
   assert.equal(output.semantics.dark["role-pending-solid-bg"], "var(--pf-role-pending-dark-solid-2)");
   assert.equal(Object.keys(output.semantics.light).length, SEMANTIC_TOKEN_NAMES.length + 16);
+  assert.equal(Object.keys(output.semantics["high-contrast"]).length, SEMANTIC_TOKEN_NAMES.length + 16);
   assert.match(output.cssOutput.primitives, /--pf-role-pending-light-soft-1: oklch\(/);
   assert.match(output.cssOutput.primitives, /--pf-role-pending-dark-solid-2: oklch\(0.7 0.12 285\);/);
   assert.match(output.cssOutput.themes.light, /--pf-role-pending-soft-bg: var\(--pf-role-pending-light-soft-1\);/);
   assert.match(output.cssOutput.themes.dark, /--pf-role-pending-soft-bg: var\(--pf-role-pending-dark-soft-1\);/);
+  assert.match(output.cssOutput.themes["high-contrast"], /--pf-role-pending-soft-bg: var\(--pf-hc-light-role-soft-bg\);/);
+  assert.match(output.cssOutput.themes["high-contrast-dark"], /--pf-role-pending-solid-text: var\(--pf-hc-dark-role-solid-text\);/);
   assert.match(output.cssOutput.themes.light, /--pf-role-billing-alert-solid-bg: var\(--pf-role-billing-alert-light-solid-2\);/);
   assert.doesNotMatch(output.cssOutput.themes.light, /--pf-primary-action-bg: var\(--pf-role-/);
   assert.equal(output.primitives["primary-light-solid"].length, 4);
@@ -278,6 +298,53 @@ test("omitted, empty, and populated custom roles preserve built-in output", () =
   );
 });
 
+test("high contrast output stays fixed across tenant seeds and surface presets", () => {
+  const baseline = createColorEngineTheme({
+    namespace: "ds",
+    customRoles: {
+      promo: {
+        seed: "oklch(0.6 0.12 20)",
+        darkSeed: "oklch(0.7 0.1 20)",
+      },
+    },
+  });
+  const varied = createColorEngineTheme({
+    namespace: "ds",
+    neutralSeed: "oklch(0.8 0.05 35)",
+    surfaceLightSeed: "oklch(0.98 0.04 120)",
+    surfaceDarkSeed: "oklch(0.08 0.05 300)",
+    primarySeed: "#f8d7ff",
+    primaryDarkSeed: "#00f5ff",
+    primarySeedPolicy: "anchored",
+    dangerSeed: "#ff003d",
+    dangerDarkSeed: "#ff99aa",
+    warningSeed: "#fff000",
+    warningDarkSeed: "#ffe26a",
+    successSeed: "#00a854",
+    successDarkSeed: "#b6ffbe",
+    infoSeed: "#0047ff",
+    infoDarkSeed: "#90d7ff",
+    lightSurfacePreset: "quiet",
+    darkSurfacePreset: "high-separation",
+    preset: "layered",
+    textTreatment: "adaptive",
+    customRoles: {
+      promo: {
+        seed: "oklch(0.7 0.22 330)",
+        darkSeed: "oklch(0.84 0.2 330)",
+        seedPolicy: "anchored",
+      },
+    },
+  });
+
+  assert.deepEqual(
+    extractHighContrastPrimitiveDeclarations(varied.cssOutput.primitives),
+    extractHighContrastPrimitiveDeclarations(baseline.cssOutput.primitives),
+  );
+  assert.equal(varied.cssOutput.themes["high-contrast"], baseline.cssOutput.themes["high-contrast"]);
+  assert.equal(varied.cssOutput.themes["high-contrast-dark"], baseline.cssOutput.themes["high-contrast-dark"]);
+});
+
 test("custom role state CSS detects theme from the family suffix", () => {
   const output = createColorEngineTheme({
     namespace: "pf",
@@ -297,6 +364,13 @@ test("custom role state CSS detects theme from the family suffix", () => {
   assert.ok(lightHover < lightBase);
   assert.ok(darkHover > darkBase);
 });
+
+function extractHighContrastPrimitiveDeclarations(css) {
+  return css
+    .split("\n")
+    .filter((line) => line.trimStart().startsWith("--ds-hc-"))
+    .sort();
+}
 
 test("chrome ramps separate structural borders from surface states", () => {
   const quiet = createColorEngineTheme({ preset: "quiet" });

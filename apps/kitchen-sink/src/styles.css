@@ -57,11 +57,17 @@ p {
 }
 
 .app-shell[data-theme-v2="dark"],
+.app-shell[data-theme-v2="high-contrast-dark"],
 .theme-sample[data-theme-v2="dark"],
+.theme-sample[data-theme-v2="high-contrast-dark"],
 .semantic-panel[data-theme-v2="dark"],
+.semantic-panel[data-theme-v2="high-contrast-dark"],
 .foreground-text-card[data-theme-v2="dark"],
+.foreground-text-card[data-theme-v2="high-contrast-dark"],
 .text-treatment-card[data-theme-v2="dark"],
-.component-sample[data-theme-v2="dark"] {
+.text-treatment-card[data-theme-v2="high-contrast-dark"],
+.component-sample[data-theme-v2="dark"],
+.component-sample[data-theme-v2="high-contrast-dark"] {
   --app-text-primary: var(--ds-text-primary, #f6f8fb);
   --app-text-secondary: var(--ds-text-secondary, #b7c0cc);
   --app-border: var(--ds-border-default, color-mix(in oklch, var(--ds-surface-1, #111827), #ffffff 18%));
@@ -940,6 +946,46 @@ h3 {
 
 .foreground-text-card[data-theme-v2="dark"] .foreground-text-disabled {
   color: var(--ds-text-light-disabled);
+}
+
+.foreground-text-card[data-theme-v2="high-contrast"] .foreground-text-strong {
+  color: var(--ds-hc-light-text-strong);
+}
+
+.foreground-text-card[data-theme-v2="high-contrast"] .foreground-text-primary {
+  color: var(--ds-hc-light-text-primary);
+}
+
+.foreground-text-card[data-theme-v2="high-contrast"] .foreground-text-secondary {
+  color: var(--ds-hc-light-text-secondary);
+}
+
+.foreground-text-card[data-theme-v2="high-contrast"] .foreground-text-muted {
+  color: var(--ds-hc-light-text-muted);
+}
+
+.foreground-text-card[data-theme-v2="high-contrast"] .foreground-text-disabled {
+  color: var(--ds-hc-light-text-disabled);
+}
+
+.foreground-text-card[data-theme-v2="high-contrast-dark"] .foreground-text-strong {
+  color: var(--ds-hc-dark-text-strong);
+}
+
+.foreground-text-card[data-theme-v2="high-contrast-dark"] .foreground-text-primary {
+  color: var(--ds-hc-dark-text-primary);
+}
+
+.foreground-text-card[data-theme-v2="high-contrast-dark"] .foreground-text-secondary {
+  color: var(--ds-hc-dark-text-secondary);
+}
+
+.foreground-text-card[data-theme-v2="high-contrast-dark"] .foreground-text-muted {
+  color: var(--ds-hc-dark-text-muted);
+}
+
+.foreground-text-card[data-theme-v2="high-contrast-dark"] .foreground-text-disabled {
+  color: var(--ds-hc-dark-text-disabled);
 }
 
 .state-chip {

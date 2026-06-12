@@ -119,6 +119,8 @@ const statusIntents = [
 const themeOptions = [
   { key: "light", label: "Light" },
   { key: "dark", label: "Dark" },
+  { key: "high-contrast", label: "High Contrast" },
+  { key: "high-contrast-dark", label: "High Contrast Dark" },
 ] as const satisfies readonly { readonly key: SurfaceTheme; readonly label: string }[];
 
 const assertionRoles = [
@@ -1129,9 +1131,11 @@ function TokenInspection({ engine }: { engine: EngineState }) {
 
   const output = engine.output;
   const primitiveDeclarations = parseCssDeclarations(output.cssOutput.primitives, "primitives.css");
-  const lightThemeDeclarations = parseCssDeclarations(output.cssOutput.themes.light, "theme-light.css");
-  const darkThemeDeclarations = parseCssDeclarations(output.cssOutput.themes.dark, "theme-dark.css");
-  const semanticDeclarations = [...lightThemeDeclarations, ...darkThemeDeclarations];
+  const themeDeclarations = themeOptions.map((theme) => ({
+    theme,
+    declarations: parseCssDeclarations(output.cssOutput.themes[theme.key], `theme-${theme.key}.css`),
+  }));
+  const semanticDeclarations = themeDeclarations.flatMap((theme) => theme.declarations);
   const customRoleDeclarations = output.cssOutput.files
     .flatMap((file) => parseCssDeclarations(file.css, file.fileName))
     .filter((declaration) => declaration.name.startsWith(`--${output.namespace}-role-`));
@@ -1144,8 +1148,14 @@ function TokenInspection({ engine }: { engine: EngineState }) {
       <section className="metric-grid" aria-label="CSS output summary">
         <Metric label="CSS files" value={output.cssOutput.files.length.toString()} />
         <Metric label="Primitive variables" value={primitiveDeclarations.length.toString()} />
-        <Metric label="Light aliases" value={lightThemeDeclarations.length.toString()} />
-        <Metric label="Dark aliases" value={darkThemeDeclarations.length.toString()} />
+        <Metric label="Theme aliases" value={semanticDeclarations.length.toString()} />
+        <Metric
+          label="HC aliases"
+          value={themeDeclarations
+            .filter(({ theme }) => theme.key.startsWith("high-contrast"))
+            .reduce((total, theme) => total + theme.declarations.length, 0)
+            .toString()}
+        />
         <Metric label="Custom role variables" value={customRoleDeclarations.length.toString()} />
         <Metric label="Full declarations" value={declarationCount(output.cssOutput.all).toString()} />
       </section>
@@ -1287,7 +1297,7 @@ function ForegroundTextReview() {
                 <p className={`foreground-text-line foreground-text-${level}`} key={level}>
                   <strong>{labelize(level)}</strong>
                   <span>
-                    This line uses the {theme.key === "light" ? "text-dark" : "text-light"} {level} primitive
+                    This line uses the {getForegroundTextFamilyLabel(theme.key)} {level} primitive
                     on a normal app surface.
                   </span>
                 </p>
@@ -1298,6 +1308,18 @@ function ForegroundTextReview() {
       </div>
     </section>
   );
+}
+
+function getForegroundTextFamilyLabel(theme: SurfaceTheme): string {
+  if (theme === "light") {
+    return "text-dark";
+  }
+
+  if (theme === "dark") {
+    return "text-light";
+  }
+
+  return theme === "high-contrast" ? "hc-light text" : "hc-dark text";
 }
 
 function TextTreatmentReview({ output }: { output: ColorEngineOutput }) {

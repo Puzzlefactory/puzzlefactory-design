@@ -38,7 +38,9 @@ Seeds may be hex strings or `oklch(...)` strings. OKLCH is the preferred authori
 - `output.cssOutput.primitives`: the `:root` primitive custom property rule.
 - `output.cssOutput.themes.light`: semantic custom properties for `[data-theme-v2="light"]`.
 - `output.cssOutput.themes.dark`: semantic custom properties for `[data-theme-v2="dark"]`.
-- `output.cssOutput.files`: ordered CSS file records for `primitives.css`, `theme-light.css`, and `theme-dark.css`.
+- `output.cssOutput.themes["high-contrast"]`: fixed high-contrast semantic custom properties for `[data-theme-v2="high-contrast"]`.
+- `output.cssOutput.themes["high-contrast-dark"]`: fixed high-contrast-dark semantic custom properties for `[data-theme-v2="high-contrast-dark"]`.
+- `output.cssOutput.files`: ordered CSS file records for `primitives.css`, light/dark theme CSS, and high-contrast theme CSS.
 - `output.cssOutput.all`: all CSS files joined in canonical load order.
 - `output.css`: compatibility alias for `output.cssOutput.all`.
 
@@ -46,9 +48,14 @@ Each `cssOutput.files` entry has this shape:
 
 ```ts
 interface ColorEngineCssFile {
-  readonly fileName: "primitives.css" | "theme-light.css" | "theme-dark.css";
+  readonly fileName:
+    | "primitives.css"
+    | "theme-light.css"
+    | "theme-dark.css"
+    | "theme-high-contrast.css"
+    | "theme-high-contrast-dark.css";
   readonly kind: "primitives" | "theme";
-  readonly theme?: "light" | "dark";
+  readonly theme?: "light" | "dark" | "high-contrast" | "high-contrast-dark";
   readonly css: string;
 }
 ```
@@ -56,7 +63,13 @@ interface ColorEngineCssFile {
 The canonical order is exported as `COLOR_ENGINE_CSS_LOAD_ORDER`:
 
 ```ts
-["primitives.css", "theme-light.css", "theme-dark.css"];
+[
+  "primitives.css",
+  "theme-light.css",
+  "theme-dark.css",
+  "theme-high-contrast.css",
+  "theme-high-contrast-dark.css",
+];
 ```
 
 Load primitives before theme aliases:
@@ -65,6 +78,8 @@ Load primitives before theme aliases:
 <link rel="stylesheet" href="/themes/acme/v42/primitives.css" />
 <link rel="stylesheet" href="/themes/acme/v42/theme-light.css" />
 <link rel="stylesheet" href="/themes/acme/v42/theme-dark.css" />
+<link rel="stylesheet" href="/themes/acme/v42/theme-high-contrast.css" />
+<link rel="stylesheet" href="/themes/acme/v42/theme-high-contrast-dark.css" />
 ```
 
 Consumers that cannot manage multiple files can load or inline `output.cssOutput.all` instead. The bundled string is convenient, but separate files are the clearer production contract because primitives and theme aliases have explicit responsibilities.
@@ -83,14 +98,16 @@ Supported values today:
 
 - `data-theme-v2="light"`
 - `data-theme-v2="dark"`
+- `data-theme-v2="high-contrast"`
+- `data-theme-v2="high-contrast-dark"`
 
 Theme switching should update the same attribute on the application root or theme boundary:
 
 ```ts
-document.documentElement.dataset.themeV2 = "dark";
+document.documentElement.dataset.themeV2 = "high-contrast-dark";
 ```
 
-The engine does not emit high-contrast v2 CSS yet.
+High-contrast v2 themes are fixed outputs. They do not use tenant primary, status, surface, or custom-role seeds to tune the palette. This is intentional: high contrast should be an optimized accessibility mode, not another brand/theme variant. Built-in roles and custom roles still receive semantic aliases in high-contrast themes, but those aliases point to conservative fixed high-contrast primitives.
 
 ## Consuming Semantic Tokens
 
@@ -190,7 +207,7 @@ The semantic aliases for each custom role are:
 
 Use `createCustomColorRoleCssAliasName`, `createCustomColorRoleCssAliasNames`, `createCustomColorRoleCssVariableName`, or `createCustomColorRoleCssVariableNames` when another package needs stable custom role alias names.
 
-Custom role APCA assertions are added only when custom roles are configured. Each role adds light and dark checks for:
+Custom role APCA assertions are added only when custom roles are configured. Each role adds light, dark, high-contrast, and high-contrast-dark checks for:
 
 - `role-{id}-soft-text` on `role-{id}-soft-bg`
 - `role-{id}-soft-text` on `role-{id}-soft-bg-hover`
@@ -207,7 +224,7 @@ These assertions use the existing soft and solid status thresholds and remain di
 Build-once generation is the recommended production path for approved tenant or product themes:
 
 1. Store the normalized theme input in a catalog or source-controlled config.
-2. Generate `primitives.css`, `theme-light.css`, and `theme-dark.css`.
+2. Generate `primitives.css`, `theme-light.css`, `theme-dark.css`, `theme-high-contrast.css`, and `theme-high-contrast-dark.css`.
 3. Store the generated CSS at a versioned path.
 4. Load those CSS files from the application shell.
 
@@ -232,6 +249,8 @@ Blob-hosted generated CSS is a viable deployment model. For Azure Static Web App
 <link rel="stylesheet" href="https://cdn.example.com/themes/acme/2026-06-04/primitives.css" />
 <link rel="stylesheet" href="https://cdn.example.com/themes/acme/2026-06-04/theme-light.css" />
 <link rel="stylesheet" href="https://cdn.example.com/themes/acme/2026-06-04/theme-dark.css" />
+<link rel="stylesheet" href="https://cdn.example.com/themes/acme/2026-06-04/theme-high-contrast.css" />
+<link rel="stylesheet" href="https://cdn.example.com/themes/acme/2026-06-04/theme-high-contrast-dark.css" />
 ```
 
 Use immutable or versioned paths for cache busting. This avoids redeploying the static application every time a tenant theme changes.
@@ -244,11 +263,11 @@ Use immutable or versioned paths for cache busting. This avoids redeploying the 
 
 ## Current Limits
 
-- No high-contrast v2 CSS output is emitted yet.
+- No tenant-tuned high-contrast palette is emitted; high-contrast v2 uses fixed optimized light and dark outputs.
 - No tenant storage API, caching layer, or deployment package is included.
 - No browser fallback CSS for consumers without `oklch()` support is emitted yet.
 - The component proof consumes the v2 semantic CSS contract, but broader component integration is still early.
-- Custom role CSS and diagnostic APCA assertions are emitted, but Kitchen Sink controls/previews are not included yet.
+- Custom role CSS and diagnostic APCA assertions are emitted, including fixed high-contrast aliases.
 - APCA assertions are diagnostic guidance, not hard enforcement.
 
 ## Scripts

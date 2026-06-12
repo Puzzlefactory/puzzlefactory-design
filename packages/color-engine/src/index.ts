@@ -42,12 +42,19 @@ export type SurfacePresetName =
   | "layered"
   | "high-separation";
 
-export type SurfaceTheme = "light" | "dark";
+export type SurfaceGenerationTheme = "light" | "dark";
+
+export type SurfaceTheme =
+  | SurfaceGenerationTheme
+  | "high-contrast"
+  | "high-contrast-dark";
 
 export type ColorEngineCssFileName =
   | "primitives.css"
   | "theme-light.css"
-  | "theme-dark.css";
+  | "theme-dark.css"
+  | "theme-high-contrast.css"
+  | "theme-high-contrast-dark.css";
 
 export type ColorEngineCssFileKind = "primitives" | "theme";
 
@@ -106,10 +113,13 @@ export type CustomUsageFamilyName = UsageFamilyName | CustomColorRoleUsageFamily
 
 export type TextPrimitiveFamilyName = "text-dark" | "text-light";
 
+export type HighContrastPrimitiveFamilyName = "hc-light" | "hc-dark";
+
 export type PrimitiveFamilyName =
   | "neutral-light"
   | "neutral-dark"
   | TextPrimitiveFamilyName
+  | HighContrastPrimitiveFamilyName
   | "surface-light"
   | "surface-dark"
   | "chrome-light"
@@ -266,6 +276,8 @@ export interface BuiltInPrimitiveSurfaceOutput {
   readonly "neutral-dark": readonly ColorToken[];
   readonly "text-dark": readonly ColorToken[];
   readonly "text-light": readonly ColorToken[];
+  readonly "hc-light": readonly ColorToken[];
+  readonly "hc-dark": readonly ColorToken[];
   readonly "surface-light": readonly ColorToken[];
   readonly "surface-dark": readonly ColorToken[];
   readonly "chrome-light": readonly ColorToken[];
@@ -305,7 +317,7 @@ export type PrimitiveSurfaceOutput = BuiltInPrimitiveSurfaceOutput & CustomColor
 export interface ColorEngineOutput {
   readonly namespace: string;
   readonly preset: SurfacePreset;
-  readonly surfacePresets: Readonly<Record<SurfaceTheme, SurfacePreset>>;
+  readonly surfacePresets: Readonly<Record<SurfaceGenerationTheme, SurfacePreset>>;
   readonly input: ResolvedColorEngineInput;
   readonly customRoles: Readonly<Record<string, ResolvedCustomColorRole>>;
   readonly seeds: {
@@ -421,7 +433,16 @@ export const COLOR_ENGINE_CSS_LOAD_ORDER = [
   "primitives.css",
   "theme-light.css",
   "theme-dark.css",
+  "theme-high-contrast.css",
+  "theme-high-contrast-dark.css",
 ] as const satisfies readonly ColorEngineCssFileName[];
+
+export const COLOR_ENGINE_THEME_NAMES = [
+  "light",
+  "dark",
+  "high-contrast",
+  "high-contrast-dark",
+] as const satisfies readonly SurfaceTheme[];
 
 export const SURFACE_LEVELS = [1, 2, 3, 4] as const satisfies readonly SurfaceLevel[];
 
@@ -725,7 +746,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
   const surfacePresets = {
     light: SURFACE_PRESETS[resolvedInput.lightSurfacePreset],
     dark: SURFACE_PRESETS[resolvedInput.darkSurfacePreset],
-  } as const satisfies Readonly<Record<SurfaceTheme, SurfacePreset>>;
+  } as const satisfies Readonly<Record<SurfaceGenerationTheme, SurfacePreset>>;
   const neutralSeed = parseColorSeed(resolvedInput.neutralSeed, "neutralSeed");
   const surfaceLightSeed = parseColorSeed(resolvedInput.surfaceLightSeed, "surfaceLightSeed");
   const surfaceDarkSeed = parseColorSeed(resolvedInput.surfaceDarkSeed, "surfaceDarkSeed");
@@ -780,6 +801,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     family: "text-light",
     seed: neutralSeed,
   });
+  const highContrast = createHighContrastPrimitiveFamilies();
   const surfaceLight = createLevelRamp({
     family: "surface-light",
     seed: surfaceLightSeed,
@@ -826,6 +848,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     "neutral-dark": neutralDark,
     "text-dark": textDark,
     "text-light": textLight,
+    ...highContrast,
     "surface-light": surfaceLight,
     "surface-dark": surfaceDark,
     "chrome-light": chromeLight,
@@ -1226,6 +1249,214 @@ function createTextRamp(options: {
   });
 }
 
+function createHighContrastPrimitiveFamilies(): Pick<PrimitiveSurfaceOutput, "hc-light" | "hc-dark"> {
+  return {
+    "hc-light": [
+      ...createFixedHighContrastFoundation("hc-light", {
+        surface: [0.995, 0.965, 0.925, 0.875],
+        text: [0.01, 0.035, 0.14, 0.24, 0.42],
+        border: [0.62, 0.36, 0.08],
+        controlBg: 0.99,
+        controlBorder: 0.18,
+        controlText: 0.01,
+      }),
+      ...createFixedHighContrastInteractive("hc-light", {
+        primary: {
+          action: [0.24, 0.19, 0.14],
+          actionText: [0.995, 0, 0],
+          link: [0.24, 0.19],
+          focus: [0.5, 0.18, 265],
+          soft: [0.99, 0.965, 0.28, 0.16, 265],
+          hue: 265,
+          chroma: 0.16,
+        },
+        danger: createLightHighContrastIntent(28, 0.18, 0.3),
+        warning: createLightHighContrastIntent(82, 0.14, 0.34),
+        success: createLightHighContrastIntent(150, 0.16, 0.29),
+        info: createLightHighContrastIntent(235, 0.15, 0.3),
+        role: createLightHighContrastIntent(285, 0.16, 0.3),
+      }),
+    ],
+    "hc-dark": [
+      ...createFixedHighContrastFoundation("hc-dark", {
+        surface: [0.015, 0.055, 0.095, 0.14],
+        text: [0.995, 0.94, 0.82, 0.72, 0.6],
+        border: [0.42, 0.7, 0.94],
+        controlBg: 0.035,
+        controlBorder: 0.82,
+        controlText: 0.995,
+      }),
+      ...createFixedHighContrastInteractive("hc-dark", {
+        primary: {
+          action: [0.84, 0.91, 0.76],
+          actionText: [0.01, 0, 0],
+          link: [0.84, 0.91],
+          focus: [0.9, 0.19, 100],
+          soft: [0.045, 0.075, 0.82, 0.84, 210],
+          hue: 210,
+          chroma: 0.16,
+        },
+        danger: createDarkHighContrastIntent(28, 0.14, 0.79),
+        warning: createDarkHighContrastIntent(88, 0.16, 0.86),
+        success: createDarkHighContrastIntent(150, 0.14, 0.8),
+        info: createDarkHighContrastIntent(235, 0.13, 0.84),
+        role: createDarkHighContrastIntent(285, 0.15, 0.82),
+      }),
+    ],
+  };
+}
+
+function createFixedHighContrastFoundation(
+  family: HighContrastPrimitiveFamilyName,
+  values: {
+    readonly surface: readonly [number, number, number, number];
+    readonly text: readonly [number, number, number, number, number];
+    readonly border: readonly [number, number, number];
+    readonly controlBg: number;
+    readonly controlBorder: number;
+    readonly controlText: number;
+  },
+): readonly ColorToken[] {
+  return [
+    ...SURFACE_LEVELS.map((level, index) =>
+      createFixedToken(family, `surface-${level}`, values.surface[index] ?? values.surface[3], 0, 0),
+    ),
+    ...TEXT_LEVELS.map((level, index) =>
+      createFixedToken(family, `text-${level}`, values.text[index] ?? values.text[4], 0, 0),
+    ),
+    createFixedToken(family, "border-subtle", values.border[0], 0, 0),
+    createFixedToken(family, "border-default", values.border[1], 0, 0),
+    createFixedToken(family, "border-strong", values.border[2], 0, 0),
+    createFixedToken(family, "control-bg", values.controlBg, 0, 0),
+    createFixedToken(family, "control-border", values.controlBorder, 0, 0),
+    createFixedToken(family, "control-text", values.controlText, 0, 0),
+  ];
+}
+
+function createFixedHighContrastInteractive(
+  family: HighContrastPrimitiveFamilyName,
+  values: {
+    readonly primary: HighContrastPrimarySpec;
+    readonly danger: HighContrastIntentSpec;
+    readonly warning: HighContrastIntentSpec;
+    readonly success: HighContrastIntentSpec;
+    readonly info: HighContrastIntentSpec;
+    readonly role: HighContrastIntentSpec;
+  },
+): readonly ColorToken[] {
+  return [
+    ...createFixedHighContrastPrimary(family, values.primary),
+    ...createFixedHighContrastIntent(family, "danger", values.danger),
+    ...createFixedHighContrastIntent(family, "warning", values.warning),
+    ...createFixedHighContrastIntent(family, "success", values.success),
+    ...createFixedHighContrastIntent(family, "info", values.info),
+    ...createFixedHighContrastIntent(family, "role", values.role),
+  ];
+}
+
+interface HighContrastPrimarySpec {
+  readonly action: readonly [number, number, number];
+  readonly actionText: readonly [number, number, number];
+  readonly link: readonly [number, number];
+  readonly focus: readonly [number, number, number];
+  readonly soft: readonly [number, number, number, number, number];
+  readonly hue: number;
+  readonly chroma: number;
+}
+
+interface HighContrastIntentSpec {
+  readonly solid: readonly [number, number, number];
+  readonly solidText: readonly [number, number, number];
+  readonly soft: readonly [number, number, number, number, number];
+  readonly hue: number;
+  readonly chroma: number;
+}
+
+function createLightHighContrastIntent(
+  hue: number,
+  chroma: number,
+  solidLightness: number,
+): HighContrastIntentSpec {
+  return {
+    solid: [solidLightness, solidLightness - 0.05, solidLightness - 0.1],
+    solidText: [0.995, 0, 0],
+    soft: [0.99, 0.965, 0.35, 0.22, hue],
+    hue,
+    chroma,
+  };
+}
+
+function createDarkHighContrastIntent(
+  hue: number,
+  chroma: number,
+  solidLightness: number,
+): HighContrastIntentSpec {
+  return {
+    solid: [solidLightness, Math.min(solidLightness + 0.07, 0.95), solidLightness],
+    solidText: [0.01, 0, 0],
+    soft: [0.04, 0.075, 0.78, 0.84, hue],
+    hue,
+    chroma,
+  };
+}
+
+function createFixedHighContrastPrimary(
+  family: HighContrastPrimitiveFamilyName,
+  spec: HighContrastPrimarySpec,
+): readonly ColorToken[] {
+  return [
+    createFixedToken(family, "primary-action-bg", spec.action[0], spec.chroma, spec.hue),
+    createFixedToken(family, "primary-action-bg-hover", spec.action[1], spec.chroma, spec.hue),
+    createFixedToken(family, "primary-action-bg-pressed", spec.action[2], spec.chroma, spec.hue),
+    createFixedToken(family, "primary-action-text", spec.actionText[0], spec.actionText[1], spec.actionText[2]),
+    createFixedToken(family, "primary-link", spec.link[0], spec.chroma, spec.hue),
+    createFixedToken(family, "primary-link-hover", spec.link[1], spec.chroma, spec.hue),
+    createFixedToken(family, "primary-focus-ring", spec.focus[0], spec.focus[1], spec.focus[2]),
+    createFixedToken(family, "primary-soft-bg", spec.soft[0], spec.chroma * 0.08, spec.soft[4]),
+    createFixedToken(family, "primary-soft-bg-hover", spec.soft[1], spec.chroma * 0.12, spec.soft[4]),
+    createFixedToken(family, "primary-soft-border", spec.soft[2], spec.chroma * 0.9, spec.soft[4]),
+    createFixedToken(family, "primary-soft-text", spec.soft[3], spec.chroma, spec.soft[4]),
+  ];
+}
+
+function createFixedHighContrastIntent(
+  family: HighContrastPrimitiveFamilyName,
+  intent: StatusIntent | "role",
+  spec: HighContrastIntentSpec,
+): readonly ColorToken[] {
+  return [
+    createFixedToken(family, `${intent}-solid-bg`, spec.solid[0], spec.chroma, spec.hue),
+    createFixedToken(family, `${intent}-solid-bg-hover`, spec.solid[1], spec.chroma, spec.hue),
+    createFixedToken(family, `${intent}-solid-bg-pressed`, spec.solid[2], spec.chroma, spec.hue),
+    createFixedToken(family, `${intent}-solid-text`, spec.solidText[0], spec.solidText[1], spec.solidText[2]),
+    createFixedToken(family, `${intent}-soft-bg`, spec.soft[0], spec.chroma * 0.08, spec.soft[4]),
+    createFixedToken(family, `${intent}-soft-bg-hover`, spec.soft[1], spec.chroma * 0.12, spec.soft[4]),
+    createFixedToken(family, `${intent}-soft-border`, spec.soft[2], spec.chroma * 0.95, spec.soft[4]),
+    createFixedToken(family, `${intent}-soft-text`, spec.soft[3], spec.chroma, spec.soft[4]),
+  ];
+}
+
+function createFixedToken(
+  family: HighContrastPrimitiveFamilyName,
+  suffix: string,
+  l: number,
+  c: number,
+  h: number,
+): ColorToken {
+  const oklch = {
+    l: roundChannel(clampNumber(l, 0.01, 0.995)),
+    c: roundChannel(clampNumber(c, 0, 0.22)),
+    h: roundChannel(normalizeHue(h)),
+  };
+
+  return {
+    name: `${family}-${suffix}`,
+    value: formatOklch(oklch),
+    oklch,
+    description: `${family} fixed ${suffix}`,
+  };
+}
+
 function toneSeed(surfaceSeed: OklchValue, neutralSeed: OklchValue, chromaScale: number): OklchValue {
   return {
     l: surfaceSeed.l,
@@ -1238,7 +1469,7 @@ function createChromeRamp(options: {
   readonly family: "chrome-light" | "chrome-dark";
   readonly surfaceSeed: OklchValue;
   readonly neutralSeed: OklchValue;
-  readonly theme: SurfaceTheme;
+  readonly theme: SurfaceGenerationTheme;
   readonly preset: SurfacePreset;
 }): readonly ColorToken[] {
   const baseChroma = clampNumber(
@@ -1459,7 +1690,7 @@ function createCustomColorRoleFamilies(
 function createSolidLightness(
   seed: OklchValue,
   balancedBase: number,
-  theme: SurfaceTheme,
+  theme: SurfaceGenerationTheme,
   policy: SeedPolicy,
   profile: SolidContrastProfile = "ui",
 ): readonly [number, number, number, number] {
@@ -1513,7 +1744,7 @@ function anchoredUsageBounds(policy: SeedPolicy): {
 function createSolidChroma(
   seed: OklchValue,
   balancedChroma: number,
-  theme: SurfaceTheme,
+  theme: SurfaceGenerationTheme,
   policy: SeedPolicy,
   lightFirstStepScale = 0.88,
   darkFirstStepScale = 0.75,
@@ -1594,12 +1825,14 @@ function createSemantics(
       ...createStatusSemantics(namespace, "dark", primitives, textTreatment),
       ...createCustomColorRoleSemantics(namespace, "dark", primitives, textTreatment, customRoles),
     },
+    "high-contrast": createHighContrastSemantics(namespace, "hc-light", customRoles),
+    "high-contrast-dark": createHighContrastSemantics(namespace, "hc-dark", customRoles),
   };
 }
 
 function createNeutralSemantics(
   namespace: string,
-  theme: SurfaceTheme,
+  theme: SurfaceGenerationTheme,
 ): Readonly<Record<NeutralSemanticTokenName, `var(--${string})`>> {
   if (theme === "light") {
     return {
@@ -1651,7 +1884,7 @@ function createSurfaceSemantics(
 
 function createPrimarySemantics(
   namespace: string,
-  theme: SurfaceTheme,
+  theme: SurfaceGenerationTheme,
   primitives: PrimitiveSurfaceOutput,
   textTreatment: TextTreatmentStrategyName,
 ): Readonly<Record<PrimarySemanticTokenName, `var(--${string})`>> {
@@ -1707,7 +1940,7 @@ function createPrimarySemantics(
 
 function createStatusSemantics(
   namespace: string,
-  theme: SurfaceTheme,
+  theme: SurfaceGenerationTheme,
   primitives: PrimitiveSurfaceOutput,
   textTreatment: TextTreatmentStrategyName,
 ): Readonly<Record<StatusSemanticTokenName, `var(--${string})`>> {
@@ -1745,7 +1978,7 @@ function createStatusSemantics(
 
 function createCustomColorRoleSemantics(
   namespace: string,
-  theme: SurfaceTheme,
+  theme: SurfaceGenerationTheme,
   primitives: PrimitiveSurfaceOutput,
   textTreatment: TextTreatmentStrategyName,
   customRoles: ColorEngineOutput["customRoles"],
@@ -1784,12 +2017,123 @@ function createCustomColorRoleSemantics(
   return Object.fromEntries(entries) as Partial<Record<CustomColorRoleSemanticTokenName, `var(--${string})`>>;
 }
 
+function createHighContrastSemantics(
+  namespace: string,
+  family: HighContrastPrimitiveFamilyName,
+  customRoles: ColorEngineOutput["customRoles"],
+): ColorEngineThemeSemantics {
+  return {
+    ...createHighContrastNeutralSemantics(namespace, family),
+    ...createHighContrastSurfaceSemantics(namespace, family),
+    ...createHighContrastPrimarySemantics(namespace, family),
+    ...createHighContrastStatusSemantics(namespace, family),
+    ...createHighContrastCustomColorRoleSemantics(namespace, family, customRoles),
+  };
+}
+
+function createHighContrastNeutralSemantics(
+  namespace: string,
+  family: HighContrastPrimitiveFamilyName,
+): Readonly<Record<NeutralSemanticTokenName, `var(--${string})`>> {
+  return {
+    "text-primary": cssVar(namespace, `${family}-text-primary`),
+    "text-secondary": cssVar(namespace, `${family}-text-secondary`),
+    "text-muted": cssVar(namespace, `${family}-text-muted`),
+    "border-subtle": cssVar(namespace, `${family}-border-subtle`),
+    "border-default": cssVar(namespace, `${family}-border-default`),
+    "border-strong": cssVar(namespace, `${family}-border-strong`),
+    "control-border": cssVar(namespace, `${family}-control-border`),
+    "control-bg": cssVar(namespace, `${family}-control-bg`),
+    "control-bg-hover": cssVar(namespace, `${family}-control-bg-hover`),
+    "control-text": cssVar(namespace, `${family}-control-text`),
+  };
+}
+
+function createHighContrastSurfaceSemantics(
+  namespace: string,
+  family: HighContrastPrimitiveFamilyName,
+): Readonly<Record<SurfaceSemanticTokenName, `var(--${string})`>> {
+  const entries: [SurfaceSemanticTokenName, `var(--${string})`][] = [];
+
+  for (const level of SURFACE_LEVELS) {
+    entries.push([`surface-${level}`, cssVar(namespace, `${family}-surface-${level}`)]);
+    for (const state of SURFACE_STATES) {
+      entries.push([
+        `surface-${level}-${state}`,
+        cssVar(namespace, `${family}-surface-${level}-${state}`),
+      ]);
+    }
+  }
+
+  return Object.fromEntries(entries) as Record<SurfaceSemanticTokenName, `var(--${string})`>;
+}
+
+function createHighContrastPrimarySemantics(
+  namespace: string,
+  family: HighContrastPrimitiveFamilyName,
+): Readonly<Record<PrimarySemanticTokenName, `var(--${string})`>> {
+  return {
+    "primary-action-bg": cssVar(namespace, `${family}-primary-action-bg`),
+    "primary-action-bg-hover": cssVar(namespace, `${family}-primary-action-bg-hover`),
+    "primary-action-bg-pressed": cssVar(namespace, `${family}-primary-action-bg-pressed`),
+    "primary-action-text": cssVar(namespace, `${family}-primary-action-text`),
+    "primary-link": cssVar(namespace, `${family}-primary-link`),
+    "primary-link-hover": cssVar(namespace, `${family}-primary-link-hover`),
+    "primary-focus-ring": cssVar(namespace, `${family}-primary-focus-ring`),
+    "primary-soft-bg": cssVar(namespace, `${family}-primary-soft-bg`),
+    "primary-soft-bg-hover": cssVar(namespace, `${family}-primary-soft-bg-hover`),
+    "primary-soft-border": cssVar(namespace, `${family}-primary-soft-border`),
+    "primary-soft-text": cssVar(namespace, `${family}-primary-soft-text`),
+  };
+}
+
+function createHighContrastStatusSemantics(
+  namespace: string,
+  family: HighContrastPrimitiveFamilyName,
+): Readonly<Record<StatusSemanticTokenName, `var(--${string})`>> {
+  const entries: [StatusSemanticTokenName, `var(--${string})`][] = [];
+
+  for (const intent of STATUS_INTENTS) {
+    entries.push([`${intent}-soft-bg`, cssVar(namespace, `${family}-${intent}-soft-bg`)]);
+    entries.push([`${intent}-soft-bg-hover`, cssVar(namespace, `${family}-${intent}-soft-bg-hover`)]);
+    entries.push([`${intent}-soft-border`, cssVar(namespace, `${family}-${intent}-soft-border`)]);
+    entries.push([`${intent}-soft-text`, cssVar(namespace, `${family}-${intent}-soft-text`)]);
+    entries.push([`${intent}-solid-bg`, cssVar(namespace, `${family}-${intent}-solid-bg`)]);
+    entries.push([`${intent}-solid-bg-hover`, cssVar(namespace, `${family}-${intent}-solid-bg-hover`)]);
+    entries.push([`${intent}-solid-bg-pressed`, cssVar(namespace, `${family}-${intent}-solid-bg-pressed`)]);
+    entries.push([`${intent}-solid-text`, cssVar(namespace, `${family}-${intent}-solid-text`)]);
+  }
+
+  return Object.fromEntries(entries) as Record<StatusSemanticTokenName, `var(--${string})`>;
+}
+
+function createHighContrastCustomColorRoleSemantics(
+  namespace: string,
+  family: HighContrastPrimitiveFamilyName,
+  customRoles: ColorEngineOutput["customRoles"],
+): Readonly<Partial<Record<CustomColorRoleSemanticTokenName, `var(--${string})`>>> {
+  const entries: [CustomColorRoleSemanticTokenName, `var(--${string})`][] = [];
+
+  for (const role of Object.values(customRoles)) {
+    entries.push([role.cssAliases["soft-bg"], cssVar(namespace, `${family}-role-soft-bg`)]);
+    entries.push([role.cssAliases["soft-bg-hover"], cssVar(namespace, `${family}-role-soft-bg-hover`)]);
+    entries.push([role.cssAliases["soft-border"], cssVar(namespace, `${family}-role-soft-border`)]);
+    entries.push([role.cssAliases["soft-text"], cssVar(namespace, `${family}-role-soft-text`)]);
+    entries.push([role.cssAliases["solid-bg"], cssVar(namespace, `${family}-role-solid-bg`)]);
+    entries.push([role.cssAliases["solid-bg-hover"], cssVar(namespace, `${family}-role-solid-bg-hover`)]);
+    entries.push([role.cssAliases["solid-bg-pressed"], cssVar(namespace, `${family}-role-solid-bg-pressed`)]);
+    entries.push([role.cssAliases["solid-text"], cssVar(namespace, `${family}-role-solid-text`)]);
+  }
+
+  return Object.fromEntries(entries) as Partial<Record<CustomColorRoleSemanticTokenName, `var(--${string})`>>;
+}
+
 function resolveSoftTextToken(options: {
   readonly primitives: PrimitiveSurfaceOutput;
   readonly softBackgrounds: readonly string[];
   readonly sameHueToken: string;
   readonly strategy: TextTreatmentStrategyName;
-  readonly theme: SurfaceTheme;
+  readonly theme: SurfaceGenerationTheme;
 }): string {
   if (options.strategy === "same-hue") {
     return options.sameHueToken;
@@ -1830,7 +2174,7 @@ function resolveSoftTextToken(options: {
 function resolveStatusSolidTextToken(options: {
   readonly primitives: PrimitiveSurfaceOutput;
   readonly solidFamily: `${StatusIntent}-${"light" | "dark"}-solid`;
-  readonly theme: SurfaceTheme;
+  readonly theme: SurfaceGenerationTheme;
 }): string {
   return resolveSolidForegroundToken({
     primitives: options.primitives,
@@ -1846,7 +2190,7 @@ function resolveSolidForegroundToken(options: {
   readonly backgrounds: readonly string[];
   readonly preferredToken: string;
   readonly threshold: number;
-  readonly theme: SurfaceTheme;
+  readonly theme: SurfaceGenerationTheme;
 }): string {
   const candidates = options.theme === "light"
     ? [options.preferredToken, "text-light-primary", "text-dark-strong", "text-dark-primary"] as const
@@ -1881,14 +2225,14 @@ function resolveSolidForegroundToken(options: {
 
 function getStatusSolidBackgroundTokenNames(
   solidFamily: `${StatusIntent}-${"light" | "dark"}-solid`,
-  theme: SurfaceTheme,
+  theme: SurfaceGenerationTheme,
 ): readonly string[] {
   return getSolidBackgroundTokenNames(solidFamily, theme);
 }
 
 function getSolidBackgroundTokenNames(
   solidFamily: string,
-  theme: SurfaceTheme,
+  theme: SurfaceGenerationTheme,
 ): readonly string[] {
   return theme === "light"
     ? [`${solidFamily}-2`, `${solidFamily}-3`, `${solidFamily}-4`]
@@ -1914,12 +2258,18 @@ function createCssOutput(
   namespace: string,
   primitives: PrimitiveSurfaceOutput,
   semantics: ColorEngineOutput["semantics"],
-  surfacePresets: Readonly<Record<SurfaceTheme, SurfacePreset>>,
+  surfacePresets: Readonly<Record<SurfaceGenerationTheme, SurfacePreset>>,
 ): ColorEngineCssOutput {
   const primitiveCss = createPrimitiveCss(namespace, primitives, surfacePresets);
   const themeCss = {
     light: createThemeCss(namespace, "light", semantics.light),
     dark: createThemeCss(namespace, "dark", semantics.dark),
+    "high-contrast": createThemeCss(namespace, "high-contrast", semantics["high-contrast"]),
+    "high-contrast-dark": createThemeCss(
+      namespace,
+      "high-contrast-dark",
+      semantics["high-contrast-dark"],
+    ),
   } as const satisfies Readonly<Record<SurfaceTheme, string>>;
   const files = [
     {
@@ -1939,6 +2289,18 @@ function createCssOutput(
       theme: "dark",
       css: themeCss.dark,
     },
+    {
+      fileName: "theme-high-contrast.css",
+      kind: "theme",
+      theme: "high-contrast",
+      css: themeCss["high-contrast"],
+    },
+    {
+      fileName: "theme-high-contrast-dark.css",
+      kind: "theme",
+      theme: "high-contrast-dark",
+      css: themeCss["high-contrast-dark"],
+    },
   ] as const satisfies readonly ColorEngineCssFile[];
 
   return {
@@ -1952,19 +2314,25 @@ function createCssOutput(
 function createPrimitiveCss(
   namespace: string,
   primitives: PrimitiveSurfaceOutput,
-  surfacePresets: Readonly<Record<SurfaceTheme, SurfacePreset>>,
+  surfacePresets: Readonly<Record<SurfaceGenerationTheme, SurfacePreset>>,
 ): string {
   const declarations: [string, string][] = [];
 
   for (const tokens of Object.values(primitives)) {
     for (const token of tokens) {
       declarations.push([`--${namespace}-${token.name}`, token.value]);
-      if (!token.name.endsWith("-seed") && !token.name.startsWith("text-")) {
-        const theme = getPrimitiveTokenTheme(token.name);
+      if (shouldCreateStateValues(token.name)) {
         for (const state of SURFACE_STATES) {
           declarations.push([
             `--${namespace}-${token.name}-${state}`,
-            createStateValue(token.oklch, state, theme, surfacePresets[theme]),
+            token.name.startsWith("hc-light-") || token.name.startsWith("hc-dark-")
+              ? createHighContrastStateValue(token.oklch, state, token.name.startsWith("hc-light-") ? "light" : "dark")
+              : createStateValue(
+                  token.oklch,
+                  state,
+                  getPrimitiveTokenTheme(token.name),
+                  surfacePresets[getPrimitiveTokenTheme(token.name)],
+                ),
           ]);
         }
       }
@@ -1974,7 +2342,14 @@ function createPrimitiveCss(
   return createCssRule(":root", declarations);
 }
 
-function getPrimitiveTokenTheme(tokenName: string): SurfaceTheme {
+function shouldCreateStateValues(tokenName: string): boolean {
+  return !tokenName.endsWith("-seed") &&
+    !tokenName.startsWith("text-") &&
+    !tokenName.startsWith("hc-light-text-") &&
+    !tokenName.startsWith("hc-dark-text-");
+}
+
+function getPrimitiveTokenTheme(tokenName: string): SurfaceGenerationTheme {
   if (tokenName.startsWith("role-")) {
     const match = /^role-[a-z][a-z0-9-]*-(light|dark)-(?:soft|solid)-\d+$/.exec(tokenName);
     if (match?.[1] === "light" || match?.[1] === "dark") {
@@ -1982,7 +2357,33 @@ function getPrimitiveTokenTheme(tokenName: string): SurfaceTheme {
     }
   }
 
+  if (tokenName.startsWith("hc-light-")) {
+    return "light";
+  }
+
+  if (tokenName.startsWith("hc-dark-")) {
+    return "dark";
+  }
+
   return tokenName.includes("-light-") ? "light" : "dark";
+}
+
+function createHighContrastStateValue(
+  base: OklchValue,
+  state: SurfaceState,
+  theme: SurfaceGenerationTheme,
+): `oklch(${string})` {
+  const multiplier = state === "hover" ? 1 : state === "selected" ? 1.8 : 2.6;
+  const isLightSurface = theme === "light";
+  const direction = isLightSurface ? -1 : 1;
+  const delta = isLightSurface ? 0.025 : 0.04;
+  const oklch = {
+    l: roundChannel(clampNumber(base.l + direction * delta * multiplier, 0.01, 0.995)),
+    c: base.c,
+    h: base.h,
+  };
+
+  return formatOklch(oklch);
 }
 
 function createThemeCss(
@@ -2000,7 +2401,7 @@ function createThemeCss(
 function createStateValue(
   base: OklchValue,
   state: SurfaceState,
-  theme: SurfaceTheme,
+  theme: SurfaceGenerationTheme,
   preset: SurfacePreset,
 ): `oklch(${string})` {
   const multiplier = state === "hover" ? 1 : state === "selected" ? 1.65 : 2.2;

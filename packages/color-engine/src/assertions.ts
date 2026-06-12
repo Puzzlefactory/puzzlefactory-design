@@ -65,6 +65,13 @@ export const CONTRAST_ASSERTION_THRESHOLDS = {
   "status-solid": 60,
 } as const satisfies Readonly<Record<ContrastAssertionRole, number>>;
 
+const ASSERTION_THEME_NAMES = [
+  "light",
+  "dark",
+  "high-contrast",
+  "high-contrast-dark",
+] as const satisfies readonly SurfaceTheme[];
+
 export function createContrastAssertionReport(options: {
   readonly namespace: string;
   readonly primitives: PrimitiveSurfaceOutput;
@@ -139,7 +146,7 @@ function createSurfaceTextPairs(
 ): readonly ContrastAssertionPair[] {
   const pairs: ContrastAssertionPair[] = [];
 
-  for (const theme of ["light", "dark"] as const satisfies readonly SurfaceTheme[]) {
+  for (const theme of ASSERTION_THEME_NAMES) {
     for (const background of ["surface-1", "surface-2", "surface-3", "surface-4"] as const) {
       pairs.push(createPair({
         theme,
@@ -161,7 +168,7 @@ function createUiPairs(): readonly ContrastAssertionPair[] {
     "primary-action-bg-hover",
     "primary-action-bg-pressed",
   ].flatMap((background) =>
-    (["light", "dark"] as const satisfies readonly SurfaceTheme[]).map((theme) =>
+    ASSERTION_THEME_NAMES.map((theme) =>
       createPair({
         theme,
         role: "ui",
@@ -172,7 +179,7 @@ function createUiPairs(): readonly ContrastAssertionPair[] {
       }),
     ),
   ).concat(
-    (["light", "dark"] as const satisfies readonly SurfaceTheme[]).map((theme) =>
+    ASSERTION_THEME_NAMES.map((theme) =>
       createPair({
         theme,
         role: "ui",
@@ -190,7 +197,7 @@ function createPrimarySoftPairs(): readonly ContrastAssertionPair[] {
     "primary-soft-bg",
     "primary-soft-bg-hover",
   ].flatMap((background) =>
-    (["light", "dark"] as const satisfies readonly SurfaceTheme[]).map((theme) =>
+    ASSERTION_THEME_NAMES.map((theme) =>
       createPair({
         theme,
         role: "ui",
@@ -206,7 +213,7 @@ function createPrimarySoftPairs(): readonly ContrastAssertionPair[] {
 function createStatusPairs(): readonly ContrastAssertionPair[] {
   const pairs: ContrastAssertionPair[] = [];
 
-  for (const theme of ["light", "dark"] as const satisfies readonly SurfaceTheme[]) {
+  for (const theme of ASSERTION_THEME_NAMES) {
     for (const intent of ["danger", "warning", "success", "info"] as const) {
       for (const background of [
         `${intent}-soft-bg`,
@@ -247,7 +254,7 @@ function createCustomRolePairs(
 ): readonly ContrastAssertionPair[] {
   const pairs: ContrastAssertionPair[] = [];
 
-  for (const theme of ["light", "dark"] as const satisfies readonly SurfaceTheme[]) {
+  for (const theme of ASSERTION_THEME_NAMES) {
     for (const role of Object.values(customRoles)) {
       for (const background of [
         role.cssAliases["soft-bg"],
