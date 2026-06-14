@@ -191,9 +191,11 @@ CE2-24 is implemented. Kitchen Sink now has a `/tokens` route for inspecting the
 
 CE2-25 is implemented. V2 now emits fixed high-contrast and high-contrast-dark semantic CSS output in addition to seed-driven light and dark output. `COLOR_ENGINE_CSS_LOAD_ORDER` now includes `theme-high-contrast.css` and `theme-high-contrast-dark.css`; `cssOutput.themes` exposes `high-contrast` and `high-contrast-dark`; and `data-theme-v2` supports `light`, `dark`, `high-contrast`, and `high-contrast-dark`. High-contrast output is intentionally fixed and optimized instead of being tuned by tenant primary/status/surface/custom-role seeds. Built-in roles and custom roles receive high-contrast semantic aliases that point to conservative fixed primitives. APCA assertions now cover all four themes. Kitchen Sink renders all four theme boundaries across Semantic, Themes, Components, Tokens, foreground text review, and Assertions. No static artifact writer, high-contrast authoring controls, tenant storage, v2 token package migration, or component API expansion was added.
 
+CE2-28 is implemented. `@puzzlefactory/color-engine` now exports `createColorEngineCssArtifacts(...)`, `ColorEngineCssArtifact`, and `ColorEngineCssArtifactHash`. The helper wraps the existing ordered `cssOutput.files` contract without changing generated CSS, adding UTF-8 byte length and a deterministic `fnv1a32-*` content hash for artifact identity/cache metadata. The package also has `npm run export:css --workspace @puzzlefactory/color-engine`, which builds the package and writes the default `primitives.css`, `theme-light.css`, `theme-dark.css`, `theme-high-contrast.css`, `theme-high-contrast-dark.css`, and `manifest.json` to ignored `packages/color-engine/.generated/default/` output. This is a local/static artifact proof only; no tenant storage API, Azure upload, deployment pipeline, v2 token package migration, or Theme Authoring Tool was added.
+
 ## Next Actions
 
-- Pause for direction selection. The planned CE2 arc is now complete enough to choose the next larger path: static CSS/token artifact export, Theme Authoring Tool planning, v2 token package migration, a high-contrast forced-colors follow-up, or a Lit form-control prototype.
+- Pause for direction selection. The planned CE2 arc is now complete enough to choose the next larger path: Theme Authoring Tool planning, v2 token package migration, a high-contrast forced-colors follow-up, tenant/blob publishing infrastructure, or a Lit form-control prototype.
 - If component work is prioritized instead, use ADR 0002 to scope a future Lit form-control prototype before adding inputs, selects, comboboxes, dialogs, menus, popovers, tabs, tooltips, or similar components.
 - Keep future custom role component APIs scoped and explicit; tenant storage, enforcement, and broad auto-tuning remain later sub-slices unless explicitly reauthorized.
 - Continue with simple raw Custom Element proofs only where the UI behavior is low-risk, such as status indicator, divider, toolbar spacer, or similar display/native-backed pieces.
@@ -202,7 +204,7 @@ CE2-25 is implemented. V2 now emits fixed high-contrast and high-contrast-dark s
 - Keep reviewing whether `--ds-text-muted` is sufficient for disabled component foregrounds or whether a future dedicated `--ds-text-disabled` semantic alias should be added.
 - Keep a future Theme Authoring Tool as a separate workstream candidate, not a Kitchen Sink expansion or a single CE2 slice.
 - Treat later component work as strategic placeholders. Reorder or revise if Kitchen Sink visual feedback exposes a more important color/token issue.
-- CE2-24 completed Kitchen Sink CSS/token inspection. Future generated CSS work should move to static artifact export, package-level helpers, or a separate authoring/publish workflow rather than adding more read-only inspection to Kitchen Sink.
+- CE2-24 completed Kitchen Sink CSS/token inspection, and CE2-28 completed the first package-level static artifact helper/script. Future generated CSS work should move to a separate authoring/publish workflow, tenant/blob storage integration, or v2 token package migration rather than adding more read-only inspection to Kitchen Sink.
 - CE2-23 completed the first preset/custom-role differentiation pass. Future preset work should be driven by visual review or a dedicated Theme Authoring Tool workstream, not by the original samey-preset backlog item.
 
 ## Seed Policy Plan
@@ -434,6 +436,7 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-25` | Fixed high-contrast v2 themes | Implemented. Added fixed high-contrast and high-contrast-dark primitive-backed semantic output, CSS files, theme selectors, APCA coverage, Kitchen Sink four-theme visualization, and package docs. | High-contrast authoring controls, tenant-tuned HC colors, static artifact writer, forced-colors CSS |
 | `CE2-26` | Lit form-control prototype | If component work resumes, explicitly add Lit as an approved dependency and build one narrow native-like form-control proof using platform form APIs and semantic CSS variables. | Broad form suite, combobox/select/dialog/menu/tabs work, Lion adoption |
 | `CE2-27` | React wrapper runtime tests | Add dedicated React DOM browser-runtime coverage for wrapper prop/attribute transitions, ref forwarding, slot output, and default-prop normalization if wrappers move beyond proof status. | New wrapper APIs, non-React wrappers, component behavior changes |
+| `CE2-28` | Static CSS artifact export | Implemented. Added `createColorEngineCssArtifacts(...)` metadata helper plus a package `export:css` script that writes the default five CSS files and manifest to ignored local output. | Tenant storage APIs, Azure upload/publish pipeline, v2 token package migration, Theme Authoring Tool |
 
 ## Completion Shape
 
@@ -451,6 +454,7 @@ This workstream is substantially complete when:
 - Primary and status seed handling is explicit: either balanced/adapted or anchored/preserved.
 - Custom color roles are generated, inspectable, tenant/theme-scoped role families under `--ds-role-*`, separate from stable built-in semantic aliases.
 - V2 CSS output provides explicit load-order-ready primitive and theme files while preserving the bundled compatibility string.
+- V2 CSS output can be wrapped as static artifact records with byte length and deterministic content-hash metadata, and locally written as ignored package-owned generated CSS files.
 - Kitchen Sink exposes generated v2 CSS/token inspection for primitive variables, semantic aliases, custom role variables, theme selector CSS, ordered files, and bundled CSS.
 - Consumer integration is documented for direct v2 `@puzzlefactory/color-engine` CSS output, including build-once, persisted runtime, and blob-hosted CSS patterns.
 - First Web Component proof consumes semantic CSS variables without calling color-generation internals.

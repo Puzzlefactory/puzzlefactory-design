@@ -21,6 +21,7 @@ import {
   createCustomColorRoleCssAliasNames,
   createCustomColorRoleCssVariableName,
   createCustomColorRoleCssVariableNames,
+  createColorEngineCssArtifacts,
   createColorEngineTheme,
   parseColorSeed,
 } from "../dist/index.js";
@@ -170,6 +171,52 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
   assert.match(output.css, /--ds-primary-action-bg: var\(--ds-primary-light-solid-2\);/);
   assert.match(output.css, /--ds-success-soft-border: var\(--ds-success-light-soft-4\);/);
   assert.doesNotMatch(output.css, /--ds-role-/);
+});
+
+test("CSS artifacts wrap ordered output files with stable metadata", () => {
+  const output = createColorEngineTheme({
+    namespace: "pf",
+    customRoles: {
+      promo: {
+        seed: "oklch(0.68 0.22 330)",
+        darkSeed: "oklch(0.78 0.18 330)",
+      },
+    },
+  });
+  const artifacts = createColorEngineCssArtifacts(output);
+  const artifactsFromCssOutput = createColorEngineCssArtifacts(output.cssOutput);
+
+  assert.deepEqual(
+    artifacts.map((artifact) => artifact.fileName),
+    [...COLOR_ENGINE_CSS_LOAD_ORDER],
+  );
+  assert.deepEqual(artifacts, artifactsFromCssOutput);
+  assert.deepEqual(
+    artifacts.map((artifact) => artifact.kind),
+    ["primitives", "theme", "theme", "theme", "theme"],
+  );
+  assert.deepEqual(
+    artifacts.map((artifact) => artifact.theme ?? null),
+    [null, "light", "dark", "high-contrast", "high-contrast-dark"],
+  );
+  assert.equal(artifacts[0]?.css, output.cssOutput.primitives);
+  assert.equal(artifacts[1]?.css, output.cssOutput.themes.light);
+  assert.equal(artifacts[2]?.css, output.cssOutput.themes.dark);
+  assert.equal(artifacts[3]?.css, output.cssOutput.themes["high-contrast"]);
+  assert.equal(artifacts[4]?.css, output.cssOutput.themes["high-contrast-dark"]);
+
+  for (const artifact of artifacts) {
+    assert.equal(artifact.byteLength, Buffer.byteLength(artifact.css, "utf8"));
+    assert.match(artifact.contentHash, /^fnv1a32-[0-9a-f]{8}$/);
+  }
+
+  assert.match(artifacts[0]?.css ?? "", /--pf-role-promo-light-solid-2: oklch\(/);
+  assert.match(artifacts[1]?.css ?? "", /\[data-theme-v2="light"\]/);
+  assert.match(artifacts[3]?.css ?? "", /\[data-theme-v2="high-contrast"\]/);
+  assert.notEqual(
+    artifacts[0]?.contentHash,
+    createColorEngineCssArtifacts(createColorEngineTheme())[0]?.contentHash,
+  );
 });
 
 test("custom roles generate primitive families and semantic aliases", () => {

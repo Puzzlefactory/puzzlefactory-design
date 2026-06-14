@@ -1,5 +1,7 @@
 import type {
   ApcaConstants,
+  ColorEngineCssArtifact,
+  ColorEngineCssArtifactHash,
   ColorEngineCssFile,
   ColorEngineCssFileKind,
   ColorEngineCssFileName,
@@ -72,6 +74,7 @@ import {
   createCustomColorRoleCssAliasNames,
   createCustomColorRoleCssVariableName,
   createCustomColorRoleCssVariableNames,
+  createColorEngineCssArtifacts,
   createColorEngineTheme,
   srgbToApcaY,
 } from "../src/index.js";
@@ -165,6 +168,10 @@ const textTreatment: TextTreatmentStrategy = TEXT_TREATMENT_STRATEGIES[textTreat
 const lightSurfacePreset: SurfacePreset = output.surfacePresets.light;
 const darkSurfacePreset: SurfacePreset = output.surfacePresets.dark;
 const cssOutput: ColorEngineCssOutput = output.cssOutput;
+const cssArtifacts: readonly ColorEngineCssArtifact[] = createColorEngineCssArtifacts(output);
+const cssArtifactsFromCssOutput: readonly ColorEngineCssArtifact[] =
+  createColorEngineCssArtifacts(cssOutput);
+const cssArtifactHash: ColorEngineCssArtifactHash = cssArtifacts[0]?.contentHash ?? "fnv1a32-00000000";
 const cssFile: ColorEngineCssFile | undefined = cssOutput.files[0];
 const cssFileName: ColorEngineCssFileName = "primitives.css";
 const cssFileKind: ColorEngineCssFileKind = "primitives";
@@ -234,6 +241,9 @@ void warningSeedPolicy;
 void textTreatmentName;
 void textTreatment;
 void cssOutput;
+void cssArtifacts;
+void cssArtifactsFromCssOutput;
+void cssArtifactHash;
 void cssFile;
 void cssFileName;
 void cssFileKind;

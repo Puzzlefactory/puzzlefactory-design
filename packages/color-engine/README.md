@@ -11,6 +11,7 @@ Runtime dependencies must remain zero.
 ```ts
 import {
   COLOR_ENGINE_CSS_LOAD_ORDER,
+  createColorEngineCssArtifacts,
   createColorEngineTheme,
 } from "@puzzlefactory/color-engine";
 
@@ -27,6 +28,7 @@ const output = createColorEngineTheme({
 
 console.log(COLOR_ENGINE_CSS_LOAD_ORDER);
 console.log(output.cssOutput.files);
+console.log(createColorEngineCssArtifacts(output));
 ```
 
 Seeds may be hex strings or `oklch(...)` strings. OKLCH is the preferred authoring format when a designer needs more precise control.
@@ -59,6 +61,27 @@ interface ColorEngineCssFile {
   readonly css: string;
 }
 ```
+
+For static publishing, `createColorEngineCssArtifacts(output)` wraps those same ordered file records with deployment metadata:
+
+```ts
+const artifacts = createColorEngineCssArtifacts(output);
+
+for (const artifact of artifacts) {
+  console.log(artifact.fileName, artifact.byteLength, artifact.contentHash);
+}
+```
+
+Each artifact preserves the original file fields and adds:
+
+```ts
+interface ColorEngineCssArtifact extends ColorEngineCssFile {
+  readonly byteLength: number;
+  readonly contentHash: `fnv1a32-${string}`;
+}
+```
+
+`contentHash` is a small deterministic package hash for artifact identity and cache metadata. It is not a security or integrity hash.
 
 The canonical order is exported as `COLOR_ENGINE_CSS_LOAD_ORDER`:
 
@@ -230,6 +253,18 @@ Build-once generation is the recommended production path for approved tenant or 
 
 This gives stable artifacts, simple cache busting, and no color-generation work during normal page rendering.
 
+For local inspection, the package can write the default generated files to an ignored output directory:
+
+```sh
+npm run export:css --workspace @puzzlefactory/color-engine
+```
+
+By default this writes `packages/color-engine/.generated/default/` with the five CSS files plus `manifest.json`. Pass an output directory after `--` to write somewhere else:
+
+```sh
+npm run export:css --workspace @puzzlefactory/color-engine -- ../../tmp/acme-theme
+```
+
 ### Runtime Generation
 
 Runtime generation is useful for theme editors, tenant admin tooling, previews, or systems where a tenant theme can change without redeploying the application.
@@ -273,5 +308,6 @@ Use immutable or versioned paths for cache busting. This avoids redeploying the 
 ## Scripts
 
 - `npm run build --workspace @puzzlefactory/color-engine`
+- `npm run export:css --workspace @puzzlefactory/color-engine`
 - `npm run typecheck --workspace @puzzlefactory/color-engine`
 - `npm run test --workspace @puzzlefactory/color-engine`

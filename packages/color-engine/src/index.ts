@@ -355,6 +355,13 @@ export interface ColorEngineCssFile {
   readonly css: string;
 }
 
+export type ColorEngineCssArtifactHash = `fnv1a32-${string}`;
+
+export interface ColorEngineCssArtifact extends ColorEngineCssFile {
+  readonly byteLength: number;
+  readonly contentHash: ColorEngineCssArtifactHash;
+}
+
 export type ValidationErrorCode =
   | "INVALID_SEED"
   | "INVALID_SEED_POLICY"
@@ -925,6 +932,18 @@ export function parseColorSeed(seed: string, field = "seed"): OklchValue {
     value: seed,
     message: "Seed must be #rgb, #rrggbb, or oklch(L C H).",
   });
+}
+
+export function createColorEngineCssArtifacts(
+  output: ColorEngineOutput | ColorEngineCssOutput,
+): readonly ColorEngineCssArtifact[] {
+  const cssOutput = "cssOutput" in output ? output.cssOutput : output;
+
+  return cssOutput.files.map((file) => ({
+    ...file,
+    byteLength: getUtf8ByteLength(file.css),
+    contentHash: createStableCssContentHash(file.css),
+  }));
 }
 
 function resolveInput(input: ColorEngineInput): ResolvedColorEngineInput {
@@ -2309,6 +2328,54 @@ function createCssOutput(
     files,
     all: files.map((file) => file.css).join("\n\n"),
   };
+}
+
+function getUtf8ByteLength(value: string): number {
+  let byteLength = 0;
+
+  for (const byte of iterateUtf8Bytes(value)) {
+    void byte;
+    byteLength += 1;
+  }
+
+  return byteLength;
+}
+
+function createStableCssContentHash(value: string): ColorEngineCssArtifactHash {
+  let hash = 0x811c9dc5;
+
+  for (const byte of iterateUtf8Bytes(value)) {
+    hash ^= byte;
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+
+  return `fnv1a32-${hash.toString(16).padStart(8, "0")}`;
+}
+
+function* iterateUtf8Bytes(value: string): Generator<number> {
+  for (let index = 0; index < value.length; index += 1) {
+    const codePoint = value.codePointAt(index) ?? 0;
+
+    if (codePoint > 0xffff) {
+      index += 1;
+    }
+
+    if (codePoint <= 0x7f) {
+      yield codePoint;
+    } else if (codePoint <= 0x7ff) {
+      yield 0xc0 | (codePoint >> 6);
+      yield 0x80 | (codePoint & 0x3f);
+    } else if (codePoint <= 0xffff) {
+      yield 0xe0 | (codePoint >> 12);
+      yield 0x80 | ((codePoint >> 6) & 0x3f);
+      yield 0x80 | (codePoint & 0x3f);
+    } else {
+      yield 0xf0 | (codePoint >> 18);
+      yield 0x80 | ((codePoint >> 12) & 0x3f);
+      yield 0x80 | ((codePoint >> 6) & 0x3f);
+      yield 0x80 | (codePoint & 0x3f);
+    }
+  }
 }
 
 function createPrimitiveCss(

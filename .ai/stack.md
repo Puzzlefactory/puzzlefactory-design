@@ -165,7 +165,7 @@ Figma MCP is available in Claude Code sessions and can read design files, inspec
 
 ## Distribution
 
-Generated color CSS v2 is distributed directly from `@puzzlefactory/color-engine` for now. The package documents the supported consumer contract for `cssOutput.files`, primitive/theme file load order, `data-theme-v2`, build-once generation, persisted runtime generation, and blob-hosted tenant CSS.
+Generated color CSS v2 is distributed directly from `@puzzlefactory/color-engine` for now. The package documents the supported consumer contract for `cssOutput.files`, primitive/theme file load order, `data-theme-v2`, build-once generation, persisted runtime generation, and blob-hosted tenant CSS. `createColorEngineCssArtifacts(...)` wraps the ordered CSS files with byte length and deterministic content hash metadata for static publishing. `npm run export:css --workspace @puzzlefactory/color-engine` writes the default generated files plus `manifest.json` to the ignored `packages/color-engine/.generated/default/` folder for local inspection.
 
 Component distribution is still not fully decided. The current proof favors Web Components because they can consume the generated CSS contract from any framework. A first React wrapper package now exists for React consumer ergonomics, but broad packaging, CDN, and non-React wrapper decisions remain deferred.
 

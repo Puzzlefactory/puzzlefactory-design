@@ -10,3 +10,4 @@ dist/
 build/
 .turbo/
 *.tsbuildinfo
+packages/color-engine/.generated/
