@@ -159,6 +159,16 @@ Status: React + Vite + React Router 7 verification shell wired to v2 neutral/sur
 
 Status: placeholder folder only. Stack undecided.
 
+### `apps/theme-author`
+
+Status: planned only. This app does not exist yet.
+
+- Purpose: future designer-facing Theme Authoring workflow for normalized theme input editing, preview, human-readable diagnostics, artifact preview, and export.
+- Expected relationship to Kitchen Sink: separate app/workflow. Kitchen Sink remains the diagnostic lab for internals; Theme Authoring should guide humans through coherent theme creation and export.
+- Expected early stack: likely React + Vite + React Router, to stay aligned with Kitchen Sink unless a future slice chooses otherwise.
+- Expected package inputs: `@puzzlefactory/color-engine` for color output and artifacts; future `@puzzlefactory/tokens` for broader token model; future `@puzzlefactory/themes` for composed theme configs, manifests, and artifact orchestration.
+- Tooling dependencies such as Color.js may be considered for authoring/dev workflows only; do not add them to `@puzzlefactory/color-engine` runtime without explicit approval.
+
 ## Figma Integration
 
 Figma MCP is available in Claude Code sessions and can read design files, inspect tokens, and search the design system. The approach for bidirectional design/code sync is not yet defined.

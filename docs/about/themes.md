@@ -44,3 +44,41 @@ Package `dist/` directories should remain for compiled package code. Tenant-gene
 Runtime generation is useful for authoring tools, previews, and admin workflows.
 
 Production applications should generally load persisted CSS artifacts instead of regenerating a theme on every request or render.
+
+## Theme Authoring Tool
+
+Theme Authoring should be a separate app and workstream from Kitchen Sink.
+
+Kitchen Sink remains the diagnostic lab for engine, token, and component internals. Theme Authoring should be the designer-facing workflow for creating, reviewing, versioning, and exporting themes.
+
+The first authoring pass should stay narrow:
+
+- edit color-engine input
+- preview light, dark, high-contrast, and high-contrast-dark output
+- review APCA diagnostics in human terms
+- export CSS artifacts and `manifest.json`
+- preserve normalized input as the source of truth
+
+## Regions And Custom Color Roles
+
+Custom color roles are the preferred flexibility path for identity, secondary, accent, promo, tenant, workflow, header, footer, and similar colors.
+
+Do not assume built-in secondary or accent roles are required just because a design needs another color. A theme can define named custom roles and then map those roles to region semantics.
+
+Example future concept:
+
+```txt
+header:
+  source: role.institution.solid
+  bg: role-institution-solid-bg
+  text: role-institution-solid-text
+  border: role-institution-solid-bg-pressed
+
+footer:
+  source: role.footer.solid
+  bg: role-footer-solid-bg
+  text: role-footer-solid-text
+  border: role-footer-solid-bg-pressed
+```
+
+Region mappings should choose complete role/treatment pairs, not arbitrary mismatched individual colors. If a region maps `bg`, `text`, `link`, or action colors, the theme layer must also define APCA diagnostic pairs for those text/background relationships.

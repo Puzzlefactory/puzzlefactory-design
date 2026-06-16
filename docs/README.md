@@ -20,3 +20,7 @@ These docs are discoverable reference material. They are not mandatory startup r
 ## Specifications
 
 - [Color Engine Spec](./color-engine-spec.md)
+
+## Notes
+
+- [Direction Questions](./notes/direction-questions.md)
