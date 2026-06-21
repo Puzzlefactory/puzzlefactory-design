@@ -2,7 +2,7 @@
 
 Status: active
 Created: 2026-06-15
-Last Updated: 2026-06-16
+Last Updated: 2026-06-20
 
 Theme Authoring is the future designer-facing workflow for creating, reviewing, versioning, and exporting design-system themes. It is separate from Kitchen Sink: Kitchen Sink remains the diagnostic lab for engine, token, and component internals, while Theme Authoring should guide humans through a coherent theme creation and artifact export flow.
 
@@ -34,7 +34,7 @@ Out of scope:
 
 ## Current State
 
-Theme Authoring now has a minimal app scaffold at `apps/theme-author`. It is a separate React + Vite + React Router app with a designer-facing workflow shell for Overview, Theme Input, Preview, Artifacts, and Diagnostics. It does not yet import the color engine or implement real authoring behavior. The direction is captured in `docs/notes/direction-questions.md` and the `docs/about/*` package-boundary docs.
+Theme Authoring now has a first usable input editor, designer-facing preview, and artifact inspection surface at `apps/theme-author`. It is a separate React + Vite + React Router app with a workflow for Overview, Theme Input, Preview, Artifacts, and Diagnostics. It imports `@puzzlefactory/color-engine`, applies curated theme presets, holds normalized theme input state, validates that input through `createColorEngineTheme(...)`, injects generated semantic CSS, and previews light, dark, high-contrast, and high-contrast-dark output in realistic app-shell review frames with chrome, nested surfaces, controls, actions, and status treatments. Its Artifacts route previews the canonical generated CSS files, bundled CSS, and a derived `manifest.json`, with browser-local copy/download controls. Human-readable diagnostics are still deferred. The direction is captured in `docs/notes/direction-questions.md` and the `docs/about/*` package-boundary docs.
 
 Current supporting pieces exist:
 
@@ -48,16 +48,17 @@ Current supporting pieces exist:
 
 ## Next Actions
 
-- `TA-03`: Add a first normalized theme input editor using existing color-engine fields and curated presets.
-- `TA-04`: Add artifact preview/export for multi-file CSS, bundled CSS, and `manifest.json`.
-- `TA-05`: Add human-readable APCA review and theme readiness summary.
-- `TA-06`: Plan or implement initial region semantic mapping for header/footer/sidebar-style surfaces, with APCA diagnostics.
-- `TA-07`: Decide whether Color.js should be added to Theme Authoring for color conversion/picker workflows.
-- `TA-08`: Revisit `@puzzlefactory/themes` package responsibilities once authoring artifact needs are clearer.
+- `TA-06`: Add human-readable APCA review and theme readiness summary.
+- `TA-07`: Plan or implement initial region semantic mapping for header/footer/sidebar-style surfaces, with APCA diagnostics.
+- `TA-08`: Decide whether Color.js should be added to Theme Authoring for color conversion/picker workflows.
+- `TA-09`: Revisit `@puzzlefactory/themes` package responsibilities once authoring artifact needs are clearer.
 
 ## Completed Slices
 
 - `TA-02`: Created `apps/theme-author` as a private React + Vite + React Router app with a thin designer-facing route shell and workspace scripts.
+- `TA-03`: Added the first normalized theme input editor using existing color-engine curated presets, seed/policy/surface/text fields, real generator validation, and generated semantic CSS preview cards.
+- `TA-04`: Replaced the compact preview cards with designer-facing generated theme review frames for light, dark, high-contrast, and high-contrast-dark output.
+- `TA-05`: Added artifact inspection/export for generated CSS files, bundled CSS, and derived manifest metadata, with local copy/download controls.
 
 ## Completion Shape
 

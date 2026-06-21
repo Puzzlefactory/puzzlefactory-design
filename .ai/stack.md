@@ -161,12 +161,12 @@ Status: placeholder folder only. Stack undecided.
 
 ### `apps/theme-author`
 
-Status: minimal scaffold implemented.
+Status: first normalized input editor implemented.
 
 - Purpose: future designer-facing Theme Authoring workflow for normalized theme input editing, preview, human-readable diagnostics, artifact preview, and export.
 - Expected relationship to Kitchen Sink: separate app/workflow. Kitchen Sink remains the diagnostic lab for internals; Theme Authoring should guide humans through coherent theme creation and export.
 - Runtime stack: React 19, Vite 8, React Router 7.
-- Current behavior: private workspace app with a thin route/layout shell for Overview, Theme Input, Preview, Artifacts, and Diagnostics. It does not yet import `@puzzlefactory/color-engine`, edit normalized theme input, generate artifacts, or render real APCA diagnostics.
+- Current behavior: private workspace app with routes for Overview, Theme Input, Preview, Artifacts, and Diagnostics. It imports `@puzzlefactory/color-engine`, applies `COLOR_ENGINE_THEME_PRESETS`, edits normalized seed/policy/surface/text input fields, validates through `createColorEngineTheme(...)`, injects generated semantic CSS variables, renders designer-facing app-shell preview frames for light, dark, high-contrast, and high-contrast-dark output, and previews generated CSS artifacts plus a derived manifest with browser-local copy/download controls. Human-readable APCA diagnostics remain deferred.
 - Expected package inputs: `@puzzlefactory/color-engine` for color output and artifacts; future `@puzzlefactory/tokens` for broader token model; future `@puzzlefactory/themes` for composed theme configs, manifests, and artifact orchestration.
 - Tooling dependencies such as Color.js may be considered for authoring/dev workflows only; do not add them to `@puzzlefactory/color-engine` runtime without explicit approval.
 
