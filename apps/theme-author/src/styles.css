@@ -703,6 +703,250 @@ select {
   padding: 18px;
 }
 
+.region-workspace {
+  display: grid;
+  gap: 24px;
+}
+
+.region-intro-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+  gap: 24px;
+  align-items: center;
+  border: 1px solid #c6d1c7;
+  border-radius: 8px;
+  background: rgba(248, 250, 247, 0.86);
+  padding: 28px;
+}
+
+.region-intro-panel h2 {
+  margin: 6px 0 12px;
+  color: #101713;
+  font-size: clamp(1.75rem, 3vw, 2.8rem);
+  line-height: 1.08;
+}
+
+.region-intro-panel p,
+.region-map-card p {
+  margin: 0;
+  color: #37443d;
+  line-height: 1.5;
+}
+
+.region-score {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  border: 1px solid rgba(16, 23, 19, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.42);
+  padding: 20px;
+  text-align: center;
+}
+
+.region-score strong {
+  color: #101713;
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.region-score span {
+  color: #3c4c43;
+  font-weight: 800;
+}
+
+.region-map-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.region-map-card {
+  display: grid;
+  gap: 14px;
+  border: 1px solid #c6d1c7;
+  border-radius: 8px;
+  background: rgba(248, 250, 247, 0.86);
+  padding: 20px;
+}
+
+.region-map-card h3 {
+  margin: 0;
+  color: #101713;
+  font-size: 1.35rem;
+}
+
+.region-map-card dl,
+.region-diagnostic-row dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.region-map-card dl div,
+.region-diagnostic-row dl div {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.35fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+}
+
+.region-map-card dt,
+.region-diagnostic-row dt {
+  color: #5c6d62;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.region-map-card dd,
+.region-diagnostic-row dd {
+  min-width: 0;
+  margin: 0;
+  color: #101713;
+  font-weight: 750;
+}
+
+.region-map-card code,
+.region-diagnostic-row code {
+  overflow-wrap: anywhere;
+}
+
+.region-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.region-theme-preview {
+  display: grid;
+  gap: 16px;
+}
+
+.region-theme-preview > header {
+  display: grid;
+  gap: 6px;
+}
+
+.region-theme-preview > header h2 {
+  margin: 0;
+  color: var(--ds-text-primary);
+}
+
+.region-shell-preview {
+  display: grid;
+  gap: 10px;
+}
+
+.region-example {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.65fr) minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  border: 1px solid var(--region-border);
+  border-radius: 8px;
+  background: var(--region-bg);
+  color: var(--region-text);
+  padding: 16px;
+}
+
+.region-example:hover {
+  background: var(--region-bg-hover);
+}
+
+.region-example span,
+.region-example strong {
+  display: block;
+  color: var(--region-text);
+}
+
+.region-example span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.region-example strong {
+  margin-top: 4px;
+  font-size: 1.05rem;
+}
+
+.region-example nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.region-example a {
+  color: var(--region-text);
+  font-weight: 800;
+}
+
+.region-example button {
+  min-height: 40px;
+  border: 1px solid var(--region-action-bg);
+  border-radius: 8px;
+  background: var(--region-action-bg);
+  color: var(--region-action-text);
+  font-weight: 800;
+  padding: 0 14px;
+}
+
+.region-example button:hover {
+  border-color: var(--region-action-bg-hover);
+  background: var(--region-action-bg-hover);
+}
+
+.region-diagnostic-panel {
+  gap: 16px;
+}
+
+.region-diagnostic-list {
+  display: grid;
+  gap: 10px;
+}
+
+.region-diagnostic-row {
+  display: grid;
+  gap: 12px;
+  border: 1px solid #d3ddd4;
+  border-radius: 8px;
+  background: #f8faf7;
+  padding: 14px;
+}
+
+.region-diagnostic-row-fail {
+  border-color: #d69588;
+  background: #fff1ee;
+}
+
+.region-diagnostic-row > div:first-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.region-diagnostic-row span {
+  border: 1px solid #c6d1c7;
+  border-radius: 999px;
+  background: #fff;
+  color: #233128;
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 5px 9px;
+  text-transform: uppercase;
+}
+
+.region-diagnostic-row-fail span {
+  border-color: #d69588;
+  color: #7f2618;
+}
+
+.region-diagnostic-row strong {
+  color: #101713;
+}
+
 .placeholder-list {
   display: grid;
   gap: 10px;
@@ -1029,6 +1273,10 @@ select {
   .artifact-manifest-panel,
   .artifact-toolbar,
   .preset-grid,
+  .region-example,
+  .region-intro-panel,
+  .region-map-grid,
+  .region-preview-grid,
   .status-editor-grid,
   .theme-preview-grid,
   .status-band {

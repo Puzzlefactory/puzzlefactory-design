@@ -7,6 +7,7 @@ import {
   SURFACE_PRESETS,
   TEXT_TREATMENT_STRATEGIES,
   TEXT_TREATMENT_STRATEGY_NAMES,
+  calculateApcaLcFromOklch,
   createColorEngineCssArtifacts,
   createColorEngineTheme,
   type ContrastAssertionRole,
@@ -16,13 +17,14 @@ import {
   type ColorEngineOutput,
   type ColorEngineThemePresetInput,
   type ColorEngineThemePresetName,
+  type ColorToken,
   type ResolvedContrastAssertion,
   type SeedPolicy,
   type SurfaceTheme,
   type SurfacePresetName,
   type TextTreatmentStrategyName,
 } from "@puzzlefactory/color-engine";
-import type { ChangeEvent, ReactNode } from "react";
+import type { CSSProperties, ChangeEvent, ReactNode } from "react";
 import { useMemo, useRef, useState } from "react";
 import { NavLink, Navigate, Route, Routes } from "react-router";
 
@@ -30,6 +32,7 @@ const navItems = [
   { to: "/overview", label: "Overview" },
   { to: "/input", label: "Theme Input" },
   { to: "/preview", label: "Preview" },
+  { to: "/regions", label: "Regions" },
   { to: "/artifacts", label: "Artifacts" },
   { to: "/diagnostics", label: "Diagnostics" },
 ] as const;
@@ -83,6 +86,48 @@ const statusFields = [
   { key: "info", label: "Info" },
 ] as const;
 
+const themeAuthorCustomRoles = {
+  institution: {
+    seed: "oklch(0.42 0.13 255)",
+    darkSeed: "oklch(0.66 0.1 255)",
+    seedPolicy: "balanced",
+  },
+  navigation: {
+    seed: "oklch(0.5 0.09 178)",
+    darkSeed: "oklch(0.7 0.08 178)",
+    seedPolicy: "balanced",
+  },
+  footer: {
+    seed: "oklch(0.28 0.05 250)",
+    darkSeed: "oklch(0.62 0.06 250)",
+    seedPolicy: "balanced",
+  },
+} as const satisfies NonNullable<ColorEngineInput["customRoles"]>;
+
+const regionMappings = [
+  {
+    id: "header",
+    label: "Header",
+    roleId: "institution",
+    treatment: "solid",
+    description: "Institutional masthead, account controls, and primary navigation chrome.",
+  },
+  {
+    id: "sidebar",
+    label: "Sidebar",
+    roleId: "navigation",
+    treatment: "soft",
+    description: "Persistent navigation context that can be tinted without becoming primary action color.",
+  },
+  {
+    id: "footer",
+    label: "Footer",
+    roleId: "footer",
+    treatment: "solid",
+    description: "Dense lower-chrome area for links, legal text, and operational metadata.",
+  },
+] as const satisfies readonly RegionMapping[];
+
 const seedPolicyOptions = SEED_POLICY_NAMES.map((name) => ({
   label: toTitleLabel(name),
   value: name,
@@ -100,6 +145,7 @@ const textTreatmentOptions = TEXT_TREATMENT_STRATEGY_NAMES.map((name) => ({
 
 type EditableThemeInput = ColorEngineThemePresetInput & {
   readonly namespace: string;
+  readonly customRoles?: ColorEngineInput["customRoles"];
 };
 
 type EngineState =
@@ -126,10 +172,53 @@ type ArtifactPreviewFile = {
   readonly contentHash?: string;
 };
 
+type RegionTreatment = "soft" | "solid";
+
+type RegionMapping = {
+  readonly id: "header" | "sidebar" | "footer";
+  readonly label: string;
+  readonly roleId: keyof typeof themeAuthorCustomRoles;
+  readonly treatment: RegionTreatment;
+  readonly description: string;
+};
+
+type RegionSemanticPart =
+  | "bg"
+  | "bg-hover"
+  | "border"
+  | "text"
+  | "action-bg"
+  | "action-bg-hover"
+  | "action-text";
+
+type RegionResolvedMapping = RegionMapping & {
+  readonly namespace: string;
+  readonly roleLabel: string;
+  readonly semantics: Readonly<Record<RegionSemanticPart, string>>;
+};
+
+type RegionDiagnosticResult = {
+  readonly id: string;
+  readonly theme: SurfaceTheme;
+  readonly region: RegionResolvedMapping;
+  readonly label: string;
+  readonly foregroundName: string;
+  readonly backgroundName: string;
+  readonly foregroundToken: ColorToken;
+  readonly backgroundToken: ColorToken;
+  readonly lc: number;
+  readonly absLc: number;
+  readonly threshold: number;
+  readonly passed: boolean;
+};
+
+type RegionStyle = CSSProperties & Readonly<Record<`--region-${string}`, string>>;
+
 const initialPresetName = "evergreen" satisfies ColorEngineThemePresetName;
 const initialInput = {
   ...COLOR_ENGINE_THEME_PRESETS[initialPresetName].input,
   namespace: "ds",
+  customRoles: themeAuthorCustomRoles,
 } as const satisfies EditableThemeInput;
 
 export function App() {
@@ -146,6 +235,7 @@ export function App() {
     setThemeInput({
       ...COLOR_ENGINE_THEME_PRESETS[presetName].input,
       namespace: themeInput.namespace,
+      customRoles: themeInput.customRoles,
     });
   }
 
@@ -225,6 +315,7 @@ export function App() {
             }
           />
           <Route path="/preview" element={<PreviewPage engine={engine} />} />
+          <Route path="/regions" element={<RegionsPage engine={engine} />} />
           <Route path="/artifacts" element={<ArtifactsPage engine={engine} />} />
           <Route path="/diagnostics" element={<DiagnosticsPage engine={engine} />} />
           <Route path="*" element={<Navigate to="/overview" replace />} />
@@ -441,6 +532,22 @@ function PreviewPage({ engine }: { readonly engine: EngineState }) {
   );
 }
 
+function RegionsPage({ engine }: { readonly engine: EngineState }) {
+  return (
+    <PageFrame
+      eyebrow="Regions"
+      title="Region Semantics"
+      summary="Map custom color roles to complete header, sidebar, and footer treatments before component APIs get involved."
+    >
+      {engine.kind === "ready" ? (
+        <RegionMappingReview output={engine.output} />
+      ) : (
+        <EngineNotice engine={engine} />
+      )}
+    </PageFrame>
+  );
+}
+
 function ArtifactsPage({ engine }: { readonly engine: EngineState }) {
   return (
     <PageFrame
@@ -597,8 +704,145 @@ function ChecklistPanel({
   );
 }
 
+function RegionMappingReview({ output }: { readonly output: ColorEngineOutput }) {
+  const regions = createResolvedRegionMappings(output);
+  const diagnostics = createRegionDiagnostics(output, regions);
+  const failed = diagnostics.filter((result) => !result.passed);
+
+  return (
+    <section className="region-workspace" aria-label="Region semantic mapping review">
+      <section className="region-intro-panel">
+        <div>
+          <span className="eyebrow">Mapping model</span>
+          <h2>Complete role treatments</h2>
+          <p>
+            Regions choose a generated custom role and one treatment. The region then
+            maps background, border, text, hover, and action aliases together instead
+            of letting each component pick arbitrary custom colors.
+          </p>
+        </div>
+        <div className="region-score">
+          <strong>{diagnostics.length - failed.length}</strong>
+          <span>of {diagnostics.length} region pairs pass</span>
+        </div>
+      </section>
+
+      <section className="region-map-grid" aria-label="Configured region mappings">
+        {regions.map((region) => (
+          <RegionMappingCard key={region.id} region={region} />
+        ))}
+      </section>
+
+      <section className="region-preview-grid" aria-label="Region previews by theme">
+        {previewThemes.map((theme) => (
+          <article className="region-theme-preview generated-preview" data-theme-v2={theme.key} key={theme.key}>
+            <header>
+              <span>{theme.label}</span>
+              <h2>Regional App Shell</h2>
+              <p>{theme.note}</p>
+            </header>
+            <div className="region-shell-preview">
+              {regions.map((region) => (
+                <RegionExample key={`${theme.key}-${region.id}`} region={region} />
+              ))}
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="panel region-diagnostic-panel">
+        <div className="panel-header">
+          <h2>Region APCA diagnostics</h2>
+          <span>{failed.length} failed / {diagnostics.length}</span>
+        </div>
+        <p className="panel-copy">
+          Region diagnostics are generated from the mapped custom role aliases. They
+          verify region text, links, and action text against their mapped backgrounds
+          without adding component tone props.
+        </p>
+        <div className="region-diagnostic-list">
+          {diagnostics.map((result) => (
+            <RegionDiagnosticRow key={result.id} result={result} />
+          ))}
+        </div>
+      </section>
+    </section>
+  );
+}
+
+function RegionMappingCard({ region }: { readonly region: RegionResolvedMapping }) {
+  return (
+    <article className="region-map-card">
+      <span className="eyebrow">{region.id}</span>
+      <h3>{region.label}</h3>
+      <p>{region.description}</p>
+      <dl>
+        <div>
+          <dt>Role</dt>
+          <dd>{region.roleLabel}</dd>
+        </div>
+        <div>
+          <dt>Treatment</dt>
+          <dd>{region.treatment}</dd>
+        </div>
+        <div>
+          <dt>Background</dt>
+          <dd><code>{region.semantics.bg}</code></dd>
+        </div>
+        <div>
+          <dt>Text</dt>
+          <dd><code>{region.semantics.text}</code></dd>
+        </div>
+      </dl>
+    </article>
+  );
+}
+
+function RegionExample({ region }: { readonly region: RegionResolvedMapping }) {
+  return (
+    <section className={`region-example region-example-${region.id}`} style={createRegionStyle(region)}>
+      <div>
+        <span>{region.label}</span>
+        <strong>{region.roleLabel}</strong>
+      </div>
+      <nav aria-label={`${region.label} links`}>
+        <a href="#region-link" onClick={(event) => event.preventDefault()}>Overview</a>
+        <a href="#region-link" onClick={(event) => event.preventDefault()}>Reports</a>
+      </nav>
+      <button type="button">Action</button>
+    </section>
+  );
+}
+
+function RegionDiagnosticRow({ result }: { readonly result: RegionDiagnosticResult }) {
+  return (
+    <article className={result.passed ? "region-diagnostic-row" : "region-diagnostic-row region-diagnostic-row-fail"}>
+      <div>
+        <span>{result.passed ? "Pass" : "Review"}</span>
+        <strong>{getThemeLabel(result.theme)} {result.region.label}: {result.label}</strong>
+      </div>
+      <dl>
+        <div>
+          <dt>Current</dt>
+          <dd>Lc {formatNumber(result.absLc)}</dd>
+        </div>
+        <div>
+          <dt>Target</dt>
+          <dd>Lc {result.threshold}</dd>
+        </div>
+        <div>
+          <dt>Tokens</dt>
+          <dd><code>{result.foregroundToken.name}</code> on <code>{result.backgroundToken.name}</code></dd>
+        </div>
+      </dl>
+    </article>
+  );
+}
+
 function DiagnosticsReview({ output }: { readonly output: ColorEngineOutput }) {
-  const readiness = createReadinessSummary(output);
+  const regionDiagnostics = createRegionDiagnostics(output, createResolvedRegionMappings(output));
+  const regionFailures = regionDiagnostics.filter((result) => !result.passed);
+  const readiness = createReadinessSummary(output, regionFailures);
   const failures = output.assertions.results.filter((result) => !result.passed);
   const requiredFailures = failures.filter((result) => result.severity === "required");
   const advisoryFailures = failures.filter((result) => result.severity === "diagnostic");
@@ -632,7 +876,11 @@ function DiagnosticsReview({ output }: { readonly output: ColorEngineOutput }) {
           tone={output.assertions.summary.diagnosticFailed === 0 ? "good" : "neutral"}
           value={output.assertions.summary.diagnosticFailed.toString()}
         />
-        <MetricCard label="Algorithm" value={output.assertions.apcaAlgorithmVersion} />
+        <MetricCard
+          label="Region failures"
+          tone={regionFailures.length === 0 ? "good" : "bad"}
+          value={regionFailures.length.toString()}
+        />
       </section>
 
       <section className="diagnostic-guidance-grid" aria-label="Export guidance">
@@ -690,6 +938,26 @@ function DiagnosticsReview({ output }: { readonly output: ColorEngineOutput }) {
         results={advisoryFailures}
         title="Advisory issues"
       />
+
+      <section className="panel region-diagnostic-panel">
+        <div className="panel-header">
+          <h2>Region issues</h2>
+          <span>{regionFailures.length} failed / {regionDiagnostics.length}</span>
+        </div>
+        <p className="panel-copy">
+          Header, sidebar, and footer mappings are checked as complete region
+          treatments. These pairs are separate from component tone props.
+        </p>
+        <div className="region-diagnostic-list">
+          {regionFailures.length > 0 ? (
+            regionFailures.map((result) => (
+              <RegionDiagnosticRow key={result.id} result={result} />
+            ))
+          ) : (
+            <p className="diagnostic-empty">No region contrast failures for the active input.</p>
+          )}
+        </div>
+      </section>
 
       {customRoleResults.length > 0 ? (
         <section className="panel">
@@ -1096,9 +1364,19 @@ function createEngineState(input: EditableThemeInput): EngineState {
 }
 
 function toColorEngineInput(input: EditableThemeInput): ColorEngineInput {
-  return {
-    ...input,
+  const { customRoles, ...baseInput } = input;
+  const output: ColorEngineInput = {
+    ...baseInput,
     namespace: input.namespace.trim(),
+  };
+
+  if (customRoles === undefined) {
+    return output;
+  }
+
+  return {
+    ...output,
+    customRoles,
   };
 }
 
@@ -1174,9 +1452,168 @@ function createArtifactManifest(
   );
 }
 
+function createResolvedRegionMappings(output: ColorEngineOutput): readonly RegionResolvedMapping[] {
+  return regionMappings.flatMap((mapping) => {
+    const role = output.customRoles[mapping.roleId];
+
+    if (!role) {
+      return [];
+    }
+
+    const backgroundPart = mapping.treatment === "solid" ? "solid-bg" : "soft-bg";
+    const hoverPart = mapping.treatment === "solid" ? "solid-bg-hover" : "soft-bg-hover";
+    const borderPart = mapping.treatment === "solid" ? "solid-bg-pressed" : "soft-border";
+    const textPart = mapping.treatment === "solid" ? "solid-text" : "soft-text";
+    const actionTreatment = mapping.treatment === "solid" ? "soft" : "solid";
+    const actionBackgroundPart = actionTreatment === "solid" ? "solid-bg" : "soft-bg";
+    const actionHoverPart = actionTreatment === "solid" ? "solid-bg-hover" : "soft-bg-hover";
+    const actionTextPart = actionTreatment === "solid" ? "solid-text" : "soft-text";
+
+    return [{
+      ...mapping,
+      namespace: output.input.namespace,
+      roleLabel: toTitleLabel(role.id),
+      semantics: {
+        bg: role.cssAliases[backgroundPart],
+        "bg-hover": role.cssAliases[hoverPart],
+        border: role.cssAliases[borderPart],
+        text: role.cssAliases[textPart],
+        "action-bg": role.cssAliases[actionBackgroundPart],
+        "action-bg-hover": role.cssAliases[actionHoverPart],
+        "action-text": role.cssAliases[actionTextPart],
+      },
+    }];
+  });
+}
+
+function createRegionStyle(region: RegionResolvedMapping): RegionStyle {
+  return {
+    "--region-bg": cssVar(region.namespace, region.semantics.bg),
+    "--region-bg-hover": cssVar(region.namespace, region.semantics["bg-hover"]),
+    "--region-border": cssVar(region.namespace, region.semantics.border),
+    "--region-text": cssVar(region.namespace, region.semantics.text),
+    "--region-action-bg": cssVar(region.namespace, region.semantics["action-bg"]),
+    "--region-action-bg-hover": cssVar(region.namespace, region.semantics["action-bg-hover"]),
+    "--region-action-text": cssVar(region.namespace, region.semantics["action-text"]),
+  };
+}
+
+function createRegionDiagnostics(
+  output: ColorEngineOutput,
+  regions: readonly RegionResolvedMapping[],
+): readonly RegionDiagnosticResult[] {
+  return previewThemes.flatMap((theme) =>
+    regions.flatMap((region) => [
+      createRegionDiagnostic({
+        backgroundName: region.semantics.bg,
+        foregroundName: region.semantics.text,
+        label: "region text on region background",
+        output,
+        region,
+        theme: theme.key,
+      }),
+      createRegionDiagnostic({
+        backgroundName: region.semantics["bg-hover"],
+        foregroundName: region.semantics.text,
+        label: "region text on hover background",
+        output,
+        region,
+        theme: theme.key,
+      }),
+      createRegionDiagnostic({
+        backgroundName: region.semantics["action-bg"],
+        foregroundName: region.semantics["action-text"],
+        label: "region action text on action background",
+        output,
+        region,
+        theme: theme.key,
+      }),
+      createRegionDiagnostic({
+        backgroundName: region.semantics["action-bg-hover"],
+        foregroundName: region.semantics["action-text"],
+        label: "region action text on action hover",
+        output,
+        region,
+        theme: theme.key,
+      }),
+    ]),
+  );
+}
+
+function createRegionDiagnostic(options: {
+  readonly output: ColorEngineOutput;
+  readonly theme: SurfaceTheme;
+  readonly region: RegionResolvedMapping;
+  readonly label: string;
+  readonly foregroundName: string;
+  readonly backgroundName: string;
+}): RegionDiagnosticResult {
+  const foregroundToken = resolveSemanticToken(options.output, options.theme, options.foregroundName);
+  const backgroundToken = resolveSemanticToken(options.output, options.theme, options.backgroundName);
+  const lc = calculateApcaLcFromOklch(foregroundToken.oklch, backgroundToken.oklch);
+  const absLc = Math.abs(lc);
+  const threshold = options.label.includes("action") ? 45 : 60;
+
+  return {
+    id: `${options.theme}:${options.region.id}:${options.foregroundName}:on:${options.backgroundName}`,
+    theme: options.theme,
+    region: options.region,
+    label: options.label,
+    foregroundName: options.foregroundName,
+    backgroundName: options.backgroundName,
+    foregroundToken,
+    backgroundToken,
+    lc,
+    absLc,
+    threshold,
+    passed: absLc >= threshold,
+  };
+}
+
+function resolveSemanticToken(
+  output: ColorEngineOutput,
+  theme: SurfaceTheme,
+  semanticName: string,
+): ColorToken {
+  const semantics = output.semantics[theme] as Readonly<Record<string, `var(--${string})`>>;
+  const semanticValue = semantics[semanticName];
+
+  if (!semanticValue) {
+    throw new Error(`Could not resolve ${theme}.${semanticName}.`);
+  }
+
+  const tokenName = parseSemanticVariableName(output.input.namespace, semanticValue);
+  const token = Object.values(output.primitives)
+    .flatMap((tokens) => [...tokens])
+    .find((candidate) => candidate.name === tokenName);
+
+  if (!token) {
+    throw new Error(`Could not resolve ${semanticValue} for ${theme}.${semanticName}.`);
+  }
+
+  return token;
+}
+
+function parseSemanticVariableName(namespace: string, value: `var(--${string})`): string {
+  const prefix = `var(--${namespace}-`;
+
+  if (!value.startsWith(prefix) || !value.endsWith(")")) {
+    throw new Error(`Semantic value ${value} is not a ${namespace} variable reference.`);
+  }
+
+  return value.slice(prefix.length, -1);
+}
+
+function cssVar(namespace: string, semanticName: string): `var(--${string})` {
+  return `var(--${namespace}-${semanticName})`;
+}
+
 type DiagnosticReadinessTone = "good" | "review" | "bad" | "neutral";
 
-function createReadinessSummary(output: ColorEngineOutput): {
+function createReadinessSummary(
+  output: ColorEngineOutput,
+  regionFailures: readonly RegionDiagnosticResult[] = [],
+): {
   readonly title: string;
   readonly summary: string;
   readonly exportGuidance: string;
@@ -1184,13 +1621,13 @@ function createReadinessSummary(output: ColorEngineOutput): {
 } {
   const { diagnosticFailed, requiredFailed } = output.assertions.summary;
 
-  if (requiredFailed > 0) {
+  if (requiredFailed > 0 || regionFailures.length > 0) {
     return {
       title: "Not ready to export",
       summary:
-        "At least one required text or UI contrast pair misses its APCA target. Review the affected theme and role before treating this theme as production-ready.",
+        "At least one required text, UI, or region contrast pair misses its APCA target. Review the affected theme and role before treating this theme as production-ready.",
       exportGuidance:
-        "Keep this theme in draft. The CSS can still be inspected, but generated artifacts should not be published as approved tenant output until required failures are resolved or intentionally accepted.",
+        "Keep this theme in draft. The CSS can still be inspected, but generated artifacts should not be published as approved tenant output until required or region failures are resolved or intentionally accepted.",
       tone: "bad",
     };
   }
