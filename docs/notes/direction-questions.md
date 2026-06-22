@@ -127,9 +127,11 @@ The first Theme Authoring work should be narrow: planning/scaffold, color-engine
 
 ### 12. Color.js In Tooling
 
-Color.js is allowed in authoring and dev tooling if it provides clear value.
+Color.js is approved for authoring and dev tooling if it provides clear value.
 
 Good uses include color picker support, color conversion, gamut checks, designer input validation, color-space previews, authoring UI utilities, and dev-only diagnostics.
+
+Install it in `apps/theme-author` or a future authoring-support package when an implementation slice needs picker/converter/gamut-preview behavior. Do not install it in `@puzzlefactory/color-engine` by default.
 
 `@puzzlefactory/color-engine` runtime remains zero-runtime-dependency for now. If the core generator later needs stronger color-space support than the internal helpers can responsibly maintain, bringing Color.js into the core should be a separate explicit decision.
 

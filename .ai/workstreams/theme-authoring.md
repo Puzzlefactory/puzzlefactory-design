@@ -92,13 +92,14 @@ This workstream is substantially complete when:
 - **Manifest:** Generated artifacts should include a documented `manifest.json`; consumers can use it but are not required to.
 - **Custom roles:** Custom color roles handle secondary/accent/identity flexibility for now. Do not add built-in secondary/accent roles by default.
 - **Region contexts:** Header/footer/sidebar-style region mappings should use complete role/treatment pairs and add APCA diagnostics for region text/background pairs.
-- **Color.js:** Color.js is allowed in authoring/dev tooling if useful; core color-engine runtime remains zero-dependency for now.
+- **Color.js:** Color.js is approved for future Theme Authoring/dev tooling when a picker, converter, gamut preview, or color-space display slice needs it. It should be installed in `apps/theme-author` or a future authoring-support package, not in `@puzzlefactory/color-engine` runtime, unless a separate explicit architecture decision changes the zero-runtime-dependency core policy.
 
 ## Key Files
 
 - `.ai/workstreams/theme-authoring.md`
 - `apps/theme-author/`
 - `docs/notes/direction-questions.md`
+- `docs/about/theme-authoring.md`
 - `docs/about/color-engine.md`
 - `docs/about/tokens.md`
 - `docs/about/themes.md`
