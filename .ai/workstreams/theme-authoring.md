@@ -44,12 +44,15 @@ Current supporting pieces exist:
 - Custom color roles exist as generated color families and semantic aliases.
 - APCA diagnostics exist for built-in and custom role text/background pairs.
 - `@puzzlefactory/tokens` is still v1/reference-backed and not yet the v2 broader token model.
-- `@puzzlefactory/themes` is currently a placeholder package; it is the likely future home for full theme composition, presets, manifests, and artifact orchestration.
+- `@puzzlefactory/themes` is currently a placeholder package with documented future responsibility for full theme composition, presets/configuration, region mapping schemas, manifests, and local artifact orchestration.
 
 ## Next Actions
 
-- `TA-08`: Decide whether Color.js should be added to Theme Authoring for color conversion/picker workflows.
-- `TA-09`: Revisit `@puzzlefactory/themes` package responsibilities once authoring artifact needs are clearer.
+- Current planned Theme Authoring slices are complete. Future work should start from a new planned slice, likely one of:
+  - add designer-grade color picker/converter workflows using Color.js
+  - make custom roles and region mappings editable in Theme Authoring
+  - implement the first real `@puzzlefactory/themes` composition API
+  - add save/load/versioning integration once tenant catalog boundaries are known
 
 ## Completed Slices
 
@@ -59,6 +62,8 @@ Current supporting pieces exist:
 - `TA-05`: Added artifact inspection/export for generated CSS files, bundled CSS, and derived manifest metadata, with local copy/download controls.
 - `TA-06`: Added human-readable APCA diagnostics with theme readiness, export guidance, required/advisory issue groups, per-theme coverage, and custom role notes.
 - `TA-07`: Added initial region semantic mapping review for header, sidebar, and footer examples, backed by fixed custom roles and APCA region diagnostics.
+- `TA-08`: Recorded the Color.js authoring-tooling decision and documented that Color.js belongs in Theme Authoring or authoring-support packages when needed, not in the core color-engine runtime by default.
+- `TA-09`: Defined future `@puzzlefactory/themes` responsibilities and non-responsibilities before implementing the package.
 
 ## Completion Shape
 
