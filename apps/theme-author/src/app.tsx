@@ -9,13 +9,16 @@ import {
   TEXT_TREATMENT_STRATEGY_NAMES,
   createColorEngineCssArtifacts,
   createColorEngineTheme,
+  type ContrastAssertionRole,
   type ColorEngineInput,
   type ColorEngineCssArtifact,
   type ColorEngineCssFileName,
   type ColorEngineOutput,
   type ColorEngineThemePresetInput,
   type ColorEngineThemePresetName,
+  type ResolvedContrastAssertion,
   type SeedPolicy,
+  type SurfaceTheme,
   type SurfacePresetName,
   type TextTreatmentStrategyName,
 } from "@puzzlefactory/color-engine";
@@ -42,12 +45,36 @@ const artifactSections = [
 ] as const;
 
 const diagnosticSections = [
-  "Readiness summary",
-  "Required contrast pairs",
-  "Recommended contrast pairs",
-  "Custom role checks",
-  "Export warnings",
+  "Readiness",
+  "Required pairs",
+  "Advisory pairs",
+  "Theme coverage",
+  "Export guidance",
 ] as const;
+
+const previewThemes = [
+  { key: "light", label: "Light", note: "Default workspace review" },
+  { key: "dark", label: "Dark", note: "Low-light workspace review" },
+  { key: "high-contrast", label: "High Contrast", note: "Fixed contrast review" },
+  {
+    key: "high-contrast-dark",
+    label: "High Contrast Dark",
+    note: "Fixed dark contrast review",
+  },
+] as const satisfies readonly {
+  readonly key: SurfaceTheme;
+  readonly label: string;
+  readonly note: string;
+}[];
+
+const assertionRoleLabels = {
+  body: "Body text",
+  secondary: "Secondary text",
+  muted: "Muted text",
+  ui: "UI controls",
+  "status-soft": "Soft color roles",
+  "status-solid": "Solid color roles",
+} as const satisfies Readonly<Record<ContrastAssertionRole, string>>;
 
 const statusFields = [
   { key: "danger", label: "Danger" },
@@ -235,12 +262,12 @@ function OverviewPage({
       <section className="status-band" aria-label="Current authoring phase">
         <div>
           <span className="eyebrow">Current phase</span>
-          <h2>Input editor</h2>
+          <h2>Review-ready workflow</h2>
         </div>
         <p>
           Theme Author now holds normalized color-engine input and validates it
-          against the real generator. Generated artifact preview is available;
-          human-readable diagnostics remain a separate follow-up slice.
+          against the real generator. Generated preview, artifact inspection, and
+          human-readable readiness diagnostics are available from the active input.
         </p>
       </section>
     </PageFrame>
@@ -436,22 +463,15 @@ function DiagnosticsPage({ engine }: { readonly engine: EngineState }) {
     <PageFrame
       eyebrow="Review"
       title="Diagnostics"
-      summary="Theme readiness, contrast diagnostics, and export warnings will be summarized here."
+      summary="Review APCA results in authoring terms before exporting generated theme artifacts."
     >
-      <ChecklistPanel title="Diagnostic groups" items={diagnosticSections} />
       {engine.kind === "ready" ? (
-        <section className="panel">
-          <div className="panel-header">
-            <h2>Current assertion signal</h2>
-            <span>{engine.output.assertions.summary.total} pairs</span>
-          </div>
-          <p className="panel-copy">
-            The active input has {engine.output.assertions.summary.failed} failing
-            diagnostic pairs. Human-readable review remains deferred to TA-06.
-          </p>
-        </section>
+        <DiagnosticsReview output={engine.output} />
       ) : (
-        <EngineNotice engine={engine} />
+        <>
+          <ChecklistPanel title="Diagnostic groups" items={diagnosticSections} />
+          <EngineNotice engine={engine} />
+        </>
       )}
     </PageFrame>
   );
@@ -577,6 +597,205 @@ function ChecklistPanel({
   );
 }
 
+function DiagnosticsReview({ output }: { readonly output: ColorEngineOutput }) {
+  const readiness = createReadinessSummary(output);
+  const failures = output.assertions.results.filter((result) => !result.passed);
+  const requiredFailures = failures.filter((result) => result.severity === "required");
+  const advisoryFailures = failures.filter((result) => result.severity === "diagnostic");
+  const customRoleResults = output.assertions.results.filter((result) =>
+    isCustomRoleAssertion(result),
+  );
+  const customRoleFailures = customRoleResults.filter((result) => !result.passed);
+
+  return (
+    <section className="diagnostics-workspace" aria-label="Theme diagnostics review">
+      <section className={`diagnostic-hero diagnostic-hero-${readiness.tone}`}>
+        <div>
+          <span className="eyebrow">Theme readiness</span>
+          <h2>{readiness.title}</h2>
+          <p>{readiness.summary}</p>
+        </div>
+        <div className="diagnostic-score">
+          <strong>{output.assertions.summary.passed}</strong>
+          <span>of {output.assertions.summary.total} pairs pass</span>
+        </div>
+      </section>
+
+      <section className="summary-grid" aria-label="Diagnostic summary">
+        <MetricCard
+          label="Required failures"
+          tone={output.assertions.summary.requiredFailed === 0 ? "good" : "bad"}
+          value={output.assertions.summary.requiredFailed.toString()}
+        />
+        <MetricCard
+          label="Advisory failures"
+          tone={output.assertions.summary.diagnosticFailed === 0 ? "good" : "neutral"}
+          value={output.assertions.summary.diagnosticFailed.toString()}
+        />
+        <MetricCard label="Algorithm" value={output.assertions.apcaAlgorithmVersion} />
+      </section>
+
+      <section className="diagnostic-guidance-grid" aria-label="Export guidance">
+        <DiagnosticGuidanceCard
+          body={readiness.exportGuidance}
+          title="Export guidance"
+          tone={readiness.tone}
+        />
+        <DiagnosticGuidanceCard
+          body="Required pairs cover normal text, controls, primary actions, and color role text. Advisory pairs cover lower-emphasis muted text where some product teams may accept softer contrast."
+          title="Review model"
+        />
+        <DiagnosticGuidanceCard
+          body={Object.entries(output.assertions.thresholds)
+            .map(([role, threshold]) => {
+              const roleName = assertionRoleLabels[role as ContrastAssertionRole];
+
+              return `${roleName} Lc ${threshold}`;
+            })
+            .join("; ")}
+          title="Thresholds"
+        />
+      </section>
+
+      <section className="diagnostic-theme-grid" aria-label="Diagnostics by theme">
+        {previewThemes.map((theme) => {
+          const results = output.assertions.results.filter((result) => result.theme === theme.key);
+          const failed = results.filter((result) => !result.passed);
+          const requiredFailed = failed.filter((result) => result.severity === "required");
+
+          return (
+            <article className="diagnostic-theme-card" key={theme.key}>
+              <div>
+                <span className="eyebrow">{theme.label}</span>
+                <h3>{requiredFailed.length === 0 ? "Usable" : "Needs review"}</h3>
+              </div>
+              <p>
+                {results.length - failed.length} of {results.length} pairs pass.
+                {requiredFailed.length > 0
+                  ? ` ${requiredFailed.length} required pair(s) need attention.`
+                  : " Required pairs are clear."}
+              </p>
+            </article>
+          );
+        })}
+      </section>
+
+      <DiagnosticIssuePanel
+        emptyMessage="No required contrast failures for the active input."
+        results={requiredFailures}
+        title="Required issues"
+      />
+      <DiagnosticIssuePanel
+        emptyMessage="No advisory failures for the active input."
+        results={advisoryFailures}
+        title="Advisory issues"
+      />
+
+      {customRoleResults.length > 0 ? (
+        <section className="panel">
+          <div className="panel-header">
+            <h2>Custom color roles</h2>
+            <span>{customRoleFailures.length} failed / {customRoleResults.length}</span>
+          </div>
+          <p className="panel-copy">
+            Custom role diagnostics use the same soft and solid color-role thresholds
+            as status roles. They are generated extensions and do not change built-in
+            primary or status semantics.
+          </p>
+        </section>
+      ) : null}
+    </section>
+  );
+}
+
+function DiagnosticGuidanceCard({
+  body,
+  title,
+  tone = "neutral",
+}: {
+  readonly body: string;
+  readonly title: string;
+  readonly tone?: DiagnosticReadinessTone;
+}) {
+  return (
+    <article className={`diagnostic-guidance-card diagnostic-guidance-card-${tone}`}>
+      <h3>{title}</h3>
+      <p>{body}</p>
+    </article>
+  );
+}
+
+function DiagnosticIssuePanel({
+  emptyMessage,
+  results,
+  title,
+}: {
+  readonly emptyMessage: string;
+  readonly results: readonly ResolvedContrastAssertion[];
+  readonly title: string;
+}) {
+  return (
+    <section className="panel diagnostic-issue-panel">
+      <div className="panel-header">
+        <h2>{title}</h2>
+        <span>{results.length} pairs</span>
+      </div>
+      {results.length > 0 ? (
+        <div className="diagnostic-issue-list">
+          {sortDiagnosticResults(results).map((result) => (
+            <DiagnosticIssueCard key={result.id} result={result} />
+          ))}
+        </div>
+      ) : (
+        <p className="diagnostic-empty">{emptyMessage}</p>
+      )}
+    </section>
+  );
+}
+
+function DiagnosticIssueCard({ result }: { readonly result: ResolvedContrastAssertion }) {
+  const gap = Math.max(0, result.threshold - result.absLc);
+
+  return (
+    <article className="diagnostic-issue-card">
+      <div className="diagnostic-issue-main">
+        <span className="diagnostic-severity">{result.severity}</span>
+        <div>
+          <h3>{toDiagnosticIssueTitle(result)}</h3>
+          <p>{toDiagnosticIssueExplanation(result)}</p>
+        </div>
+      </div>
+      <dl className="diagnostic-metrics">
+        <div>
+          <dt>Theme</dt>
+          <dd>{getThemeLabel(result.theme)}</dd>
+        </div>
+        <div>
+          <dt>Role</dt>
+          <dd>{assertionRoleLabels[result.role]}</dd>
+        </div>
+        <div>
+          <dt>Current</dt>
+          <dd>Lc {formatNumber(result.absLc)}</dd>
+        </div>
+        <div>
+          <dt>Target</dt>
+          <dd>Lc {result.threshold}</dd>
+        </div>
+        <div>
+          <dt>Gap</dt>
+          <dd>{formatNumber(gap)}</dd>
+        </div>
+      </dl>
+      <div className="diagnostic-token-row" aria-label="Resolved token pair">
+        <code>{result.foregroundToken.name}</code>
+        <span>on</span>
+        <code>{result.backgroundToken.name}</code>
+      </div>
+    </article>
+  );
+}
+
 function EngineNotice({ engine }: { readonly engine: EngineState }) {
   if (engine.kind === "ready") {
     return (
@@ -615,20 +834,9 @@ function MetricCard({
 }
 
 function ThemePreviewGrid({ output }: { readonly output: ColorEngineOutput }) {
-  const themes = [
-    { key: "light", label: "Light", note: "Default workspace review" },
-    { key: "dark", label: "Dark", note: "Low-light workspace review" },
-    { key: "high-contrast", label: "High Contrast", note: "Fixed contrast review" },
-    {
-      key: "high-contrast-dark",
-      label: "High Contrast Dark",
-      note: "Fixed dark contrast review",
-    },
-  ] as const;
-
   return (
     <section className="theme-preview-grid" aria-label="Generated theme previews">
-      {themes.map((theme) => (
+      {previewThemes.map((theme) => (
         <article
           className="theme-preview generated-preview"
           data-theme-v2={theme.key}
@@ -966,6 +1174,97 @@ function createArtifactManifest(
   );
 }
 
+type DiagnosticReadinessTone = "good" | "review" | "bad" | "neutral";
+
+function createReadinessSummary(output: ColorEngineOutput): {
+  readonly title: string;
+  readonly summary: string;
+  readonly exportGuidance: string;
+  readonly tone: DiagnosticReadinessTone;
+} {
+  const { diagnosticFailed, requiredFailed } = output.assertions.summary;
+
+  if (requiredFailed > 0) {
+    return {
+      title: "Not ready to export",
+      summary:
+        "At least one required text or UI contrast pair misses its APCA target. Review the affected theme and role before treating this theme as production-ready.",
+      exportGuidance:
+        "Keep this theme in draft. The CSS can still be inspected, but generated artifacts should not be published as approved tenant output until required failures are resolved or intentionally accepted.",
+      tone: "bad",
+    };
+  }
+
+  if (diagnosticFailed > 0) {
+    return {
+      title: "Ready with advisory notes",
+      summary:
+        "Required pairs pass. Some lower-emphasis diagnostic pairs are softer than their APCA targets and should be reviewed against the intended product context.",
+      exportGuidance:
+        "This theme can move forward for review. Export is reasonable if the advisory failures are visually acceptable for the intended density and content.",
+      tone: "review",
+    };
+  }
+
+  return {
+    title: "Ready to export",
+    summary:
+      "All required and advisory APCA pairs pass for the generated light, dark, high-contrast, and high-contrast-dark themes.",
+    exportGuidance:
+      "This theme is ready for artifact export from a contrast diagnostics perspective. Continue visual review for brand fit, surface separation, and component composition.",
+    tone: "good",
+  };
+}
+
+function sortDiagnosticResults(
+  results: readonly ResolvedContrastAssertion[],
+): readonly ResolvedContrastAssertion[] {
+  return [...results].sort((left, right) => {
+    const severityDelta = severityWeight(right.severity) - severityWeight(left.severity);
+
+    if (severityDelta !== 0) {
+      return severityDelta;
+    }
+
+    return (right.threshold - right.absLc) - (left.threshold - left.absLc);
+  });
+}
+
+function severityWeight(severity: ResolvedContrastAssertion["severity"]): number {
+  return severity === "required" ? 2 : 1;
+}
+
+function toDiagnosticIssueTitle(result: ResolvedContrastAssertion): string {
+  return `${getThemeLabel(result.theme)}: ${toSentenceLabel(result.description)}`;
+}
+
+function toDiagnosticIssueExplanation(result: ResolvedContrastAssertion): string {
+  const role = assertionRoleLabels[result.role].toLowerCase();
+  const need =
+    result.severity === "required"
+      ? "This pair is part of the required theme contract."
+      : "This pair is advisory for lower-emphasis text.";
+  const customRoleNote = isCustomRoleAssertion(result)
+    ? " It comes from a custom color role, so tune that role seed or policy rather than changing built-in status colors."
+    : "";
+
+  return `${need} The ${role} contrast is Lc ${formatNumber(result.absLc)} against a target of Lc ${result.threshold}.${customRoleNote}`;
+}
+
+function getThemeLabel(theme: SurfaceTheme): string {
+  return previewThemes.find((candidate) => candidate.key === theme)?.label ?? toTitleLabel(theme);
+}
+
+function isCustomRoleAssertion(result: ResolvedContrastAssertion): boolean {
+  return result.foreground.startsWith("role-") || result.background.startsWith("role-");
+}
+
+function toSentenceLabel(value: string): string {
+  const readable = value.replaceAll("-", " ");
+
+  return `${readable[0]?.toUpperCase() ?? ""}${readable.slice(1)}`;
+}
+
 function downloadTextFile(fileName: string, content: string) {
   const blob = new Blob([content], {
     type: fileName.endsWith(".json") ? "application/json" : "text/css",
@@ -1029,4 +1328,8 @@ function formatByteLength(value: string | number): string {
   }
 
   return `${(bytes / 1024).toFixed(1)} KB`;
+}
+
+function formatNumber(value: number): string {
+  return Number.isInteger(value) ? value.toString() : value.toFixed(1);
 }

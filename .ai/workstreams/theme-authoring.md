@@ -34,7 +34,7 @@ Out of scope:
 
 ## Current State
 
-Theme Authoring now has a first usable input editor, designer-facing preview, and artifact inspection surface at `apps/theme-author`. It is a separate React + Vite + React Router app with a workflow for Overview, Theme Input, Preview, Artifacts, and Diagnostics. It imports `@puzzlefactory/color-engine`, applies curated theme presets, holds normalized theme input state, validates that input through `createColorEngineTheme(...)`, injects generated semantic CSS, and previews light, dark, high-contrast, and high-contrast-dark output in realistic app-shell review frames with chrome, nested surfaces, controls, actions, and status treatments. Its Artifacts route previews the canonical generated CSS files, bundled CSS, and a derived `manifest.json`, with browser-local copy/download controls. Human-readable diagnostics are still deferred. The direction is captured in `docs/notes/direction-questions.md` and the `docs/about/*` package-boundary docs.
+Theme Authoring now has a first usable input editor, designer-facing preview, artifact inspection surface, and human-readable diagnostics route at `apps/theme-author`. It is a separate React + Vite + React Router app with a workflow for Overview, Theme Input, Preview, Artifacts, and Diagnostics. It imports `@puzzlefactory/color-engine`, applies curated theme presets, holds normalized theme input state, validates that input through `createColorEngineTheme(...)`, injects generated semantic CSS, and previews light, dark, high-contrast, and high-contrast-dark output in realistic app-shell review frames with chrome, nested surfaces, controls, actions, and status treatments. Its Artifacts route previews the canonical generated CSS files, bundled CSS, and a derived `manifest.json`, with browser-local copy/download controls. Its Diagnostics route translates the existing APCA assertion report into readiness language, required/advisory issue groups, per-theme coverage, custom role notes when assertion output includes custom roles, thresholds, and export guidance. Current Theme Author input does not yet expose custom role editing, so custom-role diagnostics remain present as an output path but are not reachable from the current UI. The direction is captured in `docs/notes/direction-questions.md` and the `docs/about/*` package-boundary docs.
 
 Current supporting pieces exist:
 
@@ -48,7 +48,6 @@ Current supporting pieces exist:
 
 ## Next Actions
 
-- `TA-06`: Add human-readable APCA review and theme readiness summary.
 - `TA-07`: Plan or implement initial region semantic mapping for header/footer/sidebar-style surfaces, with APCA diagnostics.
 - `TA-08`: Decide whether Color.js should be added to Theme Authoring for color conversion/picker workflows.
 - `TA-09`: Revisit `@puzzlefactory/themes` package responsibilities once authoring artifact needs are clearer.
@@ -59,6 +58,7 @@ Current supporting pieces exist:
 - `TA-03`: Added the first normalized theme input editor using existing color-engine curated presets, seed/policy/surface/text fields, real generator validation, and generated semantic CSS preview cards.
 - `TA-04`: Replaced the compact preview cards with designer-facing generated theme review frames for light, dark, high-contrast, and high-contrast-dark output.
 - `TA-05`: Added artifact inspection/export for generated CSS files, bundled CSS, and derived manifest metadata, with local copy/download controls.
+- `TA-06`: Added human-readable APCA diagnostics with theme readiness, export guidance, required/advisory issue groups, per-theme coverage, and custom role notes.
 
 ## Completion Shape
 
