@@ -1863,7 +1863,7 @@ function createNeutralSemantics(
       "border-strong": cssVar(namespace, "chrome-light-strong"),
       "control-border": cssVar(namespace, "chrome-light-default"),
       "control-bg": cssVar(namespace, "surface-light-1"),
-      "control-bg-hover": cssVar(namespace, "surface-light-2-hover"),
+      "control-bg-hover": cssVar(namespace, "surface-light-1-hover"),
       "control-text": cssVar(namespace, "text-dark-primary"),
     };
   }
@@ -1877,7 +1877,7 @@ function createNeutralSemantics(
     "border-strong": cssVar(namespace, "chrome-dark-strong"),
     "control-border": cssVar(namespace, "chrome-dark-default"),
     "control-bg": cssVar(namespace, "surface-dark-2"),
-    "control-bg-hover": cssVar(namespace, "surface-dark-3-hover"),
+    "control-bg-hover": cssVar(namespace, "surface-dark-2-hover"),
     "control-text": cssVar(namespace, "text-light-primary"),
   };
 }

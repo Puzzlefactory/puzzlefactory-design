@@ -2,7 +2,7 @@
 
 Status: active
 Created: 2026-06-02
-Last Updated: 2026-06-12
+Last Updated: 2026-07-11
 
 This workstream covers the second color-engine attempt. The v2 direction is visual-first and usage-first: generate compact, purpose-built color families with named presets and immediate kitchen-sink feedback instead of broad generic ramps that are mapped to semantics after the fact.
 
@@ -192,6 +192,8 @@ CE2-24 is implemented. Kitchen Sink now has a `/tokens` route for inspecting the
 CE2-25 is implemented. V2 now emits fixed high-contrast and high-contrast-dark semantic CSS output in addition to seed-driven light and dark output. `COLOR_ENGINE_CSS_LOAD_ORDER` now includes `theme-high-contrast.css` and `theme-high-contrast-dark.css`; `cssOutput.themes` exposes `high-contrast` and `high-contrast-dark`; and `data-theme-v2` supports `light`, `dark`, `high-contrast`, and `high-contrast-dark`. High-contrast output is intentionally fixed and optimized instead of being tuned by tenant primary/status/surface/custom-role seeds. Built-in roles and custom roles receive high-contrast semantic aliases that point to conservative fixed primitives. APCA assertions now cover all four themes. Kitchen Sink renders all four theme boundaries across Semantic, Themes, Components, Tokens, foreground text review, and Assertions. No static artifact writer, high-contrast authoring controls, tenant storage, v2 token package migration, or component API expansion was added.
 
 CE2-28 is implemented. `@puzzlefactory/color-engine` now exports `createColorEngineCssArtifacts(...)`, `ColorEngineCssArtifact`, and `ColorEngineCssArtifactHash`. The helper wraps the existing ordered `cssOutput.files` contract without changing generated CSS, adding UTF-8 byte length and a deterministic `fnv1a32-*` content hash for artifact identity/cache metadata. The package also has `npm run export:css --workspace @puzzlefactory/color-engine`, which builds the package and writes the default `primitives.css`, `theme-light.css`, `theme-dark.css`, `theme-high-contrast.css`, `theme-high-contrast-dark.css`, and `manifest.json` to ignored `packages/color-engine/.generated/default/` output. This is a local/static artifact proof only; no tenant storage API, Azure upload, deployment pipeline, v2 token package migration, or Theme Authoring Tool was added.
+
+CE2-29 is implemented. The neutral control hover semantics now stay on the control's resting surface layer: light maps `control-bg` / `control-bg-hover` to `surface-light-1` / `surface-light-1-hover`, and dark maps them to `surface-dark-2` / `surface-dark-2-hover`. This fixes the nearly indistinguishable light secondary-button fill caused by jumping from light surface level 1 to level 2's hover state, while keeping the component recipe and public semantic names unchanged. Focused semantic mapping coverage, color-engine tests, component tests, Kitchen Sink build, and light/dark browser visual checks pass.
 
 ## Next Actions
 
@@ -437,6 +439,7 @@ Use these IDs as shorthand for future work authorization prompts.
 | `CE2-26` | Lit form-control prototype | If component work resumes, explicitly add Lit as an approved dependency and build one narrow native-like form-control proof using platform form APIs and semantic CSS variables. | Broad form suite, combobox/select/dialog/menu/tabs work, Lion adoption |
 | `CE2-27` | React wrapper runtime tests | Add dedicated React DOM browser-runtime coverage for wrapper prop/attribute transitions, ref forwarding, slot output, and default-prop normalization if wrappers move beyond proof status. | New wrapper APIs, non-React wrappers, component behavior changes |
 | `CE2-28` | Static CSS artifact export | Implemented. Added `createColorEngineCssArtifacts(...)` metadata helper plus a package `export:css` script that writes the default five CSS files and manifest to ignored local output. | Tenant storage APIs, Azure upload/publish pipeline, v2 token package migration, Theme Authoring Tool |
+| `CE2-29` | Neutral control hover alignment | Implemented. Kept `control-bg-hover` on the same light/dark surface layer as `control-bg`, restoring perceptible secondary-button hover feedback without changing component CSS or public semantic names. | Pressed-state recipe expansion, new component variants |
 
 ## Completion Shape
 
