@@ -2,7 +2,7 @@
 
 Status: active
 Created: 2026-06-15
-Last Updated: 2026-06-15
+Last Updated: 2026-06-22
 
 Theme Authoring is the future designer-facing workflow for creating, reviewing, versioning, and exporting design-system themes. It is separate from Kitchen Sink: Kitchen Sink remains the diagnostic lab for engine, token, and component internals, while Theme Authoring should guide humans through a coherent theme creation and artifact export flow.
 
@@ -34,7 +34,7 @@ Out of scope:
 
 ## Current State
 
-Theme Authoring is planned but not implemented. `apps/theme-author` does not exist yet. The direction is captured in `docs/notes/direction-questions.md` and the `docs/about/*` package-boundary docs.
+Theme Authoring now has a first usable input editor, designer-facing preview, artifact inspection surface, human-readable diagnostics route, and region semantic review route at `apps/theme-author`. It is a separate React + Vite + React Router app with a workflow for Overview, Theme Input, Preview, Regions, Artifacts, and Diagnostics. It imports `@puzzlefactory/color-engine`, applies curated theme presets, holds normalized theme input state, validates that input through `createColorEngineTheme(...)`, injects generated semantic CSS, and previews light, dark, high-contrast, and high-contrast-dark output in realistic app-shell review frames with chrome, nested surfaces, controls, actions, and status treatments. Its Regions route uses fixed custom role examples for header, sidebar, and footer mappings, renders each mapping as a complete role/treatment pair, and checks region text/background pairs with APCA diagnostics. Its Artifacts route previews the canonical generated CSS files, bundled CSS, and a derived `manifest.json`, with browser-local copy/download controls. Its Diagnostics route translates the existing APCA assertion report and region diagnostics into readiness language, required/advisory issue groups, per-theme coverage, custom role notes when assertion output includes custom roles, thresholds, and export guidance. Current Theme Author input does not yet expose custom role editing, so custom-role and region-role inputs are fixed examples rather than user-editable authoring controls. The direction is captured in `docs/notes/direction-questions.md` and the `docs/about/*` package-boundary docs.
 
 Current supporting pieces exist:
 
@@ -44,17 +44,26 @@ Current supporting pieces exist:
 - Custom color roles exist as generated color families and semantic aliases.
 - APCA diagnostics exist for built-in and custom role text/background pairs.
 - `@puzzlefactory/tokens` is still v1/reference-backed and not yet the v2 broader token model.
-- `@puzzlefactory/themes` is currently a placeholder package; it is the likely future home for full theme composition, presets, manifests, and artifact orchestration.
+- `@puzzlefactory/themes` is currently a placeholder package with documented future responsibility for full theme composition, presets/configuration, region mapping schemas, manifests, and local artifact orchestration.
 
 ## Next Actions
 
-- `TA-02`: Create the minimal `apps/theme-author` scaffold as a separate React + Vite + React Router app, without duplicating Kitchen Sink internals.
-- `TA-03`: Add a first normalized theme input editor using existing color-engine fields and curated presets.
-- `TA-04`: Add artifact preview/export for multi-file CSS, bundled CSS, and `manifest.json`.
-- `TA-05`: Add human-readable APCA review and theme readiness summary.
-- `TA-06`: Plan or implement initial region semantic mapping for header/footer/sidebar-style surfaces, with APCA diagnostics.
-- `TA-07`: Decide whether Color.js should be added to Theme Authoring for color conversion/picker workflows.
-- `TA-08`: Revisit `@puzzlefactory/themes` package responsibilities once authoring artifact needs are clearer.
+- Current planned Theme Authoring slices are complete. Future work should start from a new planned slice, likely one of:
+  - add designer-grade color picker/converter workflows using Color.js
+  - make custom roles and region mappings editable in Theme Authoring
+  - implement the first real `@puzzlefactory/themes` composition API
+  - add save/load/versioning integration once tenant catalog boundaries are known
+
+## Completed Slices
+
+- `TA-02`: Created `apps/theme-author` as a private React + Vite + React Router app with a thin designer-facing route shell and workspace scripts.
+- `TA-03`: Added the first normalized theme input editor using existing color-engine curated presets, seed/policy/surface/text fields, real generator validation, and generated semantic CSS preview cards.
+- `TA-04`: Replaced the compact preview cards with designer-facing generated theme review frames for light, dark, high-contrast, and high-contrast-dark output.
+- `TA-05`: Added artifact inspection/export for generated CSS files, bundled CSS, and derived manifest metadata, with local copy/download controls.
+- `TA-06`: Added human-readable APCA diagnostics with theme readiness, export guidance, required/advisory issue groups, per-theme coverage, and custom role notes.
+- `TA-07`: Added initial region semantic mapping review for header, sidebar, and footer examples, backed by fixed custom roles and APCA region diagnostics.
+- `TA-08`: Recorded the Color.js authoring-tooling decision and documented that Color.js belongs in Theme Authoring or authoring-support packages when needed, not in the core color-engine runtime by default.
+- `TA-09`: Defined future `@puzzlefactory/themes` responsibilities and non-responsibilities before implementing the package.
 
 ## Completion Shape
 
@@ -88,12 +97,14 @@ This workstream is substantially complete when:
 - **Manifest:** Generated artifacts should include a documented `manifest.json`; consumers can use it but are not required to.
 - **Custom roles:** Custom color roles handle secondary/accent/identity flexibility for now. Do not add built-in secondary/accent roles by default.
 - **Region contexts:** Header/footer/sidebar-style region mappings should use complete role/treatment pairs and add APCA diagnostics for region text/background pairs.
-- **Color.js:** Color.js is allowed in authoring/dev tooling if useful; core color-engine runtime remains zero-dependency for now.
+- **Color.js:** Color.js is approved for future Theme Authoring/dev tooling when a picker, converter, gamut preview, or color-space display slice needs it. It should be installed in `apps/theme-author` or a future authoring-support package, not in `@puzzlefactory/color-engine` runtime, unless a separate explicit architecture decision changes the zero-runtime-dependency core policy.
 
 ## Key Files
 
 - `.ai/workstreams/theme-authoring.md`
+- `apps/theme-author/`
 - `docs/notes/direction-questions.md`
+- `docs/about/theme-authoring.md`
 - `docs/about/color-engine.md`
 - `docs/about/tokens.md`
 - `docs/about/themes.md`

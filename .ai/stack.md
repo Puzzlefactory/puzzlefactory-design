@@ -86,6 +86,16 @@ Status: implemented TypeScript library/generator that consumes `EngineOutput`.
 - P3 tokens use `color(display-p3 R G B)` string format — not `oklch()` — required for `@supports` guard to be meaningful
 - Token themes: light, dark, high-contrast light (`data-theme="high-contrast"`), high-contrast dark (`data-theme="high-contrast-dark"`)
 
+### `@puzzlefactory/themes`
+
+Status: placeholder package with documented future responsibility. This package is expected to sit above `@puzzlefactory/color-engine` and future broader `@puzzlefactory/tokens`.
+
+- Package folder: `packages/themes`
+- Current implementation: README only
+- Future responsibility: full theme composition, theme preset/configuration objects, theme version metadata, region mapping schemas, manifest helpers, artifact metadata helpers, and build-time or publish-time local artifact orchestration
+- Expected inputs: color output from `@puzzlefactory/color-engine`; future typography, spacing, radius, elevation, density, motion, and component-default output from `@puzzlefactory/tokens`
+- Non-responsibilities: low-level color math, color ramp generation, component CSS recipes, tenant catalog persistence, blob/CDN upload execution, Azure credentials, deployment infrastructure, and app-specific theme switching behavior
+
 ### `@puzzlefactory/components`
 
 Status: first Web Component proof with bounded state recipes, explicit API/accessibility contract, accepted simple-component foundation direction, and accepted form/interactive foundation direction. Target runtime is a TypeScript library of Custom Elements that consume semantic CSS custom properties from the v2 color-engine CSS contract.
@@ -161,13 +171,14 @@ Status: placeholder folder only. Stack undecided.
 
 ### `apps/theme-author`
 
-Status: planned only. This app does not exist yet.
+Status: first normalized input editor and region semantic review implemented.
 
 - Purpose: future designer-facing Theme Authoring workflow for normalized theme input editing, preview, human-readable diagnostics, artifact preview, and export.
 - Expected relationship to Kitchen Sink: separate app/workflow. Kitchen Sink remains the diagnostic lab for internals; Theme Authoring should guide humans through coherent theme creation and export.
-- Expected early stack: likely React + Vite + React Router, to stay aligned with Kitchen Sink unless a future slice chooses otherwise.
+- Runtime stack: React 19, Vite 8, React Router 7.
+- Current behavior: private workspace app with routes for Overview, Theme Input, Preview, Regions, Artifacts, and Diagnostics. It imports `@puzzlefactory/color-engine`, applies `COLOR_ENGINE_THEME_PRESETS`, edits normalized seed/policy/surface/text input fields, validates through `createColorEngineTheme(...)`, injects generated semantic CSS variables, renders designer-facing app-shell preview frames for light, dark, high-contrast, and high-contrast-dark output, renders fixed header/sidebar/footer region mapping examples backed by custom roles, previews generated CSS artifacts plus a derived manifest with browser-local copy/download controls, and translates existing APCA assertion output plus region diagnostics into readiness status, export guidance, required/advisory issue groups, per-theme coverage, thresholds, and custom role notes.
 - Expected package inputs: `@puzzlefactory/color-engine` for color output and artifacts; future `@puzzlefactory/tokens` for broader token model; future `@puzzlefactory/themes` for composed theme configs, manifests, and artifact orchestration.
-- Tooling dependencies such as Color.js may be considered for authoring/dev workflows only; do not add them to `@puzzlefactory/color-engine` runtime without explicit approval.
+- Tooling dependencies such as Color.js are approved for future authoring/dev picker, converter, gamut-preview, and color-space display workflows when an implementation slice needs them. Install them in `apps/theme-author` or a future authoring-support package, not in `@puzzlefactory/color-engine` runtime without a separate explicit architecture decision.
 
 ## Figma Integration
 

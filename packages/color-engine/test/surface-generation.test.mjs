@@ -116,7 +116,10 @@ test("createColorEngineTheme renders neutral, surface, primary, and status usage
   assert.equal(output.semantics.light["border-default"], "var(--ds-chrome-light-default)");
   assert.equal(output.semantics.light["border-strong"], "var(--ds-chrome-light-strong)");
   assert.equal(output.semantics.light["control-border"], "var(--ds-chrome-light-default)");
+  assert.equal(output.semantics.light["control-bg"], "var(--ds-surface-light-1)");
+  assert.equal(output.semantics.light["control-bg-hover"], "var(--ds-surface-light-1-hover)");
   assert.equal(output.semantics.dark["control-bg"], "var(--ds-surface-dark-2)");
+  assert.equal(output.semantics.dark["control-bg-hover"], "var(--ds-surface-dark-2-hover)");
   assert.equal(output.semantics.light["surface-1"], "var(--ds-surface-light-1)");
   assert.equal(output.semantics.dark["surface-1"], "var(--ds-surface-dark-1)");
   assert.equal(output.semantics.light["primary-action-bg"], "var(--ds-primary-light-solid-2)");

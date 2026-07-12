@@ -16,6 +16,24 @@ A full theme may combine:
 
 Theme composition should combine design-system decisions without forcing the color engine to own those decisions.
 
+## Intended Package Responsibilities
+
+When implemented, `@puzzlefactory/themes` should sit above the color engine and token packages.
+
+It may own:
+
+- full theme preset/configuration objects
+- theme input version metadata
+- region mapping schemas for header, footer, sidebar, navigation, tenant, promo, and workflow surfaces
+- manifest helpers and artifact metadata helpers
+- build-time or publish-time local artifact orchestration
+- composition helpers that call `@puzzlefactory/color-engine`
+- future integration with broader token output from `@puzzlefactory/tokens`
+
+It should not own low-level color math, ramp generation, component state recipes, tenant catalog storage, blob/CDN upload, credentials, or deployment behavior.
+
+Until the package is implemented, Theme Authoring can continue to consume `@puzzlefactory/color-engine` directly.
+
 ## Persistent Artifacts
 
 For tenant or client use, generated theme output should become persistent artifacts.

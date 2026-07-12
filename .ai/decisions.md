@@ -34,9 +34,10 @@ This file is a rolling index of currently binding decisions. Use ADRs in `docs/a
 - Normalized tenant theme input is the source of truth. Generated CSS files and `manifest.json` are versioned artifacts derived from that input.
 - This repo should generate theme artifacts and metadata but should not own blob/CDN publishing as core behavior; upload/publish execution belongs to consuming app or infrastructure.
 - Theme artifact output should support canonical multi-file CSS and a bundled CSS convenience artifact when low effort. Generated artifacts should include a documented `manifest.json`, but consumers may load known CSS files directly without using it.
+- `@puzzlefactory/themes` is the future package for full theme composition, presets, region mapping schemas, manifest helpers, and local artifact orchestration once non-color theme composition justifies it. It should sit above `@puzzlefactory/color-engine` and future broader `@puzzlefactory/tokens`; it must not own low-level color math, component recipes, tenant persistence, blob/CDN upload execution, credentials, or deployment behavior.
 - Do not add built-in secondary/accent roles by default. Use custom color roles plus explicit theme/region mappings for identity, accent, header, footer, promo, tenant, and workflow colors. Components should not accept arbitrary custom role props such as `tone="promo"` for now.
 - Region mappings such as header/footer/sidebar should choose complete role/treatment pairs and add APCA diagnostic pairs for every region text/background mapping.
-- Color.js is allowed in authoring/dev tooling if it provides clear value, but `@puzzlefactory/color-engine` runtime remains zero-runtime-dependency unless a future explicit decision changes that.
+- Color.js is approved for future Theme Authoring and development tooling if it provides clear value for color conversion, picker/converter workflows, gamut previews, alternate color-space display, or authoring-only diagnostics. Install it in `apps/theme-author` or a future authoring-support package when an implementation slice needs it. Do not add it to `@puzzlefactory/color-engine` runtime without a future explicit architecture decision; the core engine remains zero-runtime-dependency for now.
 
 ## Superseded Decisions
 
