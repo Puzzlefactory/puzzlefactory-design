@@ -337,6 +337,101 @@ select {
   opacity: 0.72;
 }
 
+.field-error input {
+  border-color: #b54c3a;
+  background: #fff7f5;
+}
+
+.field-error small,
+.field-inline-error {
+  margin: 0;
+  color: #8d2f20;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.custom-role-panel {
+  gap: 24px;
+}
+
+.custom-role-panel-header > div {
+  display: grid;
+  gap: 8px;
+}
+
+.secondary-action,
+.danger-action {
+  min-height: 42px;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-weight: 800;
+}
+
+.secondary-action {
+  border: 1px solid #2f7247;
+  background: #edf5ed;
+  color: #0f4f2a;
+}
+
+.danger-action {
+  border: 1px solid #d69588;
+  background: #fff7f5;
+  color: #7f2618;
+}
+
+.custom-role-list {
+  display: grid;
+  gap: 14px;
+}
+
+.custom-role-card {
+  display: grid;
+  gap: 16px;
+  border: 1px solid #d3ddd4;
+  border-radius: 8px;
+  background: #f8faf7;
+  padding: 18px;
+}
+
+.custom-role-card-disabled {
+  background: #eef1ed;
+  opacity: 0.78;
+}
+
+.custom-role-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.custom-role-card-header h3 {
+  margin: 0 auto 0 0;
+  color: #101713;
+  font-size: 1.05rem;
+}
+
+.toggle-field {
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+  color: #233128;
+  font-weight: 800;
+}
+
+.toggle-field input {
+  width: 18px;
+  height: 18px;
+  accent-color: #2f7247;
+}
+
+.custom-role-fields {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr 1.2fr 0.8fr;
+  gap: 14px;
+}
+
 .status-editor-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -776,6 +871,17 @@ select {
   font-size: 1.35rem;
 }
 
+.region-map-editor {
+  align-content: start;
+}
+
+.region-map-editor .field-inline-error {
+  border: 1px solid #d69588;
+  border-radius: 8px;
+  background: #fff7f5;
+  padding: 10px;
+}
+
 .region-map-card dl,
 .region-diagnostic-row dl {
   display: grid;
@@ -857,17 +963,19 @@ select {
 .region-example span,
 .region-example strong {
   display: block;
-  color: var(--region-text);
 }
 
 .region-example span {
+  color: var(--region-label-text);
   font-size: 0.78rem;
   font-weight: 800;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
 .region-example strong {
   margin-top: 4px;
+  color: var(--region-text);
   font-size: 1.05rem;
 }
 
@@ -947,6 +1055,42 @@ select {
   color: #101713;
 }
 
+.preview-custom-role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.preview-custom-role {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--custom-role-soft-border);
+  border-radius: 8px;
+  background: var(--custom-role-soft-bg);
+  color: var(--custom-role-soft-text);
+  padding: 12px;
+}
+
+.preview-custom-role span,
+.preview-custom-role strong {
+  display: block;
+  color: var(--custom-role-soft-text);
+}
+
+.preview-custom-role strong {
+  margin-top: 3px;
+}
+
+.preview-custom-role b {
+  border-radius: 6px;
+  background: var(--custom-role-solid-bg);
+  color: var(--custom-role-solid-text);
+  padding: 8px 10px;
+  font-size: 0.78rem;
+}
+
 .placeholder-list {
   display: grid;
   gap: 10px;
@@ -997,6 +1141,10 @@ select {
 
 .generated-preview span {
   color: var(--ds-text-muted);
+}
+
+.generated-preview .region-example span {
+  color: var(--region-label-text);
 }
 
 .preview-chrome {
@@ -1270,6 +1418,7 @@ select {
   .diagnostic-metrics,
   .diagnostic-theme-grid,
   .editor-grid,
+  .custom-role-fields,
   .artifact-manifest-panel,
   .artifact-toolbar,
   .preset-grid,
@@ -1278,6 +1427,7 @@ select {
   .region-map-grid,
   .region-preview-grid,
   .status-editor-grid,
+  .preview-custom-role-grid,
   .theme-preview-grid,
   .status-band {
     grid-template-columns: 1fr;

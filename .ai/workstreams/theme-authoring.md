@@ -2,7 +2,7 @@
 
 Status: active
 Created: 2026-06-15
-Last Updated: 2026-06-22
+Last Updated: 2026-07-12
 
 Theme Authoring is the future designer-facing workflow for creating, reviewing, versioning, and exporting design-system themes. It is separate from Kitchen Sink: Kitchen Sink remains the diagnostic lab for engine, token, and component internals, while Theme Authoring should guide humans through a coherent theme creation and artifact export flow.
 
@@ -34,7 +34,7 @@ Out of scope:
 
 ## Current State
 
-Theme Authoring now has a first usable input editor, designer-facing preview, artifact inspection surface, human-readable diagnostics route, and region semantic review route at `apps/theme-author`. It is a separate React + Vite + React Router app with a workflow for Overview, Theme Input, Preview, Regions, Artifacts, and Diagnostics. It imports `@puzzlefactory/color-engine`, applies curated theme presets, holds normalized theme input state, validates that input through `createColorEngineTheme(...)`, injects generated semantic CSS, and previews light, dark, high-contrast, and high-contrast-dark output in realistic app-shell review frames with chrome, nested surfaces, controls, actions, and status treatments. Its Regions route uses fixed custom role examples for header, sidebar, and footer mappings, renders each mapping as a complete role/treatment pair, and checks region text/background pairs with APCA diagnostics. Its Artifacts route previews the canonical generated CSS files, bundled CSS, and a derived `manifest.json`, with browser-local copy/download controls. Its Diagnostics route translates the existing APCA assertion report and region diagnostics into readiness language, required/advisory issue groups, per-theme coverage, custom role notes when assertion output includes custom roles, thresholds, and export guidance. Current Theme Author input does not yet expose custom role editing, so custom-role and region-role inputs are fixed examples rather than user-editable authoring controls. The direction is captured in `docs/notes/direction-questions.md` and the `docs/about/*` package-boundary docs.
+Theme Authoring has a usable input editor, designer-facing preview, artifact inspection surface, human-readable diagnostics route, and region semantic review route at `apps/theme-author`. It is a separate React + Vite + React Router app with a workflow for Overview, Theme Input, Preview, Regions, Artifacts, and Diagnostics. It imports `@puzzlefactory/color-engine`, applies curated theme presets, holds normalized theme input plus authoring-layer custom role and region mapping state, validates enabled roles through the real color engine, injects generated semantic CSS, and previews light, dark, high-contrast, and high-contrast-dark output in realistic app-shell review frames. Theme Input can create, edit, enable/disable, and remove custom roles with role ID, light seed, optional dark seed, and seed policy controls; role ID errors and engine seed errors surface at the relevant role. Stable authoring keys preserve region selections when a role ID is renamed. Header, sidebar, and footer each select an enabled authored role and `soft` or `solid` treatment. Those mappings drive region previews and APCA diagnostics. Region labels resolve per theme from quietest-to-strongest same-polarity text candidates and use the quietest token that clears APCA 60 across both rest and hover backgrounds. The exact resolved token is used for rendering and diagnostics, so visual subordination does not rely on opacity and does not collapse labels into primary text unless stronger contrast is actually required. APCA diagnostics cover label text on region rest and hover backgrounds in addition to primary/action pairs. Region borders remain part of the selected complete role treatment rather than a separately authored color. Preview includes authored role treatments. Artifacts include the generated custom-role CSS and a derived `manifest.json` containing normalized color-engine input and normalized region mappings. Disabled roles remain authoring drafts and are omitted from normalized input; unavailable region mappings are called out as incomplete. The direction remains captured in `docs/notes/direction-questions.md` and the `docs/about/*` package-boundary docs.
 
 Current supporting pieces exist:
 
@@ -50,7 +50,6 @@ Current supporting pieces exist:
 
 - Current planned Theme Authoring slices are complete. Future work should start from a new planned slice, likely one of:
   - add designer-grade color picker/converter workflows using Color.js
-  - make custom roles and region mappings editable in Theme Authoring
   - implement the first real `@puzzlefactory/themes` composition API
   - add save/load/versioning integration once tenant catalog boundaries are known
 
@@ -64,6 +63,9 @@ Current supporting pieces exist:
 - `TA-07`: Added initial region semantic mapping review for header, sidebar, and footer examples, backed by fixed custom roles and APCA region diagnostics.
 - `TA-08`: Recorded the Color.js authoring-tooling decision and documented that Color.js belongs in Theme Authoring or authoring-support packages when needed, not in the core color-engine runtime by default.
 - `TA-09`: Defined future `@puzzlefactory/themes` responsibilities and non-responsibilities before implementing the package.
+- `TA-10`: Made custom roles and header/sidebar/footer region mappings editable, derived normalized color-engine input from enabled role drafts, added role-aware validation, updated previews/APCA diagnostics/artifacts, and included normalized input plus region mappings in the manifest.
+- `TA-11`: Added an explicit contrast-safe region label text semantic, protected it from generic preview CSS, and expanded APCA coverage to label text on rest and hover backgrounds while keeping hierarchy typographic rather than opacity-based.
+- `TA-12`: Replaced the fixed region-label foreground with per-theme contrast resolution. Region composition now orders same-polarity text candidates from muted to strong, uses the quietest token that clears APCA 60 across rest and hover, renders and diagnoses the same token, and keeps borders inside complete named role treatments.
 
 ## Completion Shape
 
