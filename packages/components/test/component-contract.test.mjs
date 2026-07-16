@@ -91,6 +91,12 @@ test("button exposes a narrow native-backed API contract", () => {
   assert.match(source, /<button class="button" part="button" type="button">/);
 });
 
+test("button forwards explicit accessible naming to its native control", () => {
+  assert.match(source, /observedAttributes\(\)[\s\S]*"aria-label"/);
+  assert.match(source, /#syncAccessibleName\(\)/);
+  assert.match(source, /this\.#button\.setAttribute\("aria-label", label\)/);
+});
+
 test("button keeps native form behavior intentionally deferred", () => {
   assert.doesNotMatch(source, /static formAssociated/);
   assert.doesNotMatch(source, /attachInternals/);

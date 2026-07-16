@@ -222,6 +222,35 @@ test("pf-button slotted text reaches the internal native button label path", asy
   await page.close();
 });
 
+test("pf-button forwards an explicit aria-label to its internal native button", async () => {
+  const page = await createComponentPage();
+
+  await page.evaluate(() => {
+    const button = document.createElement("pf-button");
+    button.textContent = "Fallback label";
+    button.setAttribute("aria-label", "Save tenant theme");
+    document.body.append(button);
+  });
+
+  assert.equal(
+    await page.locator("pf-button").evaluate((button) =>
+      button.shadowRoot.querySelector("button").getAttribute("aria-label")
+    ),
+    "Save tenant theme",
+  );
+  assert.equal(await page.getByRole("button", { name: "Save tenant theme" }).count(), 1);
+
+  await page.locator("pf-button").evaluate((button) => button.removeAttribute("aria-label"));
+  assert.equal(
+    await page.locator("pf-button").evaluate((button) =>
+      button.shadowRoot.querySelector("button").hasAttribute("aria-label")
+    ),
+    false,
+  );
+  assert.equal(await page.getByRole("button", { name: "Fallback label" }).count(), 1);
+  await page.close();
+});
+
 test("pf-alert reflects status and variant state to attributes", async () => {
   const page = await createComponentPage();
 

@@ -347,7 +347,7 @@ const cardTemplate = documentSafeTemplate(`
 
 export class PfButtonElement extends HTMLElementBase {
   static get observedAttributes() {
-    return ["disabled"] as const;
+    return ["disabled", "aria-label"] as const;
   }
 
   readonly #button: HTMLButtonElement | null = null;
@@ -366,10 +366,12 @@ export class PfButtonElement extends HTMLElementBase {
 
   connectedCallback() {
     this.#syncDisabled();
+    this.#syncAccessibleName();
   }
 
   attributeChangedCallback() {
     this.#syncDisabled();
+    this.#syncAccessibleName();
   }
 
   get disabled(): boolean {
@@ -427,6 +429,20 @@ export class PfButtonElement extends HTMLElementBase {
     }
 
     this.#button.disabled = this.hasAttribute("disabled");
+  }
+
+  #syncAccessibleName() {
+    if (!this.#button) {
+      return;
+    }
+
+    const label = this.getAttribute("aria-label");
+    if (label === null) {
+      this.#button.removeAttribute("aria-label");
+      return;
+    }
+
+    this.#button.setAttribute("aria-label", label);
   }
 }
 
