@@ -18,6 +18,8 @@ Status: v2 neutral/surface/chrome/foreground foundation with calibrated surface 
 
 Runtime dependencies must remain zero.
 
+The public `resolveContrastForeground(...)` helper accepts caller-ordered foreground candidates, multiple required backgrounds, and an APCA threshold. It selects the first candidate that passes every background, or returns the strongest minimum-contrast fallback with `passed: false`. Semantic candidate ordering remains the caller's responsibility.
+
 CSS output contract:
 
 - `cssOutput.primitives`: root primitive custom property rule.
@@ -171,12 +173,12 @@ Status: placeholder folder only. Stack undecided.
 
 ### `apps/theme-author`
 
-Status: first normalized input editor and region semantic review implemented.
+Status: editable custom-role authoring, region semantic composition, preview, diagnostics, and artifact export implemented.
 
-- Purpose: future designer-facing Theme Authoring workflow for normalized theme input editing, preview, human-readable diagnostics, artifact preview, and export.
+- Purpose: designer-facing Theme Authoring workflow for normalized theme input editing, preview, human-readable diagnostics, artifact preview, and export.
 - Expected relationship to Kitchen Sink: separate app/workflow. Kitchen Sink remains the diagnostic lab for internals; Theme Authoring should guide humans through coherent theme creation and export.
 - Runtime stack: React 19, Vite 8, React Router 7.
-- Current behavior: private workspace app with routes for Overview, Theme Input, Preview, Regions, Artifacts, and Diagnostics. It imports `@puzzlefactory/color-engine`, applies `COLOR_ENGINE_THEME_PRESETS`, edits normalized seed/policy/surface/text input fields, validates through `createColorEngineTheme(...)`, injects generated semantic CSS variables, renders designer-facing app-shell preview frames for light, dark, high-contrast, and high-contrast-dark output, renders fixed header/sidebar/footer region mapping examples backed by custom roles, previews generated CSS artifacts plus a derived manifest with browser-local copy/download controls, and translates existing APCA assertion output plus region diagnostics into readiness status, export guidance, required/advisory issue groups, per-theme coverage, thresholds, and custom role notes.
+- Current behavior: private workspace app with routes for Overview, Theme Input, Preview, Regions, Artifacts, and Diagnostics. It imports `@puzzlefactory/color-engine`, applies `COLOR_ENGINE_THEME_PRESETS`, edits normalized seed/policy/surface/text input fields, creates/edits/enables/removes custom roles, validates through `createColorEngineTheme(...)`, injects generated semantic CSS variables, renders designer-facing app-shell preview frames for light, dark, high-contrast, and high-contrast-dark output, lets header/sidebar/footer select an enabled authored role and complete `soft` or `solid` treatment, resolves subordinate region labels to the quietest APCA-safe seed-independent text token across rest/hover backgrounds, previews generated CSS artifacts plus a derived manifest with browser-local copy/download controls, and translates existing APCA assertion output plus region diagnostics into readiness status, export guidance, required/advisory issue groups, per-theme coverage, thresholds, and custom role notes. Region borders are currently derived from the selected complete treatment rather than independently authored.
 - Expected package inputs: `@puzzlefactory/color-engine` for color output and artifacts; future `@puzzlefactory/tokens` for broader token model; future `@puzzlefactory/themes` for composed theme configs, manifests, and artifact orchestration.
 - Tooling dependencies such as Color.js are approved for future authoring/dev picker, converter, gamut-preview, and color-space display workflows when an implementation slice needs them. Install them in `apps/theme-author` or a future authoring-support package, not in `@puzzlefactory/color-engine` runtime without a separate explicit architecture decision.
 

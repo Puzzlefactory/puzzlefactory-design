@@ -19,6 +19,7 @@ import type {
   ContrastAssertionSemanticName,
   ContrastAssertionSeverity,
   ContrastAssertionSummary,
+  ContrastForegroundResolution,
   CustomColorRoleCssAliasName,
   CustomColorRoleCssVariableName,
   CustomColorRoleInput,
@@ -35,6 +36,7 @@ import type {
   ResolvedColorEngineInput,
   ResolvedCustomColorRole,
   ResolvedCustomColorRoleInput,
+  ResolveContrastForegroundOptions,
   SeedPolicy,
   SrgbColor,
   SurfacePreset,
@@ -76,6 +78,7 @@ import {
   createCustomColorRoleCssVariableNames,
   createColorEngineCssArtifacts,
   createColorEngineTheme,
+  resolveContrastForeground,
   srgbToApcaY,
 } from "../src/index.js";
 
@@ -148,6 +151,13 @@ const customRoleVariables: Readonly<Record<CustomColorRoleSemanticPart, CustomCo
 const chromeLevel: ChromeLevel = "default";
 const textLevel: TextLevel = "strong";
 const token: ColorToken | undefined = output.primitives["primary-light-solid"][0];
+const foregroundResolutionOptions: ResolveContrastForegroundOptions = {
+  backgrounds: [output.primitives["surface-light"][0]!],
+  candidates: [output.primitives["text-dark"][0]!],
+  threshold: 60,
+};
+const foregroundResolution: ContrastForegroundResolution =
+  resolveContrastForeground(foregroundResolutionOptions);
 const chromeToken: ColorToken | undefined = output.primitives["chrome-light"][0];
 const textToken: ColorToken | undefined = output.primitives["text-light"][0];
 const seedToken: ColorToken | undefined = output.primitives["primary-seed"][0];
@@ -223,6 +233,7 @@ void seedPolicy;
 void chromeLevel;
 void textLevel;
 void token;
+void foregroundResolution;
 void chromeToken;
 void textToken;
 void seedToken;

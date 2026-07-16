@@ -271,6 +271,67 @@ export interface ColorToken {
   readonly description: string;
 }
 
+export interface ContrastForegroundResolution {
+  readonly token: ColorToken;
+  readonly minimumLc: number;
+  readonly totalLc: number;
+  readonly passed: boolean;
+  readonly candidateIndex: number;
+}
+
+export interface ResolveContrastForegroundOptions {
+  readonly backgrounds: readonly ColorToken[];
+  readonly candidates: readonly ColorToken[];
+  readonly threshold: number;
+}
+
+/**
+ * Selects the first caller-ordered foreground candidate that meets the APCA
+ * threshold across every background. Candidates should be ordered from the
+ * quietest acceptable treatment to the strongest. When none pass, the
+ * strongest available minimum contrast is returned with `passed: false`.
+ */
+export function resolveContrastForeground(
+  options: ResolveContrastForegroundOptions,
+): ContrastForegroundResolution {
+  if (options.backgrounds.length === 0) {
+    throw new RangeError("Contrast foreground resolution requires at least one background token.");
+  }
+
+  if (options.candidates.length === 0) {
+    throw new RangeError("Contrast foreground resolution requires at least one candidate token.");
+  }
+
+  if (!Number.isFinite(options.threshold) || options.threshold < 0) {
+    throw new RangeError("Contrast foreground threshold must be a finite non-negative number.");
+  }
+
+  const scores = options.candidates.map((token, candidateIndex) => {
+    const contrasts = options.backgrounds.map((background) =>
+      Math.abs(calculateApcaLcFromOklch(token.oklch, background.oklch)),
+    );
+
+    return {
+      token,
+      minimumLc: Math.min(...contrasts),
+      totalLc: contrasts.reduce((total, contrast) => total + contrast, 0),
+      passed: contrasts.every((contrast) => contrast >= options.threshold),
+      candidateIndex,
+    } satisfies ContrastForegroundResolution;
+  });
+  const firstPassing = scores.find((score) => score.passed);
+
+  if (firstPassing) {
+    return firstPassing;
+  }
+
+  return [...scores].sort((left, right) =>
+    (right.minimumLc - left.minimumLc)
+    || (right.totalLc - left.totalLc)
+    || (left.candidateIndex - right.candidateIndex)
+  )[0]!;
+}
+
 export interface BuiltInPrimitiveSurfaceOutput {
   readonly "neutral-light": readonly ColorToken[];
   readonly "neutral-dark": readonly ColorToken[];
