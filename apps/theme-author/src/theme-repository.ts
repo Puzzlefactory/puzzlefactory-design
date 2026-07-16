@@ -124,6 +124,13 @@ export function createBrowserLocalThemeRepository(
         );
       }
 
+      if (currentRevision !== null && currentRevision >= Number.MAX_SAFE_INTEGER - 1) {
+        throw new ThemeRepositoryError(
+          "DRAFT_CONFLICT",
+          "Draft revision has reached the browser-local adapter limit and cannot be advanced.",
+        );
+      }
+
       const saved = {
         schemaVersion: THEME_DRAFT_SCHEMA_VERSION,
         tenantId: request.tenantId,

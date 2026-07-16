@@ -50,6 +50,19 @@ test("allocates role numbers above sparse stored keys and ids", () => {
     ...roles,
     { ...roles[0], key: `role-${"9".repeat(400)}`, id: `custom-role-${"9".repeat(400)}` },
   ]), 4);
+  assert.equal(getNextAuthoredRoleNumber([
+    ...roles,
+    { ...roles[0], key: `role-${Number.MAX_SAFE_INTEGER}`, id: "boundary" },
+  ]), 3);
+  assert.equal(getNextAuthoredRoleNumber([
+    ...roles,
+    { ...roles[0], key: "role-3", id: `custom-role-${Number.MAX_SAFE_INTEGER - 1}` },
+  ]), 4);
+  assert.equal(getNextAuthoredRoleNumber(roles, 10), 10);
+  assert.equal(getNextAuthoredRoleNumber([
+    ...roles,
+    { ...roles[0], key: `role-${Number.MAX_SAFE_INTEGER}`, id: "boundary" },
+  ], 4), 4);
 });
 
 test("reports invalid, reserved, and duplicate enabled role IDs", () => {

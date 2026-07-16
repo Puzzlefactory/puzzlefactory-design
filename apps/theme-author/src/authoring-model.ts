@@ -131,6 +131,7 @@ export function createNormalizedCustomRoles(
 
 export function getNextAuthoredRoleNumber(
   roles: readonly AuthoredCustomRole[],
+  preferredNumber = 1,
 ): number {
   const usedNumbers = roles.flatMap((role) => {
     const values = [role.key.match(/^role-(\d+)$/)?.[1], role.id.match(/^custom-role-(\d+)$/)?.[1]];
@@ -141,11 +142,38 @@ export function getNextAuthoredRoleNumber(
       }
 
       const roleNumber = Number(value);
-      return Number.isSafeInteger(roleNumber) ? [roleNumber] : [];
+      return Number.isSafeInteger(roleNumber) && roleNumber > 0 ? [roleNumber] : [];
     });
   });
 
-  return Math.max(roles.length, ...usedNumbers, 0) + 1;
+  const highestUsedNumber = usedNumbers.reduce(
+    (highest, roleNumber) => Math.max(highest, roleNumber),
+    0,
+  );
+  const highestSequentialCandidate = Math.max(
+    roles.length + 1,
+    highestUsedNumber + 1,
+    preferredNumber,
+  );
+  if (
+    Number.isSafeInteger(highestSequentialCandidate)
+    && highestSequentialCandidate > 0
+    && highestSequentialCandidate < Number.MAX_SAFE_INTEGER
+  ) {
+    return highestSequentialCandidate;
+  }
+
+  const usedNumberSet = new Set(usedNumbers);
+  let availableNumber = Number.isSafeInteger(preferredNumber)
+    && preferredNumber > 0
+    && preferredNumber < Number.MAX_SAFE_INTEGER
+    ? preferredNumber
+    : 1;
+  while (usedNumberSet.has(availableNumber)) {
+    availableNumber += 1;
+  }
+
+  return availableNumber;
 }
 
 export function normalizeRegionMappings(

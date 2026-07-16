@@ -155,6 +155,36 @@ test("draft parsing rejects revisions that cannot advance safely", async () => {
   }
 });
 
+test("draft saving rejects revision rollover before corrupting stored state", async () => {
+  const storage = new MemoryStorage();
+  const repository = createBrowserLocalThemeRepository(storage);
+  await repository.saveDraft({
+    tenantId: "tenant-a",
+    expectedRevision: null,
+    content: draft,
+  });
+  const key = storage.key(0);
+  assert.ok(key);
+  const raw = storage.getItem(key);
+  assert.ok(raw);
+  const boundary = JSON.parse(raw);
+  boundary.revision = Number.MAX_SAFE_INTEGER - 1;
+  storage.setItem(key, JSON.stringify(boundary));
+
+  await assert.rejects(
+    repository.saveDraft({
+      tenantId: "tenant-a",
+      expectedRevision: Number.MAX_SAFE_INTEGER - 1,
+      content: draft,
+    }),
+    (error) => error instanceof ThemeRepositoryError && error.code === "DRAFT_CONFLICT",
+  );
+  assert.equal(
+    (await repository.loadDraft("tenant-a", draft.themeId))?.revision,
+    Number.MAX_SAFE_INTEGER - 1,
+  );
+});
+
 test("publication parsing rejects tampered manifest artifacts", async () => {
   const storage = new MemoryStorage();
   const repository = createBrowserLocalThemeRepository(storage);

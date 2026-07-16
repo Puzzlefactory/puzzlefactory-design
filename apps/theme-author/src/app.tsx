@@ -35,7 +35,7 @@ import {
   type ThemeSourceInput,
 } from "@puzzlefactory/themes";
 import type { CSSProperties, ChangeEvent, ReactNode } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Navigate, Route, Routes } from "react-router";
 import {
   INITIAL_AUTHORED_ROLES,
@@ -257,10 +257,7 @@ export function App() {
 
   function addRole() {
     setAuthoredRoles((current) => {
-      const roleNumber = Math.max(
-        nextRoleNumber.current,
-        getNextAuthoredRoleNumber(current),
-      );
+      const roleNumber = getNextAuthoredRoleNumber(current, nextRoleNumber.current);
       nextRoleNumber.current = roleNumber + 1;
 
       return [
@@ -751,7 +748,9 @@ function PublishingPage({
     publicationRequest.current = new PublicationRequestTracker(activePublicationIdentity);
   }
   const publicationTracker = publicationRequest.current;
-  publicationTracker.updateIdentity(activePublicationIdentity);
+  useLayoutEffect(() => {
+    publicationTracker.updateIdentity(activePublicationIdentity);
+  }, [activePublicationIdentity, publicationTracker]);
   const release = useMemo<ThemeReleaseMetadata>(() => ({
     version,
     createdAt,
