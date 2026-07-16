@@ -4,6 +4,10 @@ import {
 } from "./assertions.js";
 import type { ContrastAssertionReport as ContrastAssertionReportType } from "./assertions.js";
 import { calculateApcaLcFromOklch } from "./apca.js";
+import {
+  createPrimitiveStateToken,
+  shouldCreateStateValues,
+} from "./state-values.js";
 
 export {
   CONTRAST_ASSERTION_THRESHOLDS,
@@ -944,6 +948,7 @@ export function createColorEngineTheme(input: ColorEngineInput = {}): ColorEngin
     primitives,
     semantics,
     customRoles,
+    surfacePresets,
   });
   const cssOutput = createCssOutput(resolvedInput.namespace, primitives, semantics, surfacePresets);
 
@@ -1135,7 +1140,9 @@ function resolveCustomColorRoleInputs(
 
   const resolved: Record<string, ResolvedCustomColorRoleInput> = {};
 
-  for (const [roleId, roleInput] of Object.entries(customRoles)) {
+  for (const [roleId, roleInput] of Object.entries(customRoles).sort(([left], [right]) =>
+    left.localeCompare(right)
+  )) {
     validateCustomColorRoleId(roleId, `customRoles.${roleId}`);
 
     if (!isRecord(roleInput)) {
@@ -2453,16 +2460,10 @@ function createPrimitiveCss(
       declarations.push([`--${namespace}-${token.name}`, token.value]);
       if (shouldCreateStateValues(token.name)) {
         for (const state of SURFACE_STATES) {
+          const stateToken = createPrimitiveStateToken({ token, state, surfacePresets });
           declarations.push([
-            `--${namespace}-${token.name}-${state}`,
-            token.name.startsWith("hc-light-") || token.name.startsWith("hc-dark-")
-              ? createHighContrastStateValue(token.oklch, state, token.name.startsWith("hc-light-") ? "light" : "dark")
-              : createStateValue(
-                  token.oklch,
-                  state,
-                  getPrimitiveTokenTheme(token.name),
-                  surfacePresets[getPrimitiveTokenTheme(token.name)],
-                ),
+            `--${namespace}-${stateToken.name}`,
+            stateToken.value,
           ]);
         }
       }
@@ -2470,50 +2471,6 @@ function createPrimitiveCss(
   }
 
   return createCssRule(":root", declarations);
-}
-
-function shouldCreateStateValues(tokenName: string): boolean {
-  return !tokenName.endsWith("-seed") &&
-    !tokenName.startsWith("text-") &&
-    !tokenName.startsWith("hc-light-text-") &&
-    !tokenName.startsWith("hc-dark-text-");
-}
-
-function getPrimitiveTokenTheme(tokenName: string): SurfaceGenerationTheme {
-  if (tokenName.startsWith("role-")) {
-    const match = /^role-[a-z][a-z0-9-]*-(light|dark)-(?:soft|solid)-\d+$/.exec(tokenName);
-    if (match?.[1] === "light" || match?.[1] === "dark") {
-      return match[1];
-    }
-  }
-
-  if (tokenName.startsWith("hc-light-")) {
-    return "light";
-  }
-
-  if (tokenName.startsWith("hc-dark-")) {
-    return "dark";
-  }
-
-  return tokenName.includes("-light-") ? "light" : "dark";
-}
-
-function createHighContrastStateValue(
-  base: OklchValue,
-  state: SurfaceState,
-  theme: SurfaceGenerationTheme,
-): `oklch(${string})` {
-  const multiplier = state === "hover" ? 1 : state === "selected" ? 1.8 : 2.6;
-  const isLightSurface = theme === "light";
-  const direction = isLightSurface ? -1 : 1;
-  const delta = isLightSurface ? 0.025 : 0.04;
-  const oklch = {
-    l: roundChannel(clampNumber(base.l + direction * delta * multiplier, 0.01, 0.995)),
-    c: base.c,
-    h: base.h,
-  };
-
-  return formatOklch(oklch);
 }
 
 function createThemeCss(
@@ -2526,25 +2483,6 @@ function createThemeCss(
     Object.entries(semantics)
       .flatMap(([name, value]) => value === undefined ? [] : [[`--${namespace}-${name}`, value] as const]),
   );
-}
-
-function createStateValue(
-  base: OklchValue,
-  state: SurfaceState,
-  theme: SurfaceGenerationTheme,
-  preset: SurfacePreset,
-): `oklch(${string})` {
-  const multiplier = state === "hover" ? 1 : state === "selected" ? 1.65 : 2.2;
-  const isLightSurface = theme === "light";
-  const direction = isLightSurface ? -1 : 1;
-  const delta = isLightSurface ? preset.lightStateDelta : preset.darkStateDelta;
-  const oklch = {
-    l: roundChannel(clampNumber(base.l + direction * delta * multiplier, 0.02, 0.998)),
-    c: roundChannel(clampNumber(base.c * (state === "hover" ? 0.98 : state === "selected" ? 0.96 : 0.94), 0, 0.08)),
-    h: base.h,
-  };
-
-  return formatOklch(oklch);
 }
 
 function createCssRule(selector: string, declarations: readonly (readonly [string, string])[]): string {

@@ -62,6 +62,22 @@ test("normalizes identity, color input, and exact region mappings", () => {
   });
 });
 
+test("canonicalizes custom roles independently from caller insertion order", () => {
+  const roles = createSource().color.customRoles;
+  const forward = normalizeThemeSource(createSource({
+    color: { namespace: "ds", customRoles: roles },
+  }));
+  const reverse = normalizeThemeSource(createSource({
+    color: {
+      namespace: "ds",
+      customRoles: Object.fromEntries(Object.entries(roles).reverse()),
+    },
+  }));
+
+  assert.deepEqual(Object.keys(forward.color.customRoles), ["footer", "institution", "navigation"]);
+  assert.deepEqual(reverse, forward);
+});
+
 test("rejects unsupported schema versions and invalid theme identity", () => {
   assert.throws(
     () => normalizeThemeSource(null),

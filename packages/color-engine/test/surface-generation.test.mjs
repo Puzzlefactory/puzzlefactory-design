@@ -247,7 +247,7 @@ test("custom roles generate primitive families and semantic aliases", () => {
     "solid-bg-pressed",
     "solid-text",
   ]);
-  assert.deepEqual(Object.keys(output.customRoles), ["pending", "billing-alert"]);
+  assert.deepEqual(Object.keys(output.customRoles), ["billing-alert", "pending"]);
   assert.deepEqual(output.customRoles.pending.seed, parseColorSeed("#5b47d6"));
   assert.deepEqual(output.customRoles.pending.darkSeed, parseColorSeed("oklch(0.7 0.12 285)"));
   assert.equal(output.customRoles.pending.seedPolicy, "anchored");

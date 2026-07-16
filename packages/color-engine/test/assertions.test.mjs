@@ -12,7 +12,7 @@ test("createColorEngineTheme returns APCA diagnostic assertions", () => {
   const report = output.assertions;
 
   assert.equal(report.apcaAlgorithmVersion, APCA_ALGORITHM_VERSION);
-  assert.equal(report.pairs.length, 152);
+  assert.equal(report.pairs.length, 296);
   assert.equal(report.results.length, report.pairs.length);
   assert.deepEqual(report.thresholds, CONTRAST_ASSERTION_THRESHOLDS);
   assert.deepEqual(report.summary, {
@@ -33,9 +33,9 @@ test("assertion report uses role-based thresholds and severities", () => {
   assert.equal(CONTRAST_ASSERTION_THRESHOLDS.ui, 45);
   assert.equal(CONTRAST_ASSERTION_THRESHOLDS["status-soft"], 45);
   assert.equal(CONTRAST_ASSERTION_THRESHOLDS["status-solid"], 60);
-  assert.equal(results.filter((result) => result.role === "body").length, 16);
-  assert.equal(results.filter((result) => result.role === "secondary").length, 16);
-  assert.equal(results.filter((result) => result.role === "muted").length, 16);
+  assert.equal(results.filter((result) => result.role === "body").length, 64);
+  assert.equal(results.filter((result) => result.role === "secondary").length, 64);
+  assert.equal(results.filter((result) => result.role === "muted").length, 64);
   assert.equal(results.filter((result) => result.role === "ui").length, 24);
   assert.equal(results.filter((result) => result.role === "status-soft").length, 32);
   assert.equal(results.filter((result) => result.role === "status-solid").length, 48);
@@ -49,6 +49,10 @@ test("assertion report covers expected semantic text/background pairs", () => {
 
   assert.equal(ids.has("light:text-primary:on:surface-1"), true);
   assert.equal(ids.has("dark:text-primary:on:surface-4"), true);
+  assert.equal(ids.has("light:text-primary:on:surface-1-hover"), true);
+  assert.equal(ids.has("dark:text-primary:on:surface-2-selected"), true);
+  assert.equal(ids.has("light:text-secondary:on:surface-3-pressed"), true);
+  assert.equal(ids.has("high-contrast-dark:text-muted:on:surface-4-pressed"), true);
   assert.equal(ids.has("light:text-secondary:on:surface-2"), true);
   assert.equal(ids.has("dark:text-muted:on:surface-3"), true);
   assert.equal(ids.has("light:primary-action-text:on:primary-action-bg"), true);
@@ -72,6 +76,7 @@ test("assertion report resolves semantic variables to generated primitive tokens
   const actionResult = findResult(output, "dark:primary-action-text:on:primary-action-bg");
   const statusResult = findResult(output, "light:danger-solid-text:on:danger-solid-bg");
   const highContrastResult = findResult(output, "high-contrast:text-primary:on:surface-1");
+  const pressedSurfaceResult = findResult(output, "light:text-primary:on:surface-1-pressed");
 
   assert.equal(bodyResult.foregroundToken.name, "text-dark-primary");
   assert.equal(bodyResult.backgroundToken.name, "surface-light-1");
@@ -84,6 +89,8 @@ test("assertion report resolves semantic variables to generated primitive tokens
   assert.equal(statusResult.backgroundToken.name, "danger-light-solid-2");
   assert.equal(highContrastResult.foregroundToken.name, "hc-light-text-primary");
   assert.equal(highContrastResult.backgroundToken.name, "hc-light-surface-1");
+  assert.equal(pressedSurfaceResult.backgroundToken.name, "surface-light-1-pressed");
+  assert.match(pressedSurfaceResult.backgroundToken.value, /^oklch\(/);
 });
 
 test("custom roles add soft and solid diagnostic pairs only when configured", () => {
@@ -105,9 +112,9 @@ test("custom roles add soft and solid diagnostic pairs only when configured", ()
   );
   const ids = new Set(roleResults.map((result) => result.id));
 
-  assert.equal(omitted.assertions.summary.total, 152);
+  assert.equal(omitted.assertions.summary.total, 296);
   assert.equal(omitted.assertions.results.some((result) => result.foreground.startsWith("role-")), false);
-  assert.equal(output.assertions.summary.total, 192);
+  assert.equal(output.assertions.summary.total, 336);
   assert.equal(roleResults.length, 40);
   assert.equal(roleResults.every((result) => result.severity === "required"), true);
   assert.equal(roleResults.filter((result) => result.role === "status-soft").length, 16);
@@ -192,7 +199,7 @@ test("custom role assertion matrix covers balanced, anchored, dark fallback, and
       result.foreground.startsWith("role-"),
     );
 
-    assert.equal(output.assertions.summary.total, 172, name);
+    assert.equal(output.assertions.summary.total, 316, name);
     assert.equal(roleResults.length, 20, name);
     assert.equal(roleResults.every((result) => result.description.includes("custom role")), true, name);
     assert.equal(roleResults.every((result) => result.role === "status-soft" || result.role === "status-solid"), true, name);
@@ -268,7 +275,7 @@ test("representative balanced preset and seed matrix keeps required assertions p
   for (const { input, name } of matrix) {
     const output = createColorEngineTheme(input);
 
-    assert.equal(output.assertions.summary.total, 152, name);
+    assert.equal(output.assertions.summary.total, 296, name);
     assert.deepEqual(requiredFailures(output), [], name);
   }
 });

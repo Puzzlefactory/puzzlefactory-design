@@ -165,6 +165,21 @@ test("creates ordered CSS, bundle, and manifest artifacts with stable hashes", (
   assert.deepEqual(JSON.parse(bundle.artifacts[6].content), bundle.manifest);
 });
 
+test("artifact output is stable across custom role insertion order", () => {
+  const reversedSource = {
+    ...source,
+    color: {
+      ...source.color,
+      customRoles: Object.fromEntries(Object.entries(source.color.customRoles).reverse()),
+    },
+  };
+
+  assert.deepEqual(
+    createThemeArtifactBundle(createThemeComposition(reversedSource), release),
+    createThemeArtifactBundle(createThemeComposition(source), release),
+  );
+});
+
 test("rejects invalid release metadata before creating a manifest", () => {
   const composition = createThemeComposition(source);
 
