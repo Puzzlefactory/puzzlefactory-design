@@ -1392,6 +1392,24 @@ select {
   padding: 3px 6px;
 }
 
+.publishing-panel {
+  display: grid;
+  gap: 20px;
+}
+
+.publishing-fields {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.publishing-actions {
+  justify-content: flex-start;
+}
+
+.publication-list {
+  display: grid;
+  gap: 8px;
+}
+
 @media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -1418,6 +1436,7 @@ select {
   .diagnostic-metrics,
   .diagnostic-theme-grid,
   .editor-grid,
+  .publishing-fields,
   .custom-role-fields,
   .artifact-manifest-panel,
   .artifact-toolbar,

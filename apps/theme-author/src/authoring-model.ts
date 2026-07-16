@@ -2,6 +2,7 @@ import {
   CUSTOM_COLOR_ROLE_ID_PATTERN,
   RESERVED_CUSTOM_COLOR_ROLE_IDS,
   type ColorEngineInput,
+  type ColorEngineThemePresetInput,
   type SeedPolicy,
 } from "@puzzlefactory/color-engine";
 import type {
@@ -17,6 +18,10 @@ export type AuthoredCustomRole = {
   readonly darkSeed: string;
   readonly seedPolicy: SeedPolicy;
   readonly enabled: boolean;
+};
+
+export type AuthoredThemeInput = ColorEngineThemePresetInput & {
+  readonly namespace: string;
 };
 
 export type RegionId = ThemeRegionId;

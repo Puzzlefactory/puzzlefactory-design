@@ -29,7 +29,7 @@ Out of scope:
 
 ## Current State
 
-`TTP-01` through `TTP-03` are implemented. `@puzzlefactory/themes` is a real TypeScript workspace package with a versioned canonical theme source, theme identity validation, exact header/sidebar/footer role-treatment mappings, normalized color-engine input, runtime-safe source shape checks, resolved region semantics, APCA region diagnostics, deterministic CSS/bundle/manifest artifacts, and explicit theme/color-engine/release metadata. Theme Author now delegates publishable source composition, region resolution, region diagnostics, and artifact/manifest generation to that package while retaining editor-only stable role keys, disabled drafts, and temporary incomplete mapping state. Color previews remain available for incomplete region drafts, but publishable artifact views require a complete composition. No portable draft/publish persistence contract exists yet.
+`TTP-01` through `TTP-04` are implemented. `@puzzlefactory/themes` is a real TypeScript workspace package with a versioned canonical theme source, theme identity validation, exact header/sidebar/footer role-treatment mappings, normalized color-engine input, runtime-safe source shape checks, resolved region semantics, APCA region diagnostics, deterministic CSS/bundle/manifest artifacts, and explicit theme/color-engine/release metadata. Theme Author delegates publishable source composition, region resolution, region diagnostics, and artifact/manifest generation to that package while retaining editor-only stable role keys, disabled drafts, and temporary incomplete mapping state. A replaceable async repository port now supports tenant-scoped load/save with optimistic draft revisions and immutable publication versions. Its browser-local adapter is explicitly a development workflow adapter; the publishing screen previews and stores the same precomputed artifact bundle so publication cannot diverge from review. Production persistence, Blob upload, activation, rollback, caching, and bootstrap remain consumer-owned.
 
 The implementation is planned as independently verified commits:
 
@@ -41,7 +41,7 @@ The implementation is planned as independently verified commits:
 
 ## Next Actions
 
-- Execute `TTP-04`: add the replaceable persistence port, browser-local adapter, and draft/version/publication workflow.
+- Execute `TTP-05`: run full repository verification, visually review Theme Author in the browser, and close durable context.
 - Continue through later slices without expanding into consumer infrastructure.
 
 ## Completion Shape

@@ -11,7 +11,6 @@ import {
   type ContrastAssertionRole,
   type ColorEngineInput,
   type ColorEngineOutput,
-  type ColorEngineThemePresetInput,
   type ColorEngineThemePresetName,
   type ColorToken,
   type ResolvedContrastAssertion,
@@ -22,13 +21,16 @@ import {
 } from "@puzzlefactory/color-engine";
 import {
   THEME_REGION_DEFINITIONS,
+  THEME_ID_PATTERN,
   THEME_SCHEMA_VERSION,
   createThemeArtifactBundle,
   createThemeComposition,
   resolveThemeRegionLabelForeground,
   type ResolvedThemeRegion,
+  type ThemeArtifactBundle,
   type ThemeArtifactFileName,
   type ThemeComposition,
+  type ThemeReleaseMetadata,
   type ThemeRegionDiagnosticResult,
   type ThemeSourceInput,
 } from "@puzzlefactory/themes";
@@ -45,9 +47,18 @@ import {
   validateAuthoredRoleIds,
   type AuthoredCustomRole,
   type AuthoredRegionMapping,
+  type AuthoredThemeInput,
   type RegionId,
   type RegionTreatment,
 } from "./authoring-model";
+import {
+  ThemeRepositoryError,
+  createBrowserLocalThemeRepository,
+  type PublishedThemeVersion,
+  type StoredThemeDraft,
+  type ThemeDraftContent,
+  type ThemeRepository,
+} from "./theme-repository";
 
 const navItems = [
   { to: "/overview", label: "Overview" },
@@ -56,6 +67,7 @@ const navItems = [
   { to: "/regions", label: "Regions" },
   { to: "/artifacts", label: "Artifacts" },
   { to: "/diagnostics", label: "Diagnostics" },
+  { to: "/publishing", label: "Publishing" },
 ] as const;
 
 const artifactSections = [
@@ -122,8 +134,11 @@ const textTreatmentOptions = TEXT_TREATMENT_STRATEGY_NAMES.map((name) => ({
   value: name,
 }));
 
-type EditableThemeInput = ColorEngineThemePresetInput & {
-  readonly namespace: string;
+type EditableThemeInput = AuthoredThemeInput;
+
+type ThemeIdentity = {
+  readonly id: string;
+  readonly name: string;
 };
 
 type EngineState =
@@ -169,7 +184,7 @@ const initialInput = {
 const draftThemeIdentity = {
   id: "tenant-default",
   name: "Tenant Default",
-} as const;
+} as const satisfies ThemeIdentity;
 
 const artifactPreviewRelease = {
   version: "draft",
@@ -178,6 +193,8 @@ const artifactPreviewRelease = {
 } as const;
 
 export function App() {
+  const [tenantId, setTenantId] = useState("preview-tenant");
+  const [themeIdentity, setThemeIdentity] = useState<ThemeIdentity>(draftThemeIdentity);
   const [themeInput, setThemeInput] = useState<EditableThemeInput>(initialInput);
   const [activePresetName, setActivePresetName] =
     useState<ColorEngineThemePresetName>(initialPresetName);
@@ -188,12 +205,25 @@ export function App() {
   const [regionMappings, setRegionMappings] = useState<readonly AuthoredRegionMapping[]>(
     INITIAL_REGION_MAPPINGS,
   );
+  const [draftRevision, setDraftRevision] = useState<number | null>(null);
+  const repository = useMemo(
+    () => createBrowserLocalThemeRepository(window.localStorage),
+    [],
+  );
   const nextRoleNumber = useRef(INITIAL_AUTHORED_ROLES.length + 1);
 
   const engine = useMemo<EngineState>(
-    () => createEngineState(themeInput, authoredRoles, regionMappings),
-    [authoredRoles, regionMappings, themeInput],
+    () => createEngineState(themeIdentity, themeInput, authoredRoles, regionMappings),
+    [authoredRoles, regionMappings, themeIdentity, themeInput],
   );
+
+  const draftContent = useMemo<ThemeDraftContent>(() => ({
+    themeId: themeIdentity.id,
+    themeName: themeIdentity.name,
+    themeInput,
+    roles: authoredRoles,
+    regionMappings,
+  }), [authoredRoles, regionMappings, themeIdentity, themeInput]);
 
   function applyPreset(presetName: ColorEngineThemePresetName) {
     setActivePresetName(presetName);
@@ -261,6 +291,33 @@ export function App() {
     setIsCustom(true);
   }
 
+  function updateThemeIdentity(patch: Partial<ThemeIdentity>) {
+    setThemeIdentity((current) => ({ ...current, ...patch }));
+    if (patch.id !== undefined) {
+      setDraftRevision(null);
+    }
+    setIsCustom(true);
+  }
+
+  function updateTenantId(value: string) {
+    setTenantId(value);
+    setDraftRevision(null);
+  }
+
+  function applyStoredDraft(draft: StoredThemeDraft) {
+    setTenantId(draft.tenantId);
+    setThemeIdentity({
+      id: draft.content.themeId,
+      name: draft.content.themeName,
+    });
+    setThemeInput(draft.content.themeInput);
+    setAuthoredRoles(draft.content.roles);
+    setRegionMappings(draft.content.regionMappings);
+    setDraftRevision(draft.revision);
+    nextRoleNumber.current = draft.content.roles.length + 1;
+    setIsCustom(true);
+  }
+
   const presetLabel = isCustom
     ? `${COLOR_ENGINE_THEME_PRESETS[activePresetName].label} modified`
     : COLOR_ENGINE_THEME_PRESETS[activePresetName].label;
@@ -323,6 +380,23 @@ export function App() {
           <Route path="/regions" element={<RegionsPage authoredRoles={authoredRoles} engine={engine} mappings={regionMappings} onUpdateRegion={updateRegion} />} />
           <Route path="/artifacts" element={<ArtifactsPage engine={engine} />} />
           <Route path="/diagnostics" element={<DiagnosticsPage engine={engine} />} />
+          <Route
+            path="/publishing"
+            element={
+              <PublishingPage
+                draft={draftContent}
+                engine={engine}
+                onApplyDraft={applyStoredDraft}
+                onDraftRevisionChange={setDraftRevision}
+                onTenantIdChange={updateTenantId}
+                onThemeIdentityChange={updateThemeIdentity}
+                repository={repository}
+                revision={draftRevision}
+                tenantId={tenantId}
+                themeIdentity={themeIdentity}
+              />
+            }
+          />
           <Route path="*" element={<Navigate to="/overview" replace />} />
         </Routes>
       </main>
@@ -602,7 +676,9 @@ function ArtifactsPage({ engine }: {
     >
       <ChecklistPanel title="Expected artifact set" items={artifactSections} />
       {engine.kind === "ready" && engine.composition ? (
-        <ArtifactPreview composition={engine.composition} />
+        <ArtifactPreview
+          bundle={createThemeArtifactBundle(engine.composition, artifactPreviewRelease)}
+        />
       ) : engine.kind === "ready" ? (
         <CompositionNotice message={engine.compositionError} />
       ) : (
@@ -628,6 +704,205 @@ function DiagnosticsPage({ engine }: {
           <ChecklistPanel title="Diagnostic groups" items={diagnosticSections} />
           <EngineNotice engine={engine} />
         </>
+      )}
+    </PageFrame>
+  );
+}
+
+function PublishingPage({
+  draft,
+  engine,
+  onApplyDraft,
+  onDraftRevisionChange,
+  onTenantIdChange,
+  onThemeIdentityChange,
+  repository,
+  revision,
+  tenantId,
+  themeIdentity,
+}: {
+  readonly draft: ThemeDraftContent;
+  readonly engine: EngineState;
+  readonly onApplyDraft: (draft: StoredThemeDraft) => void;
+  readonly onDraftRevisionChange: (revision: number | null) => void;
+  readonly onTenantIdChange: (tenantId: string) => void;
+  readonly onThemeIdentityChange: (patch: Partial<ThemeIdentity>) => void;
+  readonly repository: ThemeRepository;
+  readonly revision: number | null;
+  readonly tenantId: string;
+  readonly themeIdentity: ThemeIdentity;
+}) {
+  const [version, setVersion] = useState("v1");
+  const [createdAt, setCreatedAt] = useState(() => new Date().toISOString());
+  const [createdBy, setCreatedBy] = useState("theme-author");
+  const [notice, setNotice] = useState(
+    "Browser-local persistence is a development adapter; production tenant storage remains consumer-owned.",
+  );
+  const [publications, setPublications] = useState<readonly PublishedThemeVersion[]>([]);
+  const release = useMemo<ThemeReleaseMetadata>(() => ({
+    version,
+    createdAt,
+    ...(createdBy.trim() ? { createdBy } : {}),
+  }), [createdAt, createdBy, version]);
+  const publicationPreview = useMemo(() => {
+    if (engine.kind !== "ready" || !engine.composition) {
+      return null;
+    }
+
+    try {
+      return {
+        kind: "ready" as const,
+        bundle: createThemeArtifactBundle(engine.composition, release),
+      };
+    } catch (error) {
+      return {
+        kind: "error" as const,
+        message: toErrorMessage(error),
+      };
+    }
+  }, [engine, release]);
+
+  async function saveDraft() {
+    try {
+      const saved = await repository.saveDraft({
+        tenantId,
+        expectedRevision: revision,
+        content: draft,
+      });
+      onDraftRevisionChange(saved.revision);
+      setNotice(`Saved ${saved.content.themeId} draft revision ${saved.revision}.`);
+    } catch (error) {
+      setNotice(toPersistenceErrorMessage(error));
+    }
+  }
+
+  async function loadDraft() {
+    try {
+      const stored = await repository.loadDraft(tenantId, themeIdentity.id);
+      if (!stored) {
+        setNotice(`No browser-local draft exists for ${tenantId}/${themeIdentity.id}.`);
+        return;
+      }
+
+      onApplyDraft(stored);
+      setNotice(`Loaded ${stored.content.themeId} draft revision ${stored.revision}.`);
+      await refreshPublications(stored.tenantId, stored.content.themeId);
+    } catch (error) {
+      setNotice(toPersistenceErrorMessage(error));
+    }
+  }
+
+  async function publishTheme() {
+    if (!publicationPreview || publicationPreview.kind === "error") {
+      setNotice(
+        publicationPreview?.message
+          ?? "Resolve theme input and region mapping errors before publishing.",
+      );
+      return;
+    }
+
+    try {
+      const publication = await repository.publishTheme({
+        tenantId,
+        bundle: publicationPreview.bundle,
+      });
+      setNotice(`Published immutable version ${publication.version} for ${publication.themeId}.`);
+      await refreshPublications(tenantId, publication.themeId);
+    } catch (error) {
+      setNotice(toPersistenceErrorMessage(error));
+    }
+  }
+
+  async function refreshPublications(
+    targetTenantId = tenantId,
+    targetThemeId = themeIdentity.id,
+  ) {
+    try {
+      setPublications(await repository.listPublications(targetTenantId, targetThemeId));
+    } catch (error) {
+      setNotice(toPersistenceErrorMessage(error));
+    }
+  }
+
+  return (
+    <PageFrame
+      eyebrow="Persistence"
+      title="Draft and Publish"
+      summary="Exercise a replaceable tenant-theme workflow locally before a consuming application supplies production persistence and distribution."
+    >
+      <section className="panel publishing-panel">
+        <div className="panel-header">
+          <div>
+            <h2>Theme identity and draft</h2>
+            <p className="panel-copy">
+              Draft revision {revision ?? "not saved"}. Loading replaces the current editor state only after a stored draft is found.
+            </p>
+          </div>
+        </div>
+        <div className="editor-grid publishing-fields">
+          <TextField label="Tenant ID" onChange={onTenantIdChange} value={tenantId} />
+          <TextField
+            error={engine.kind === "error" && engine.field === "id" ? engine.message : undefined}
+            label="Theme ID"
+            onChange={(id) => onThemeIdentityChange({ id })}
+            value={themeIdentity.id}
+          />
+          <TextField
+            error={engine.kind === "error" && engine.field === "name" ? engine.message : undefined}
+            label="Theme name"
+            onChange={(name) => onThemeIdentityChange({ name })}
+            value={themeIdentity.name}
+          />
+        </div>
+        <div className="artifact-actions publishing-actions">
+          <button onClick={loadDraft} type="button">Load draft</button>
+          <button onClick={saveDraft} type="button">Save draft</button>
+        </div>
+      </section>
+
+      <section className="panel publishing-panel">
+        <div className="panel-header">
+          <div>
+            <h2>Immutable publication</h2>
+            <p className="panel-copy">
+              The artifact preview below is the exact bundle passed to the repository. Existing versions cannot be overwritten.
+            </p>
+          </div>
+        </div>
+        <div className="editor-grid publishing-fields">
+          <TextField label="Version" onChange={setVersion} value={version} />
+          <TextField label="Created at (UTC ISO)" onChange={setCreatedAt} value={createdAt} />
+          <TextField label="Created by" onChange={setCreatedBy} value={createdBy} />
+        </div>
+        <div className="artifact-actions publishing-actions">
+          <button onClick={() => setCreatedAt(new Date().toISOString())} type="button">
+            Refresh timestamp
+          </button>
+          <button onClick={publishTheme} type="button">Publish version</button>
+          <button onClick={() => refreshPublications()} type="button">Refresh versions</button>
+        </div>
+        <p className="artifact-notice" aria-live="polite">{notice}</p>
+        {publications.length > 0 ? (
+          <div className="publication-list" aria-label="Published theme versions">
+            {publications.map((publication) => (
+              <div className="artifact-file-row" key={publication.version}>
+                <span>{publication.version}</span>
+                <strong>{publication.publishedAt}</strong>
+                <code>{publication.manifest.files.length} files</code>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </section>
+
+      {publicationPreview?.kind === "ready" ? (
+        <ArtifactPreview bundle={publicationPreview.bundle} />
+      ) : publicationPreview?.kind === "error" ? (
+        <CompositionNotice message={publicationPreview.message} />
+      ) : engine.kind === "error" ? (
+        <EngineNotice engine={engine} />
+      ) : (
+        <CompositionNotice message={engine.compositionError} />
       )}
     </PageFrame>
   );
@@ -1530,11 +1805,11 @@ function PreviewStatus({
   );
 }
 
-function ArtifactPreview({ composition }: { readonly composition: ThemeComposition }) {
-  const output = composition.colorOutput;
+function ArtifactPreview({ bundle }: { readonly bundle: ThemeArtifactBundle }) {
+  const output = bundle.composition.colorOutput;
   const files = useMemo(
-    () => createArtifactPreviewFiles(composition),
-    [composition],
+    () => createArtifactPreviewFiles(bundle),
+    [bundle],
   );
   const [selectedFileName, setSelectedFileName] =
     useState<ArtifactFileName>("primitives.css");
@@ -1661,10 +1936,27 @@ function EngineStyles({ css }: { readonly css: string }) {
 }
 
 function createEngineState(
+  identity: ThemeIdentity,
   input: EditableThemeInput,
   roles: readonly AuthoredCustomRole[],
   mappings: readonly AuthoredRegionMapping[],
 ): EngineState {
+  if (!THEME_ID_PATTERN.test(identity.id.trim())) {
+    return {
+      kind: "error",
+      field: "id",
+      message: "Theme ID must use lowercase kebab-case beginning with a letter.",
+    };
+  }
+
+  if (!identity.name.trim() || identity.name.trim().length > 200) {
+    return {
+      kind: "error",
+      field: "name",
+      message: "Theme name must contain between 1 and 200 characters.",
+    };
+  }
+
   const roleIdError = validateAuthoredRoleIds(roles)[0];
 
   if (roleIdError) {
@@ -1692,7 +1984,8 @@ function createEngineState(
 
     const source = {
       schemaVersion: THEME_SCHEMA_VERSION,
-      ...draftThemeIdentity,
+      id: identity.id,
+      name: identity.name,
       color,
       regions,
     } satisfies ThemeSourceInput;
@@ -1742,10 +2035,8 @@ function toTitleLabel(value: string): string {
 }
 
 function createArtifactPreviewFiles(
-  composition: ThemeComposition,
+  bundle: ThemeArtifactBundle,
 ): readonly ArtifactPreviewFile[] {
-  const bundle = createThemeArtifactBundle(composition, artifactPreviewRelease);
-
   return bundle.artifacts.map((artifact) => ({
       fileName: artifact.fileName,
       label: artifact.fileName,
@@ -1876,6 +2167,18 @@ function toSentenceLabel(value: string): string {
   const readable = value.replaceAll("-", " ");
 
   return `${readable[0]?.toUpperCase() ?? ""}${readable.slice(1)}`;
+}
+
+function toPersistenceErrorMessage(error: unknown): string {
+  if (error instanceof ThemeRepositoryError) {
+    return error.message;
+  }
+
+  return `Persistence failed: ${toErrorMessage(error)}`;
+}
+
+function toErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Unknown error.";
 }
 
 function downloadTextFile(fileName: string, content: string) {
