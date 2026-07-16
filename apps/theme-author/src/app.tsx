@@ -7,12 +7,9 @@ import {
   SURFACE_PRESETS,
   TEXT_TREATMENT_STRATEGIES,
   TEXT_TREATMENT_STRATEGY_NAMES,
-  createColorEngineCssArtifacts,
   createColorEngineTheme,
   type ContrastAssertionRole,
   type ColorEngineInput,
-  type ColorEngineCssArtifact,
-  type ColorEngineCssFileName,
   type ColorEngineOutput,
   type ColorEngineThemePresetInput,
   type ColorEngineThemePresetName,
@@ -23,6 +20,18 @@ import {
   type SurfacePresetName,
   type TextTreatmentStrategyName,
 } from "@puzzlefactory/color-engine";
+import {
+  THEME_REGION_DEFINITIONS,
+  THEME_SCHEMA_VERSION,
+  createThemeArtifactBundle,
+  createThemeComposition,
+  resolveThemeRegionLabelForeground,
+  type ResolvedThemeRegion,
+  type ThemeArtifactFileName,
+  type ThemeComposition,
+  type ThemeRegionDiagnosticResult,
+  type ThemeSourceInput,
+} from "@puzzlefactory/themes";
 import type { CSSProperties, ChangeEvent, ReactNode } from "react";
 import { useMemo, useRef, useState } from "react";
 import { NavLink, Navigate, Route, Routes } from "react-router";
@@ -39,12 +48,6 @@ import {
   type RegionId,
   type RegionTreatment,
 } from "./authoring-model";
-import {
-  createRegionDiagnostics,
-  resolveRegionLabelForeground,
-  type RegionDiagnosticResult,
-  type RegionResolvedMapping,
-} from "./region-diagnostics";
 
 const navItems = [
   { to: "/overview", label: "Overview" },
@@ -104,21 +107,6 @@ const statusFields = [
   { key: "info", label: "Info" },
 ] as const;
 
-const regionDefinitions = {
-  header: {
-    label: "Header",
-    description: "Institutional masthead, account controls, and primary navigation chrome.",
-  },
-  sidebar: {
-    label: "Sidebar",
-    description: "Persistent navigation context that can be tinted without becoming primary action color.",
-  },
-  footer: {
-    label: "Footer",
-    description: "Dense lower-chrome area for links, legal text, and operational metadata.",
-  },
-} as const satisfies Readonly<Record<RegionId, { readonly label: string; readonly description: string }>>;
-
 const seedPolicyOptions = SEED_POLICY_NAMES.map((name) => ({
   label: toTitleLabel(name),
   value: name,
@@ -142,6 +130,8 @@ type EngineState =
   | {
       readonly kind: "ready";
       readonly output: ColorEngineOutput;
+      readonly composition: ThemeComposition | null;
+      readonly compositionError?: string;
     }
   | {
       readonly kind: "error";
@@ -152,7 +142,7 @@ type EngineState =
 
 type InputFieldName = keyof EditableThemeInput;
 
-type ArtifactFileName = ColorEngineCssFileName | "bundle.css" | "manifest.json";
+type ArtifactFileName = ThemeArtifactFileName;
 
 type ArtifactPreviewFile = {
   readonly fileName: ArtifactFileName;
@@ -176,6 +166,17 @@ const initialInput = {
   namespace: "ds",
 } as const satisfies EditableThemeInput;
 
+const draftThemeIdentity = {
+  id: "tenant-default",
+  name: "Tenant Default",
+} as const;
+
+const artifactPreviewRelease = {
+  version: "draft",
+  createdAt: "1970-01-01T00:00:00.000Z",
+  createdBy: "system:theme-author-preview",
+} as const;
+
 export function App() {
   const [themeInput, setThemeInput] = useState<EditableThemeInput>(initialInput);
   const [activePresetName, setActivePresetName] =
@@ -190,8 +191,8 @@ export function App() {
   const nextRoleNumber = useRef(INITIAL_AUTHORED_ROLES.length + 1);
 
   const engine = useMemo<EngineState>(
-    () => createEngineState(themeInput, authoredRoles),
-    [authoredRoles, themeInput],
+    () => createEngineState(themeInput, authoredRoles, regionMappings),
+    [authoredRoles, regionMappings, themeInput],
   );
 
   function applyPreset(presetName: ColorEngineThemePresetName) {
@@ -320,8 +321,8 @@ export function App() {
           />
           <Route path="/preview" element={<PreviewPage engine={engine} />} />
           <Route path="/regions" element={<RegionsPage authoredRoles={authoredRoles} engine={engine} mappings={regionMappings} onUpdateRegion={updateRegion} />} />
-          <Route path="/artifacts" element={<ArtifactsPage engine={engine} mappings={regionMappings} roles={authoredRoles} />} />
-          <Route path="/diagnostics" element={<DiagnosticsPage engine={engine} mappings={regionMappings} roles={authoredRoles} />} />
+          <Route path="/artifacts" element={<ArtifactsPage engine={engine} />} />
+          <Route path="/diagnostics" element={<DiagnosticsPage engine={engine} />} />
           <Route path="*" element={<Navigate to="/overview" replace />} />
         </Routes>
       </main>
@@ -577,6 +578,7 @@ function RegionsPage({
     >
       {engine.kind === "ready" ? (
         <RegionMappingReview
+          composition={engine.composition}
           mappings={mappings}
           onUpdateRegion={onUpdateRegion}
           output={engine.output}
@@ -589,14 +591,8 @@ function RegionsPage({
   );
 }
 
-function ArtifactsPage({
-  engine,
-  mappings,
-  roles,
-}: {
+function ArtifactsPage({ engine }: {
   readonly engine: EngineState;
-  readonly mappings: readonly AuthoredRegionMapping[];
-  readonly roles: readonly AuthoredCustomRole[];
 }) {
   return (
     <PageFrame
@@ -605,8 +601,10 @@ function ArtifactsPage({
       summary="Inspect and export the generated CSS products derived from the active normalized input."
     >
       <ChecklistPanel title="Expected artifact set" items={artifactSections} />
-      {engine.kind === "ready" ? (
-        <ArtifactPreview mappings={mappings} output={engine.output} roles={roles} />
+      {engine.kind === "ready" && engine.composition ? (
+        <ArtifactPreview composition={engine.composition} />
+      ) : engine.kind === "ready" ? (
+        <CompositionNotice message={engine.compositionError} />
       ) : (
         <EngineNotice engine={engine} />
       )}
@@ -614,14 +612,8 @@ function ArtifactsPage({
   );
 }
 
-function DiagnosticsPage({
-  engine,
-  mappings,
-  roles,
-}: {
+function DiagnosticsPage({ engine }: {
   readonly engine: EngineState;
-  readonly mappings: readonly AuthoredRegionMapping[];
-  readonly roles: readonly AuthoredCustomRole[];
 }) {
   return (
     <PageFrame
@@ -630,7 +622,7 @@ function DiagnosticsPage({
       summary="Review APCA results in authoring terms before exporting generated theme artifacts."
     >
       {engine.kind === "ready" ? (
-        <DiagnosticsReview mappings={mappings} output={engine.output} roles={roles} />
+        <DiagnosticsReview composition={engine.composition} output={engine.output} />
       ) : (
         <>
           <ChecklistPanel title="Diagnostic groups" items={diagnosticSections} />
@@ -879,11 +871,13 @@ function ChecklistPanel({
 }
 
 function RegionMappingReview({
+  composition,
   mappings,
   onUpdateRegion,
   output,
   roles,
 }: {
+  readonly composition: ThemeComposition | null;
   readonly mappings: readonly AuthoredRegionMapping[];
   readonly onUpdateRegion: (
     regionId: RegionId,
@@ -892,8 +886,8 @@ function RegionMappingReview({
   readonly output: ColorEngineOutput;
   readonly roles: readonly AuthoredCustomRole[];
 }) {
-  const regions = createResolvedRegionMappings(output, mappings, roles);
-  const diagnostics = createRegionDiagnostics(output, regions);
+  const regions = composition?.regions ?? [];
+  const diagnostics = composition?.regionDiagnostics ?? [];
   const failed = diagnostics.filter((result) => !result.passed);
   const availableRoles = roles.filter((role) => role.enabled && output.customRoles[role.id]);
   const unresolvedMappings = mappings.filter((mapping) =>
@@ -920,7 +914,7 @@ function RegionMappingReview({
 
       <section className="region-map-grid" aria-label="Region mapping controls">
         {mappings.map((mapping) => {
-          const definition = regionDefinitions[mapping.id];
+          const definition = THEME_REGION_DEFINITIONS[mapping.id];
           const selectedAvailable = availableRoles.some((role) => role.key === mapping.roleKey);
 
           return (
@@ -998,7 +992,7 @@ function RegionMappingReview({
         <div className="region-diagnostic-list">
           {unresolvedMappings.map((mapping) => (
             <p className="diagnostic-empty" key={mapping.id}>
-              {regionDefinitions[mapping.id].label} has no enabled role mapping.
+              {THEME_REGION_DEFINITIONS[mapping.id].label} has no enabled role mapping.
             </p>
           ))}
           {diagnostics.map((result) => (
@@ -1010,7 +1004,7 @@ function RegionMappingReview({
   );
 }
 
-function RegionMappingCard({ region }: { readonly region: RegionResolvedMapping }) {
+function RegionMappingCard({ region }: { readonly region: ResolvedThemeRegion }) {
   return (
     <article className="region-map-card">
       <span className="eyebrow">{region.id}</span>
@@ -1048,10 +1042,10 @@ function RegionExample({
   theme,
 }: {
   readonly output: ColorEngineOutput;
-  readonly region: RegionResolvedMapping;
+  readonly region: ResolvedThemeRegion;
   readonly theme: SurfaceTheme;
 }) {
-  const labelForeground = resolveRegionLabelForeground(output, region, theme);
+  const labelForeground = resolveThemeRegionLabelForeground(output, region, theme);
 
   return (
     <section
@@ -1071,7 +1065,7 @@ function RegionExample({
   );
 }
 
-function RegionDiagnosticRow({ result }: { readonly result: RegionDiagnosticResult }) {
+function RegionDiagnosticRow({ result }: { readonly result: ThemeRegionDiagnosticResult }) {
   return (
     <article className={result.passed ? "region-diagnostic-row" : "region-diagnostic-row region-diagnostic-row-fail"}>
       <div>
@@ -1097,18 +1091,15 @@ function RegionDiagnosticRow({ result }: { readonly result: RegionDiagnosticResu
 }
 
 function DiagnosticsReview({
-  mappings,
+  composition,
   output,
-  roles,
 }: {
-  readonly mappings: readonly AuthoredRegionMapping[];
+  readonly composition: ThemeComposition | null;
   readonly output: ColorEngineOutput;
-  readonly roles: readonly AuthoredCustomRole[];
 }) {
-  const resolvedRegions = createResolvedRegionMappings(output, mappings, roles);
-  const regionDiagnostics = createRegionDiagnostics(output, resolvedRegions);
+  const regionDiagnostics = composition?.regionDiagnostics ?? [];
   const regionFailures = regionDiagnostics.filter((result) => !result.passed);
-  const missingRegionCount = mappings.length - resolvedRegions.length;
+  const missingRegionCount = composition ? 0 : 1;
   const readiness = createReadinessSummary(output, regionFailures, missingRegionCount);
   const failures = output.assertions.results.filter((result) => !result.passed);
   const requiredFailures = failures.filter((result) => result.severity === "required");
@@ -1120,6 +1111,9 @@ function DiagnosticsReview({
 
   return (
     <section className="diagnostics-workspace" aria-label="Theme diagnostics review">
+      {!composition ? (
+        <CompositionNotice message="All header, sidebar, and footer mappings must select enabled custom roles before region diagnostics and publishing are available." />
+      ) : null}
       <section className={`diagnostic-hero diagnostic-hero-${readiness.tone}`}>
         <div>
           <span className="eyebrow">Theme readiness</span>
@@ -1356,6 +1350,17 @@ function EngineNotice({ engine }: { readonly engine: EngineState }) {
   );
 }
 
+function CompositionNotice({ message }: { readonly message: string | undefined }) {
+  return (
+    <section className="engine-notice engine-notice-error">
+      <strong>Theme composition needs attention</strong>
+      <span>
+        {message ?? "Map header, sidebar, and footer to enabled custom roles before generating publishable artifacts."}
+      </span>
+    </section>
+  );
+}
+
 function MetricCard({
   label,
   tone = "neutral",
@@ -1525,18 +1530,11 @@ function PreviewStatus({
   );
 }
 
-function ArtifactPreview({
-  mappings,
-  output,
-  roles,
-}: {
-  readonly mappings: readonly AuthoredRegionMapping[];
-  readonly output: ColorEngineOutput;
-  readonly roles: readonly AuthoredCustomRole[];
-}) {
+function ArtifactPreview({ composition }: { readonly composition: ThemeComposition }) {
+  const output = composition.colorOutput;
   const files = useMemo(
-    () => createArtifactPreviewFiles(output, mappings, roles),
-    [mappings, output, roles],
+    () => createArtifactPreviewFiles(composition),
+    [composition],
   );
   const [selectedFileName, setSelectedFileName] =
     useState<ArtifactFileName>("primitives.css");
@@ -1665,6 +1663,7 @@ function EngineStyles({ css }: { readonly css: string }) {
 function createEngineState(
   input: EditableThemeInput,
   roles: readonly AuthoredCustomRole[],
+  mappings: readonly AuthoredRegionMapping[],
 ): EngineState {
   const roleIdError = validateAuthoredRoleIds(roles)[0];
 
@@ -1678,9 +1677,31 @@ function createEngineState(
   }
 
   try {
+    const color = toColorEngineInput(input, roles);
+    const regions = normalizeRegionMappings(mappings, roles);
+
+    if (!regions) {
+      return {
+        kind: "ready",
+        output: createColorEngineTheme(color),
+        composition: null,
+        compositionError:
+          "Header, sidebar, and footer must each select an enabled custom role.",
+      };
+    }
+
+    const source = {
+      schemaVersion: THEME_SCHEMA_VERSION,
+      ...draftThemeIdentity,
+      color,
+      regions,
+    } satisfies ThemeSourceInput;
+    const composition = createThemeComposition(source);
+
     return {
       kind: "ready",
-      output: createColorEngineTheme(toColorEngineInput(input, roles)),
+      output: composition.colorOutput,
+      composition,
     };
   } catch (error) {
     if (error instanceof ColorEngineValidationError) {
@@ -1721,122 +1742,29 @@ function toTitleLabel(value: string): string {
 }
 
 function createArtifactPreviewFiles(
-  output: ColorEngineOutput,
-  mappings: readonly AuthoredRegionMapping[],
-  roles: readonly AuthoredCustomRole[],
+  composition: ThemeComposition,
 ): readonly ArtifactPreviewFile[] {
-  const artifacts = createColorEngineCssArtifacts(output);
-  const bundle = output.cssOutput.all;
-  const manifest = createArtifactManifest(output, artifacts, bundle, mappings, roles);
+  const bundle = createThemeArtifactBundle(composition, artifactPreviewRelease);
 
-  return [
-    ...artifacts.map((artifact) => ({
+  return bundle.artifacts.map((artifact) => ({
       fileName: artifact.fileName,
       label: artifact.fileName,
       meta:
         artifact.kind === "theme" && artifact.theme
           ? `${artifact.kind} CSS for data-theme-v2="${artifact.theme}"`
-          : "Root primitive CSS loaded before theme files",
-      content: artifact.css,
+          : artifact.kind === "primitives"
+            ? "Root primitive CSS loaded before theme files"
+            : artifact.kind === "bundle"
+              ? "Convenience bundle containing the complete generated CSS"
+              : "Canonical theme manifest for static publishing or tenant storage",
+      content: artifact.content,
       byteLength: artifact.byteLength,
       contentHash: artifact.contentHash,
-    })),
-    {
-      fileName: "bundle.css",
-      label: "bundle.css",
-      meta: "Convenience bundle equal to cssOutput.all / output.css",
-      content: bundle,
-      byteLength: getTextByteLength(bundle),
-    },
-    {
-      fileName: "manifest.json",
-      label: "manifest.json",
-      meta: "Derived metadata for static publishing or tenant theme storage",
-      content: manifest,
-      byteLength: getTextByteLength(manifest),
-    },
-  ];
-}
-
-function createArtifactManifest(
-  output: ColorEngineOutput,
-  artifacts: readonly ColorEngineCssArtifact[],
-  bundle: string,
-  mappings: readonly AuthoredRegionMapping[],
-  roles: readonly AuthoredCustomRole[],
-): string {
-  return JSON.stringify(
-    {
-      schemaVersion: 1,
-      generatedBy: "@puzzlefactory/color-engine",
-      namespace: output.input.namespace,
-      themeAttribute: "data-theme-v2",
-      themes: ["light", "dark", "high-contrast", "high-contrast-dark"],
-      normalizedThemeInput: output.input,
-      regionMappings: normalizeRegionMappings(mappings, roles),
-      loadOrder: artifacts.map((artifact) => artifact.fileName),
-      files: artifacts.map((artifact) => ({
-        fileName: artifact.fileName,
-        kind: artifact.kind,
-        theme: artifact.theme,
-        byteLength: artifact.byteLength,
-        contentHash: artifact.contentHash,
-      })),
-      bundle: {
-        fileName: "bundle.css",
-        byteLength: getTextByteLength(bundle),
-        source: "cssOutput.all",
-      },
-    },
-    null,
-    2,
-  );
-}
-
-function createResolvedRegionMappings(
-  output: ColorEngineOutput,
-  mappings: readonly AuthoredRegionMapping[],
-  roles: readonly AuthoredCustomRole[],
-): readonly RegionResolvedMapping[] {
-  const rolesByKey = new Map(roles.map((role) => [role.key, role]));
-
-  return mappings.flatMap((mapping) => {
-    const authoredRole = rolesByKey.get(mapping.roleKey);
-    const role = authoredRole?.enabled ? output.customRoles[authoredRole.id] : undefined;
-
-    if (!role) {
-      return [];
-    }
-
-    const backgroundPart = mapping.treatment === "solid" ? "solid-bg" : "soft-bg";
-    const hoverPart = mapping.treatment === "solid" ? "solid-bg-hover" : "soft-bg-hover";
-    const borderPart = mapping.treatment === "solid" ? "solid-bg-pressed" : "soft-border";
-    const textPart = mapping.treatment === "solid" ? "solid-text" : "soft-text";
-    const actionTreatment = mapping.treatment === "solid" ? "soft" : "solid";
-    const actionBackgroundPart = actionTreatment === "solid" ? "solid-bg" : "soft-bg";
-    const actionHoverPart = actionTreatment === "solid" ? "solid-bg-hover" : "soft-bg-hover";
-    const actionTextPart = actionTreatment === "solid" ? "solid-text" : "soft-text";
-
-    return [{
-      ...mapping,
-      ...regionDefinitions[mapping.id],
-      namespace: output.input.namespace,
-      roleLabel: toTitleLabel(role.id),
-      semantics: {
-        bg: role.cssAliases[backgroundPart],
-        "bg-hover": role.cssAliases[hoverPart],
-        border: role.cssAliases[borderPart],
-        text: role.cssAliases[textPart],
-        "action-bg": role.cssAliases[actionBackgroundPart],
-        "action-bg-hover": role.cssAliases[actionHoverPart],
-        "action-text": role.cssAliases[actionTextPart],
-      },
-    }];
-  });
+    }));
 }
 
 function createRegionStyle(
-  region: RegionResolvedMapping,
+  region: ResolvedThemeRegion,
   labelForeground: ColorToken,
 ): RegionStyle {
   return {
@@ -1859,7 +1787,7 @@ type DiagnosticReadinessTone = "good" | "review" | "bad" | "neutral";
 
 function createReadinessSummary(
   output: ColorEngineOutput,
-  regionFailures: readonly RegionDiagnosticResult[] = [],
+  regionFailures: readonly ThemeRegionDiagnosticResult[] = [],
   missingRegionCount = 0,
 ): {
   readonly title: string;

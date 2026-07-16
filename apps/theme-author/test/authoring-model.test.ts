@@ -58,12 +58,25 @@ test("normalizes region role keys to enabled authored role IDs", () => {
   assert.deepEqual(
     normalizeRegionMappings([
       { id: "header", roleKey: "role-1", treatment: "solid" },
+      { id: "sidebar", roleKey: "role-1", treatment: "soft" },
+      { id: "footer", roleKey: "role-1", treatment: "soft" },
+    ], roles),
+    {
+      header: { roleId: "campaign", treatment: "solid" },
+      sidebar: { roleId: "campaign", treatment: "soft" },
+      footer: { roleId: "campaign", treatment: "soft" },
+    },
+  );
+});
+
+test("does not produce a publishable mapping when a region role is unavailable", () => {
+  assert.equal(
+    normalizeRegionMappings([
+      { id: "header", roleKey: "role-1", treatment: "solid" },
+      { id: "sidebar", roleKey: "role-1", treatment: "soft" },
       { id: "footer", roleKey: "role-2", treatment: "soft" },
     ], roles),
-    [
-      { id: "header", roleId: "campaign", treatment: "solid" },
-      { id: "footer", roleId: null, treatment: "soft" },
-    ],
+    null,
   );
 });
 

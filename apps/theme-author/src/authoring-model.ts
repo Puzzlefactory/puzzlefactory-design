@@ -4,6 +4,11 @@ import {
   type ColorEngineInput,
   type SeedPolicy,
 } from "@puzzlefactory/color-engine";
+import type {
+  ThemeRegionId,
+  ThemeRegionMappings,
+  ThemeRegionTreatment,
+} from "@puzzlefactory/themes";
 
 export type AuthoredCustomRole = {
   readonly key: string;
@@ -14,18 +19,12 @@ export type AuthoredCustomRole = {
   readonly enabled: boolean;
 };
 
-export type RegionId = "header" | "sidebar" | "footer";
-export type RegionTreatment = "soft" | "solid";
+export type RegionId = ThemeRegionId;
+export type RegionTreatment = ThemeRegionTreatment;
 
 export type AuthoredRegionMapping = {
   readonly id: RegionId;
   readonly roleKey: string;
-  readonly treatment: RegionTreatment;
-};
-
-export type NormalizedRegionMapping = {
-  readonly id: RegionId;
-  readonly roleId: string | null;
   readonly treatment: RegionTreatment;
 };
 
@@ -128,18 +127,28 @@ export function createNormalizedCustomRoles(
 export function normalizeRegionMappings(
   mappings: readonly AuthoredRegionMapping[],
   roles: readonly AuthoredCustomRole[],
-): readonly NormalizedRegionMapping[] {
+): ThemeRegionMappings | null {
   const rolesByKey = new Map(roles.map((role) => [role.key, role]));
+  const mappingsById = new Map(mappings.map((mapping) => [mapping.id, mapping]));
+  const normalized = {} as Record<RegionId, ThemeRegionMappings[RegionId]>;
 
-  return mappings.map((mapping) => {
+  for (const regionId of ["header", "sidebar", "footer"] as const) {
+    const mapping = mappingsById.get(regionId);
+    if (!mapping) {
+      return null;
+    }
     const role = rolesByKey.get(mapping.roleKey);
+    if (!role?.enabled) {
+      return null;
+    }
 
-    return {
-      id: mapping.id,
-      roleId: role?.enabled ? role.id : null,
+    normalized[regionId] = {
+      roleId: role.id,
       treatment: mapping.treatment,
     };
-  });
+  }
+
+  return normalized;
 }
 
 export function getEngineFieldRoleKey(

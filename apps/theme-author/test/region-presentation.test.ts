@@ -3,19 +3,18 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   COLOR_ENGINE_THEME_PRESETS,
-  createColorEngineTheme,
 } from "@puzzlefactory/color-engine";
 import {
-  createRegionDiagnostics,
-  resolveRegionLabelForeground,
-  type RegionResolvedMapping,
-} from "../src/region-diagnostics.ts";
+  THEME_SCHEMA_VERSION,
+  createThemeComposition,
+  resolveThemeRegionLabelForeground,
+} from "@puzzlefactory/themes";
 
 const appSource = await readFile(new URL("../src/app.tsx", import.meta.url), "utf8");
 const styles = await readFile(new URL("../src/styles.css", import.meta.url), "utf8");
 
 test("region labels use an explicit role-aware text semantic", () => {
-  assert.match(appSource, /resolveRegionLabelForeground\(output, region, theme\)/);
+  assert.match(appSource, /resolveThemeRegionLabelForeground\(output, region, theme\)/);
   assert.match(appSource, /"--region-label-text": cssVar\(region\.namespace, labelForeground\.name\)/);
   assert.match(styles, /\.region-example span \{[\s\S]*?color: var\(--region-label-text\);/);
 });
@@ -33,39 +32,27 @@ test("generic preview text styling cannot override region label text", () => {
 });
 
 test("APCA diagnostics cover region labels on rest and hover backgrounds", () => {
-  const output = createColorEngineTheme({
-    ...COLOR_ENGINE_THEME_PRESETS.evergreen.input,
-    customRoles: {
-      institution: {
-        seed: "oklch(0.42 0.13 255)",
-        darkSeed: "oklch(0.66 0.1 255)",
-        seedPolicy: "balanced",
+  const composition = createThemeComposition({
+    schemaVersion: THEME_SCHEMA_VERSION,
+    id: "tenant-default",
+    name: "Tenant Default",
+    color: {
+      ...COLOR_ENGINE_THEME_PRESETS.evergreen.input,
+      customRoles: {
+        institution: {
+          seed: "oklch(0.42 0.13 255)",
+          darkSeed: "oklch(0.66 0.1 255)",
+          seedPolicy: "balanced",
+        },
       },
     },
-  });
-  const role = output.customRoles.institution;
-
-  assert.ok(role);
-
-  const region = {
-    id: "header",
-    roleKey: "institution",
-    treatment: "solid",
-    label: "Header",
-    description: "Test header",
-    namespace: output.input.namespace,
-    roleLabel: "Institution",
-    semantics: {
-      bg: role.cssAliases["solid-bg"],
-      "bg-hover": role.cssAliases["solid-bg-hover"],
-      border: role.cssAliases["solid-bg-pressed"],
-      text: role.cssAliases["solid-text"],
-      "action-bg": role.cssAliases["soft-bg"],
-      "action-bg-hover": role.cssAliases["soft-bg-hover"],
-      "action-text": role.cssAliases["soft-text"],
+    regions: {
+      header: { roleId: "institution", treatment: "solid" },
+      sidebar: { roleId: "institution", treatment: "soft" },
+      footer: { roleId: "institution", treatment: "solid" },
     },
-  } satisfies RegionResolvedMapping;
-  const results = createRegionDiagnostics(output, [region]);
+  });
+  const results = composition.regionDiagnostics.filter((result) => result.region.id === "header");
   const labelResults = results.filter((result) => result.label.includes("label text"));
 
   assert.equal(results.length, 24);
@@ -92,45 +79,36 @@ test("APCA diagnostics cover region labels on rest and hover backgrounds", () =>
 });
 
 test("high-contrast region labels use fixed seed-independent foregrounds", () => {
-  const createOutput = (neutralSeed: string) => createColorEngineTheme({
-    ...COLOR_ENGINE_THEME_PRESETS.evergreen.input,
-    neutralSeed,
-    customRoles: {
-      institution: {
-        seed: "oklch(0.42 0.13 255)",
-        darkSeed: "oklch(0.66 0.1 255)",
-        seedPolicy: "balanced",
+  const createComposition = (neutralSeed: string) => createThemeComposition({
+    schemaVersion: THEME_SCHEMA_VERSION,
+    id: "tenant-default",
+    name: "Tenant Default",
+    color: {
+      ...COLOR_ENGINE_THEME_PRESETS.evergreen.input,
+      neutralSeed,
+      customRoles: {
+        institution: {
+          seed: "oklch(0.42 0.13 255)",
+          darkSeed: "oklch(0.66 0.1 255)",
+          seedPolicy: "balanced",
+        },
       },
     },
-  });
-  const firstOutput = createOutput("oklch(0.5 0.08 25)");
-  const secondOutput = createOutput("oklch(0.5 0.08 210)");
-  const role = firstOutput.customRoles.institution;
-
-  assert.ok(role);
-
-  const region = {
-    id: "header",
-    roleKey: "institution",
-    treatment: "solid",
-    label: "Header",
-    description: "Test header",
-    namespace: firstOutput.input.namespace,
-    roleLabel: "Institution",
-    semantics: {
-      bg: role.cssAliases["solid-bg"],
-      "bg-hover": role.cssAliases["solid-bg-hover"],
-      border: role.cssAliases["solid-bg-pressed"],
-      text: role.cssAliases["solid-text"],
-      "action-bg": role.cssAliases["soft-bg"],
-      "action-bg-hover": role.cssAliases["soft-bg-hover"],
-      "action-text": role.cssAliases["soft-text"],
+    regions: {
+      header: { roleId: "institution", treatment: "solid" },
+      sidebar: { roleId: "institution", treatment: "soft" },
+      footer: { roleId: "institution", treatment: "solid" },
     },
-  } satisfies RegionResolvedMapping;
+  });
+  const firstComposition = createComposition("oklch(0.5 0.08 25)");
+  const secondComposition = createComposition("oklch(0.5 0.08 210)");
+  const region = firstComposition.regions.find((candidate) => candidate.id === "header");
+
+  assert.ok(region);
 
   for (const theme of ["high-contrast", "high-contrast-dark"] as const) {
-    const first = resolveRegionLabelForeground(firstOutput, region, theme);
-    const second = resolveRegionLabelForeground(secondOutput, region, theme);
+    const first = resolveThemeRegionLabelForeground(firstComposition.colorOutput, region, theme);
+    const second = resolveThemeRegionLabelForeground(secondComposition.colorOutput, region, theme);
 
     assert.equal(first.token.name, second.token.name);
     assert.deepEqual(first.token.oklch, second.token.oklch);

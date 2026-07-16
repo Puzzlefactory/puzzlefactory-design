@@ -29,7 +29,7 @@ Out of scope:
 
 ## Current State
 
-`TTP-01` and `TTP-02` are implemented. `@puzzlefactory/themes` is a real TypeScript workspace package with a versioned canonical theme source, theme identity validation, exact header/sidebar/footer role-treatment mappings, normalized color-engine input, runtime-safe source shape checks, resolved region semantics, APCA region diagnostics, deterministic CSS/bundle/manifest artifacts, and explicit theme/color-engine/release metadata. Color validation errors continue to surface from the real engine. Theme Author still owns parallel app-local composition helpers and has not migrated yet. No portable draft/publish persistence contract exists yet.
+`TTP-01` through `TTP-03` are implemented. `@puzzlefactory/themes` is a real TypeScript workspace package with a versioned canonical theme source, theme identity validation, exact header/sidebar/footer role-treatment mappings, normalized color-engine input, runtime-safe source shape checks, resolved region semantics, APCA region diagnostics, deterministic CSS/bundle/manifest artifacts, and explicit theme/color-engine/release metadata. Theme Author now delegates publishable source composition, region resolution, region diagnostics, and artifact/manifest generation to that package while retaining editor-only stable role keys, disabled drafts, and temporary incomplete mapping state. Color previews remain available for incomplete region drafts, but publishable artifact views require a complete composition. No portable draft/publish persistence contract exists yet.
 
 The implementation is planned as independently verified commits:
 
@@ -41,7 +41,7 @@ The implementation is planned as independently verified commits:
 
 ## Next Actions
 
-- Execute `TTP-03`: migrate Theme Author to package-owned source normalization, region composition, diagnostics, and artifacts.
+- Execute `TTP-04`: add the replaceable persistence port, browser-local adapter, and draft/version/publication workflow.
 - Continue through later slices without expanding into consumer infrastructure.
 
 ## Completion Shape
