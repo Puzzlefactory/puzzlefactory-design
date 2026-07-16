@@ -95,8 +95,8 @@ Status: active TypeScript package implementing the portable theme boundary above
 - Package folder: `packages/themes`
 - Package name: `@puzzlefactory/themes`
 - Runtime dependency: `@puzzlefactory/color-engine`; this does not change the color engine's zero-runtime-dependency contract
-- Current implementation: `THEME_SCHEMA_VERSION`, color-engine contract metadata, canonical `ThemeSourceInput` / `NormalizedThemeSource`, exact header/sidebar/footer mapping types, theme identity validation, region role/treatment validation, and `normalizeThemeSource(...)`
-- Planned next implementation: resolved region composition, APCA region diagnostics, manifest helpers, artifact metadata helpers, and persistence-facing Theme Author integration
+- Current implementation: `THEME_SCHEMA_VERSION`, color-engine contract metadata, canonical `ThemeSourceInput` / `NormalizedThemeSource`, exact header/sidebar/footer mapping types, theme identity validation, region role/treatment validation, `normalizeThemeSource(...)`, `createThemeComposition(...)`, resolved region semantics, APCA region diagnostics, and deterministic CSS/bundle/manifest artifacts from caller-supplied release metadata
+- Planned next implementation: migrate Theme Author to this package, then add a replaceable persistence port and browser-local development adapter
 - Expected inputs: color output from `@puzzlefactory/color-engine`; future typography, spacing, radius, elevation, density, motion, and component-default output from `@puzzlefactory/tokens`
 - Non-responsibilities: low-level color math, color ramp generation, component CSS recipes, tenant catalog persistence, blob/CDN upload execution, Azure credentials, deployment infrastructure, and app-specific theme switching behavior
 

@@ -44,13 +44,13 @@ Current supporting pieces exist:
 - Custom color roles exist as generated color families and semantic aliases.
 - APCA diagnostics exist for built-in and custom role text/background pairs.
 - `@puzzlefactory/tokens` is still v1/reference-backed and not yet the v2 broader token model.
-- `@puzzlefactory/themes` is currently a placeholder package with documented future responsibility for full theme composition, presets/configuration, region mapping schemas, manifests, and local artifact orchestration.
+- `@puzzlefactory/themes` now implements canonical theme source normalization, region composition, APCA region diagnostics, and deterministic artifact/manifest composition. Theme Author migration to that package is the active next slice.
 
 ## Next Actions
 
 - Current planned Theme Authoring slices are complete. Future work should start from a new planned slice, likely one of:
   - add designer-grade color picker/converter workflows using Color.js
-  - implement the first real `@puzzlefactory/themes` composition API
+  - migrate Theme Author's app-local region and artifact helpers to the implemented `@puzzlefactory/themes` composition API
   - add save/load/versioning integration once tenant catalog boundaries are known
 
 ## Completed Slices

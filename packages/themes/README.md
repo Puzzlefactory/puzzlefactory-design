@@ -2,7 +2,18 @@
 
 Portable theme composition and artifact orchestration above `@puzzlefactory/color-engine`.
 
-The first package slice defines a versioned canonical theme source with theme identity, normalized color input, and exact header/sidebar/footer custom-role mappings. `normalizeThemeSource(...)` validates theme-owned fields, delegates color validation to the real color engine, and returns the resolved source suitable for persistence or later artifact composition.
+The package defines a versioned canonical theme source with theme identity, normalized color input, and exact header/sidebar/footer custom-role mappings. `normalizeThemeSource(...)` validates theme-owned fields and delegates color validation to the real color engine. `createThemeComposition(...)` adds resolved region semantics and APCA diagnostics. `createThemeArtifactBundle(...)` produces the canonical five CSS files, a convenience bundle, and a deterministic manifest from caller-supplied release metadata.
+
+```ts
+const composition = createThemeComposition(source);
+const publication = createThemeArtifactBundle(composition, {
+  version: "1.0.0",
+  createdAt: "2026-07-16T12:00:00.000Z",
+  createdBy: "system:theme-author",
+});
+```
+
+Release metadata is explicit so identical source plus identical release input produces identical artifacts. The package does not generate timestamps, upload files, resolve tenants, or select active versions.
 
 ## Intended Responsibility
 
@@ -36,4 +47,4 @@ Current v2 color CSS output still lives in `@puzzlefactory/color-engine`.
 
 `@puzzlefactory/tokens` remains v1/reference-backed for now and is expected to become the broader token model later.
 
-Theme Authoring still uses `@puzzlefactory/color-engine` directly while the package is built in focused slices. A later slice will migrate region composition, diagnostics, and artifact manifests here.
+Theme Authoring still uses app-local region composition and artifact helpers. The next slice migrates those consumers to this package without changing Kitchen Sink.

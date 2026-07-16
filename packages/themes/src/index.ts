@@ -3,8 +3,18 @@ import {
   CUSTOM_COLOR_ROLE_ID_PATTERN,
   createColorEngineTheme,
   type ColorEngineInput,
+  type ColorEngineOutput,
   type ResolvedColorEngineInput,
 } from "@puzzlefactory/color-engine";
+import {
+  createResolvedThemeRegions,
+  createThemeRegionDiagnostics,
+  type ResolvedThemeRegion,
+  type ThemeRegionDiagnosticResult,
+} from "./regions.js";
+
+export * from "./artifacts.js";
+export * from "./regions.js";
 
 export const THEME_SCHEMA_VERSION = 1 as const;
 export const THEME_COLOR_ENGINE_CONTRACT_VERSION = COLOR_ENGINE_CONTRACT_VERSION;
@@ -41,6 +51,13 @@ export type NormalizedThemeSource = {
   readonly regions: ThemeRegionMappings;
 };
 
+export type ThemeComposition = {
+  readonly source: NormalizedThemeSource;
+  readonly colorOutput: ColorEngineOutput;
+  readonly regions: readonly ResolvedThemeRegion[];
+  readonly regionDiagnostics: readonly ThemeRegionDiagnosticResult[];
+};
+
 export type ThemeValidationErrorCode =
   | "INVALID_THEME_SOURCE"
   | "INVALID_THEME_SCHEMA_VERSION"
@@ -71,6 +88,35 @@ export class ThemeValidationError extends Error {
 export function normalizeThemeSource(
   input: ThemeSourceInput | unknown,
 ): NormalizedThemeSource {
+  return resolveThemeSource(input).source;
+}
+
+export function createThemeComposition(
+  input: ThemeSourceInput | unknown,
+): ThemeComposition {
+  const resolution = resolveThemeSource(input);
+  const regions = createResolvedThemeRegions(
+    resolution.colorOutput,
+    resolution.source.regions,
+  );
+
+  return {
+    source: resolution.source,
+    colorOutput: resolution.colorOutput,
+    regions,
+    regionDiagnostics: createThemeRegionDiagnostics(
+      resolution.colorOutput,
+      regions,
+    ),
+  };
+}
+
+function resolveThemeSource(
+  input: ThemeSourceInput | unknown,
+): {
+  readonly source: NormalizedThemeSource;
+  readonly colorOutput: ColorEngineOutput;
+} {
   if (!isRecord(input)) {
     throw new ThemeValidationError({
       code: "INVALID_THEME_SOURCE",
@@ -118,11 +164,14 @@ export function normalizeThemeSource(
   ) as ThemeRegionMappings;
 
   return {
-    schemaVersion: THEME_SCHEMA_VERSION,
-    id: identity.id,
-    name: identity.name,
-    color: colorOutput.input,
-    regions,
+    colorOutput,
+    source: {
+      schemaVersion: THEME_SCHEMA_VERSION,
+      id: identity.id,
+      name: identity.name,
+      color: colorOutput.input,
+      regions,
+    },
   };
 }
 
