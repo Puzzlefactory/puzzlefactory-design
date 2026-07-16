@@ -9,3 +9,4 @@ Canonical rule: active workstreams live in `.ai/workstreams/`. Use `workstream-t
 - [color-engine-v2.md](color-engine-v2.md) — Color Engine v2: visual-first compact usage ramps, presets, and immediate kitchen-sink feedback
 - [color-engine.md](color-engine.md) — Color Engine v1 reference: original broad-ramp OKLCH engine attempt; generation model rejected, infrastructure lessons retained
 - [theme-authoring.md](theme-authoring.md) — Theme Authoring: designer-facing workflow for normalized theme input, previews, diagnostics, and CSS artifact export
+- [tenant-theme-publishing.md](tenant-theme-publishing.md) — Tenant theme publishing foundation: canonical theme composition, deterministic artifacts, and persistence-ready Theme Author workflows
