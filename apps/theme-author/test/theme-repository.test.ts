@@ -62,7 +62,7 @@ test("stale draft writes fail without replacing the current draft", async () => 
   assert.equal((await repository.loadDraft("tenant-a", "tenant-default"))?.revision, 1);
 });
 
-test("publications store the exact artifact bundle and versions are immutable", async () => {
+test("publications store exact canonical artifacts without duplicating engine composition", async () => {
   const storage = new MemoryStorage();
   const repository = createBrowserLocalThemeRepository(storage);
   const composition = createThemeComposition({
@@ -93,11 +93,85 @@ test("publications store the exact artifact bundle and versions are immutable", 
   });
   const publication = await repository.publishTheme({ tenantId: "tenant-a", bundle });
 
-  assert.deepEqual(publication.bundle, bundle);
+  assert.deepEqual(publication.manifest, bundle.manifest);
+  assert.deepEqual(publication.artifacts, bundle.artifacts);
+  assert.equal("bundle" in publication, false);
+  const publicationKey = storage.key(0);
+  assert.ok(publicationKey);
+  const storedPublication = storage.getItem(publicationKey);
+  assert.ok(storedPublication);
+  assert.equal("bundle" in JSON.parse(storedPublication), false);
+  assert.ok(storedPublication.length < JSON.stringify(bundle).length / 2);
   assert.deepEqual(await repository.listPublications("tenant-a", draft.themeId), [publication]);
   await assert.rejects(
     repository.publishTheme({ tenantId: "tenant-a", bundle }),
     (error) => error instanceof ThemeRepositoryError && error.code === "VERSION_EXISTS",
+  );
+});
+
+test("draft parsing rejects malformed nested content and storage identity mismatches", async () => {
+  const storage = new MemoryStorage();
+  const repository = createBrowserLocalThemeRepository(storage);
+  await repository.saveDraft({ tenantId: "tenant-a", expectedRevision: null, content: draft });
+  const key = storage.key(0);
+  assert.ok(key);
+  const raw = storage.getItem(key);
+  assert.ok(raw);
+  const malformed = JSON.parse(raw);
+  malformed.content.roles[0].enabled = "yes";
+  storage.setItem(key, JSON.stringify(malformed));
+
+  await assert.rejects(
+    repository.loadDraft("tenant-a", draft.themeId),
+    (error) => error instanceof ThemeRepositoryError && error.code === "CORRUPT_STORAGE",
+  );
+
+  malformed.content.roles[0].enabled = true;
+  malformed.tenantId = "tenant-b";
+  storage.setItem(key, JSON.stringify(malformed));
+  await assert.rejects(
+    repository.loadDraft("tenant-a", draft.themeId),
+    (error) => error instanceof ThemeRepositoryError && error.code === "CORRUPT_STORAGE",
+  );
+});
+
+test("publication parsing rejects tampered manifest artifacts", async () => {
+  const storage = new MemoryStorage();
+  const repository = createBrowserLocalThemeRepository(storage);
+  const composition = createThemeComposition({
+    schemaVersion: THEME_SCHEMA_VERSION,
+    id: draft.themeId,
+    name: draft.themeName,
+    color: {
+      ...draft.themeInput,
+      customRoles: Object.fromEntries(draft.roles.map((role) => [role.id, {
+        seed: role.lightSeed,
+        darkSeed: role.darkSeed,
+        seedPolicy: role.seedPolicy,
+      }])),
+    },
+    regions: {
+      header: { roleId: "institution", treatment: "solid" },
+      sidebar: { roleId: "navigation", treatment: "soft" },
+      footer: { roleId: "footer", treatment: "solid" },
+    },
+  });
+  const bundle = createThemeArtifactBundle(composition, {
+    version: "v1",
+    createdAt: "2026-07-16T12:30:00.000Z",
+  });
+  await repository.publishTheme({ tenantId: "tenant-a", bundle });
+  const key = storage.key(0);
+  assert.ok(key);
+  const raw = storage.getItem(key);
+  assert.ok(raw);
+  const malformed = JSON.parse(raw);
+  malformed.artifacts[0].content += "\n/* tampered */";
+  storage.setItem(key, JSON.stringify(malformed));
+
+  await assert.rejects(
+    repository.listPublications("tenant-a", draft.themeId),
+    (error) => error instanceof ThemeRepositoryError && error.code === "CORRUPT_STORAGE",
   );
 });
 

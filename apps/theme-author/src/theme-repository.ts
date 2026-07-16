@@ -1,4 +1,18 @@
-import type { ThemeArtifactBundle, ThemeManifest } from "@puzzlefactory/themes";
+import {
+  THEME_ID_PATTERN,
+  THEME_REGION_IDS,
+  THEME_REGION_TREATMENTS,
+  createThemeArtifactBundle,
+  createThemeComposition,
+  type ThemeArtifactBundle,
+  type ThemeArtifactFile,
+  type ThemeManifest,
+} from "@puzzlefactory/themes";
+import {
+  SEED_POLICY_NAMES,
+  SURFACE_PRESET_NAMES,
+  TEXT_TREATMENT_STRATEGY_NAMES,
+} from "@puzzlefactory/color-engine";
 import type {
   AuthoredCustomRole,
   AuthoredRegionMapping,
@@ -6,6 +20,7 @@ import type {
 } from "./authoring-model";
 
 export const THEME_DRAFT_SCHEMA_VERSION = 1 as const;
+export const THEME_PUBLICATION_SCHEMA_VERSION = 1 as const;
 
 export type ThemeDraftContent = {
   readonly themeId: string;
@@ -24,12 +39,13 @@ export type StoredThemeDraft = {
 };
 
 export type PublishedThemeVersion = {
+  readonly schemaVersion: typeof THEME_PUBLICATION_SCHEMA_VERSION;
   readonly tenantId: string;
   readonly themeId: string;
   readonly version: string;
   readonly publishedAt: string;
   readonly manifest: ThemeManifest;
-  readonly bundle: ThemeArtifactBundle;
+  readonly artifacts: readonly ThemeArtifactFile[];
 };
 
 export type SaveThemeDraftRequest = {
@@ -52,6 +68,9 @@ export interface ThemeRepository {
 
 export type ThemeRepositoryErrorCode =
   | "INVALID_TENANT_ID"
+  | "INVALID_THEME_ID"
+  | "INVALID_DRAFT"
+  | "INVALID_PUBLICATION"
   | "DRAFT_CONFLICT"
   | "VERSION_EXISTS"
   | "CORRUPT_STORAGE";
@@ -81,16 +100,21 @@ export function createBrowserLocalThemeRepository(
   return {
     async loadDraft(tenantId, themeId) {
       validateTenantId(tenantId);
+      validateThemeId(themeId);
       const value = storage.getItem(createDraftKey(tenantId, themeId));
 
-      return value === null ? null : parseStoredDraft(value);
+      return value === null ? null : parseStoredDraft(value, tenantId, themeId);
     },
 
     async saveDraft(request) {
       validateTenantId(request.tenantId);
-      const key = createDraftKey(request.tenantId, request.content.themeId);
+      const content = validateDraftContent(request.content, "INVALID_DRAFT");
+      validateThemeId(content.themeId);
+      const key = createDraftKey(request.tenantId, content.themeId);
       const existingValue = storage.getItem(key);
-      const existing = existingValue === null ? null : parseStoredDraft(existingValue);
+      const existing = existingValue === null
+        ? null
+        : parseStoredDraft(existingValue, request.tenantId, content.themeId);
       const currentRevision = existing?.revision ?? null;
 
       if (currentRevision !== request.expectedRevision) {
@@ -105,7 +129,7 @@ export function createBrowserLocalThemeRepository(
         tenantId: request.tenantId,
         revision: (existing?.revision ?? 0) + 1,
         updatedAt: toCanonicalTimestamp(now()),
-        content: request.content,
+        content,
       } satisfies StoredThemeDraft;
 
       storage.setItem(key, JSON.stringify(saved));
@@ -114,7 +138,8 @@ export function createBrowserLocalThemeRepository(
 
     async publishTheme(request) {
       validateTenantId(request.tenantId);
-      const { manifest } = request.bundle;
+      const bundle = validateArtifactBundle(request.bundle, "INVALID_PUBLICATION");
+      const { manifest } = bundle;
       const themeId = manifest.theme.id;
       const version = manifest.release.version;
       const key = createPublicationKey(request.tenantId, themeId, version);
@@ -127,12 +152,13 @@ export function createBrowserLocalThemeRepository(
       }
 
       const publication = {
+        schemaVersion: THEME_PUBLICATION_SCHEMA_VERSION,
         tenantId: request.tenantId,
         themeId,
         version,
         publishedAt: manifest.release.createdAt,
         manifest,
-        bundle: request.bundle,
+        artifacts: bundle.artifacts,
       } satisfies PublishedThemeVersion;
 
       storage.setItem(key, JSON.stringify(publication));
@@ -141,6 +167,7 @@ export function createBrowserLocalThemeRepository(
 
     async listPublications(tenantId, themeId) {
       validateTenantId(tenantId);
+      validateThemeId(themeId);
       const prefix = createPublicationPrefix(tenantId, themeId);
       const publications: PublishedThemeVersion[] = [];
 
@@ -149,7 +176,13 @@ export function createBrowserLocalThemeRepository(
         if (key?.startsWith(prefix)) {
           const value = storage.getItem(key);
           if (value !== null) {
-            publications.push(parsePublication(value));
+            let version: string;
+            try {
+              version = decodeURIComponent(key.slice(prefix.length));
+            } catch {
+              throw corruptStorageError();
+            }
+            publications.push(parsePublication(value, tenantId, themeId, version));
           }
         }
       }
@@ -171,6 +204,15 @@ function validateTenantId(tenantId: string) {
   }
 }
 
+function validateThemeId(themeId: string) {
+  if (!THEME_ID_PATTERN.test(themeId)) {
+    throw new ThemeRepositoryError(
+      "INVALID_THEME_ID",
+      "Theme ID must use lowercase kebab-case beginning with a letter.",
+    );
+  }
+}
+
 function createDraftKey(tenantId: string, themeId: string): string {
   return `${STORAGE_PREFIX}:draft:${encodeURIComponent(tenantId)}:${encodeURIComponent(themeId)}`;
 }
@@ -183,37 +225,244 @@ function createPublicationKey(tenantId: string, themeId: string, version: string
   return `${createPublicationPrefix(tenantId, themeId)}${encodeURIComponent(version)}`;
 }
 
-function parseStoredDraft(value: string): StoredThemeDraft {
+function parseStoredDraft(
+  value: string,
+  expectedTenantId: string,
+  expectedThemeId: string,
+): StoredThemeDraft {
   const parsed = parseJson(value);
   if (
     !isRecord(parsed)
     || parsed.schemaVersion !== THEME_DRAFT_SCHEMA_VERSION
     || typeof parsed.tenantId !== "string"
+    || parsed.tenantId !== expectedTenantId
     || !Number.isInteger(parsed.revision)
+    || (parsed.revision as number) < 1
     || typeof parsed.updatedAt !== "string"
-    || !isRecord(parsed.content)
+    || !isCanonicalTimestamp(parsed.updatedAt)
   ) {
     throw corruptStorageError();
   }
 
-  return parsed as StoredThemeDraft;
+  const content = validateDraftContent(parsed.content, "CORRUPT_STORAGE");
+  if (content.themeId !== expectedThemeId) {
+    throw corruptStorageError();
+  }
+
+  return {
+    schemaVersion: THEME_DRAFT_SCHEMA_VERSION,
+    tenantId: parsed.tenantId,
+    revision: parsed.revision as number,
+    updatedAt: parsed.updatedAt,
+    content,
+  };
 }
 
-function parsePublication(value: string): PublishedThemeVersion {
+function parsePublication(
+  value: string,
+  expectedTenantId: string,
+  expectedThemeId: string,
+  expectedVersion: string,
+): PublishedThemeVersion {
   const parsed = parseJson(value);
   if (
     !isRecord(parsed)
+    || parsed.schemaVersion !== THEME_PUBLICATION_SCHEMA_VERSION
     || typeof parsed.tenantId !== "string"
+    || parsed.tenantId !== expectedTenantId
     || typeof parsed.themeId !== "string"
+    || parsed.themeId !== expectedThemeId
     || typeof parsed.version !== "string"
+    || parsed.version !== expectedVersion
     || typeof parsed.publishedAt !== "string"
+    || !isCanonicalTimestamp(parsed.publishedAt)
     || !isRecord(parsed.manifest)
-    || !isRecord(parsed.bundle)
+    || !Array.isArray(parsed.artifacts)
   ) {
     throw corruptStorageError();
   }
 
-  return parsed as PublishedThemeVersion;
+  const bundle = validateArtifactBundle(
+    { manifest: parsed.manifest, artifacts: parsed.artifacts },
+    "CORRUPT_STORAGE",
+  );
+  if (
+    bundle.manifest.theme.id !== parsed.themeId
+    || bundle.manifest.release.version !== parsed.version
+    || bundle.manifest.release.createdAt !== parsed.publishedAt
+  ) {
+    throw corruptStorageError();
+  }
+
+  return {
+    schemaVersion: THEME_PUBLICATION_SCHEMA_VERSION,
+    tenantId: parsed.tenantId,
+    themeId: parsed.themeId,
+    version: parsed.version,
+    publishedAt: parsed.publishedAt,
+    manifest: bundle.manifest,
+    artifacts: bundle.artifacts,
+  };
+}
+
+function validateDraftContent(
+  value: unknown,
+  errorCode: "INVALID_DRAFT" | "CORRUPT_STORAGE",
+): ThemeDraftContent {
+  const invalid = () => repositoryValidationError(
+    errorCode,
+    errorCode === "CORRUPT_STORAGE"
+      ? "Stored theme data is invalid. Clear the browser-local Theme Author data and try again."
+      : "Theme draft data has an invalid structure and cannot be saved.",
+  );
+
+  if (
+    !isRecord(value)
+    || typeof value.themeId !== "string"
+    || !THEME_ID_PATTERN.test(value.themeId)
+    || typeof value.themeName !== "string"
+    || value.themeName.trim().length === 0
+    || value.themeName.trim().length > 200
+    || !isRecord(value.themeInput)
+    || !Array.isArray(value.roles)
+    || !Array.isArray(value.regionMappings)
+  ) {
+    throw invalid();
+  }
+
+  const themeInput = value.themeInput;
+  const stringFields = [
+    "namespace",
+    "neutralSeed",
+    "surfaceLightSeed",
+    "surfaceDarkSeed",
+    "primarySeed",
+    "primaryDarkSeed",
+    "dangerSeed",
+    "dangerDarkSeed",
+    "warningSeed",
+    "warningDarkSeed",
+    "successSeed",
+    "successDarkSeed",
+    "infoSeed",
+    "infoDarkSeed",
+  ] as const;
+  const policyFields = [
+    "primarySeedPolicy",
+    "dangerSeedPolicy",
+    "warningSeedPolicy",
+    "successSeedPolicy",
+    "infoSeedPolicy",
+  ] as const;
+
+  if (
+    stringFields.some((field) => typeof themeInput[field] !== "string")
+    || policyFields.some((field) =>
+      typeof themeInput[field] !== "string"
+      || !(SEED_POLICY_NAMES as readonly string[]).includes(themeInput[field] as string)
+    )
+    || typeof themeInput.textTreatment !== "string"
+    || !(TEXT_TREATMENT_STRATEGY_NAMES as readonly string[]).includes(themeInput.textTreatment)
+    || typeof themeInput.preset !== "string"
+    || !(SURFACE_PRESET_NAMES as readonly string[]).includes(themeInput.preset)
+    || typeof themeInput.lightSurfacePreset !== "string"
+    || !(SURFACE_PRESET_NAMES as readonly string[]).includes(themeInput.lightSurfacePreset)
+    || typeof themeInput.darkSurfacePreset !== "string"
+    || !(SURFACE_PRESET_NAMES as readonly string[]).includes(themeInput.darkSurfacePreset)
+  ) {
+    throw invalid();
+  }
+
+  const roles = value.roles.map((role) => {
+    if (
+      !isRecord(role)
+      || typeof role.key !== "string"
+      || role.key.length === 0
+      || typeof role.id !== "string"
+      || typeof role.lightSeed !== "string"
+      || typeof role.darkSeed !== "string"
+      || typeof role.seedPolicy !== "string"
+      || !(SEED_POLICY_NAMES as readonly string[]).includes(role.seedPolicy)
+      || typeof role.enabled !== "boolean"
+    ) {
+      throw invalid();
+    }
+
+    return role as AuthoredCustomRole;
+  });
+  if (new Set(roles.map((role) => role.key)).size !== roles.length) {
+    throw invalid();
+  }
+
+  const regionMappings = value.regionMappings.map((mapping) => {
+    if (
+      !isRecord(mapping)
+      || typeof mapping.id !== "string"
+      || !(THEME_REGION_IDS as readonly string[]).includes(mapping.id)
+      || typeof mapping.roleKey !== "string"
+      || mapping.roleKey.length === 0
+      || typeof mapping.treatment !== "string"
+      || !(THEME_REGION_TREATMENTS as readonly string[]).includes(mapping.treatment)
+    ) {
+      throw invalid();
+    }
+
+    return mapping as AuthoredRegionMapping;
+  });
+  if (
+    regionMappings.length !== THEME_REGION_IDS.length
+    || new Set(regionMappings.map((mapping) => mapping.id)).size !== THEME_REGION_IDS.length
+  ) {
+    throw invalid();
+  }
+
+  return {
+    themeId: value.themeId,
+    themeName: value.themeName,
+    themeInput: themeInput as AuthoredThemeInput,
+    roles,
+    regionMappings,
+  };
+}
+
+function validateArtifactBundle(
+  value: unknown,
+  errorCode: "INVALID_PUBLICATION" | "CORRUPT_STORAGE",
+): ThemeArtifactBundle {
+  const invalid = () => repositoryValidationError(
+    errorCode,
+    errorCode === "CORRUPT_STORAGE"
+      ? "Stored theme data is invalid. Clear the browser-local Theme Author data and try again."
+      : "Theme publication data does not match its canonical manifest and artifacts.",
+  );
+
+  if (!isRecord(value) || !isRecord(value.manifest) || !Array.isArray(value.artifacts)) {
+    throw invalid();
+  }
+
+  try {
+    const manifest = value.manifest;
+    const composition = createThemeComposition(manifest.theme);
+    const expected = createThemeArtifactBundle(composition, manifest.release);
+
+    if (
+      JSON.stringify(value.manifest) !== JSON.stringify(expected.manifest)
+      || JSON.stringify(value.artifacts) !== JSON.stringify(expected.artifacts)
+    ) {
+      throw invalid();
+    }
+
+    if ("composition" in value && JSON.stringify(value.composition) !== JSON.stringify(expected.composition)) {
+      throw invalid();
+    }
+
+    return expected;
+  } catch (error) {
+    if (error instanceof ThemeRepositoryError) {
+      throw error;
+    }
+    throw invalid();
+  }
 }
 
 function parseJson(value: string): unknown {
@@ -229,6 +478,19 @@ function corruptStorageError(): ThemeRepositoryError {
     "CORRUPT_STORAGE",
     "Stored theme data is invalid. Clear the browser-local Theme Author data and try again.",
   );
+}
+
+function repositoryValidationError(
+  code: "INVALID_DRAFT" | "INVALID_PUBLICATION" | "CORRUPT_STORAGE",
+  message: string,
+): ThemeRepositoryError {
+  return new ThemeRepositoryError(code, message);
+}
+
+function isCanonicalTimestamp(value: string): boolean {
+  const parsed = new Date(value);
+
+  return Number.isFinite(parsed.valueOf()) && parsed.toISOString() === value;
 }
 
 function toCanonicalTimestamp(value: Date): string {

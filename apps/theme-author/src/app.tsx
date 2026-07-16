@@ -35,12 +35,13 @@ import {
   type ThemeSourceInput,
 } from "@puzzlefactory/themes";
 import type { CSSProperties, ChangeEvent, ReactNode } from "react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Navigate, Route, Routes } from "react-router";
 import {
   INITIAL_AUTHORED_ROLES,
   INITIAL_REGION_MAPPINGS,
   createNormalizedCustomRoles,
+  getNextAuthoredRoleNumber,
   getEngineFieldRoleKey,
   isAuthoringStateModified,
   normalizeRegionMappings,
@@ -210,7 +211,7 @@ export function App() {
     () => createBrowserLocalThemeRepository(window.localStorage),
     [],
   );
-  const nextRoleNumber = useRef(INITIAL_AUTHORED_ROLES.length + 1);
+  const nextRoleNumber = useRef(getNextAuthoredRoleNumber(INITIAL_AUTHORED_ROLES));
 
   const engine = useMemo<EngineState>(
     () => createEngineState(themeIdentity, themeInput, authoredRoles, regionMappings),
@@ -256,19 +257,25 @@ export function App() {
   }
 
   function addRole() {
-    const roleNumber = nextRoleNumber.current;
-    nextRoleNumber.current += 1;
-    setAuthoredRoles((current) => [
-      ...current,
-      {
-        key: `role-${roleNumber}`,
-        id: `custom-role-${roleNumber}`,
-        lightSeed: "oklch(0.55 0.12 250)",
-        darkSeed: "",
-        seedPolicy: "balanced",
-        enabled: true,
-      },
-    ]);
+    setAuthoredRoles((current) => {
+      const roleNumber = Math.max(
+        nextRoleNumber.current,
+        getNextAuthoredRoleNumber(current),
+      );
+      nextRoleNumber.current = roleNumber + 1;
+
+      return [
+        ...current,
+        {
+          key: `role-${roleNumber}`,
+          id: `custom-role-${roleNumber}`,
+          lightSeed: "oklch(0.55 0.12 250)",
+          darkSeed: "",
+          seedPolicy: "balanced",
+          enabled: true,
+        },
+      ];
+    });
     setIsCustom(true);
   }
 
@@ -314,7 +321,7 @@ export function App() {
     setAuthoredRoles(draft.content.roles);
     setRegionMappings(draft.content.regionMappings);
     setDraftRevision(draft.revision);
-    nextRoleNumber.current = draft.content.roles.length + 1;
+    nextRoleNumber.current = getNextAuthoredRoleNumber(draft.content.roles);
     setIsCustom(true);
   }
 
@@ -739,6 +746,7 @@ function PublishingPage({
     "Browser-local persistence is a development adapter; production tenant storage remains consumer-owned.",
   );
   const [publications, setPublications] = useState<readonly PublishedThemeVersion[]>([]);
+  const publicationRequest = useRef(0);
   const release = useMemo<ThemeReleaseMetadata>(() => ({
     version,
     createdAt,
@@ -761,6 +769,30 @@ function PublishingPage({
       };
     }
   }, [engine, release]);
+
+  useEffect(() => {
+    const requestId = publicationRequest.current + 1;
+    publicationRequest.current = requestId;
+    setPublications([]);
+
+    void repository.listPublications(tenantId, themeIdentity.id)
+      .then((storedPublications) => {
+        if (publicationRequest.current === requestId) {
+          setPublications(storedPublications);
+        }
+      })
+      .catch((error: unknown) => {
+        if (publicationRequest.current === requestId) {
+          setNotice(toPersistenceErrorMessage(error));
+        }
+      });
+
+    return () => {
+      if (publicationRequest.current === requestId) {
+        publicationRequest.current += 1;
+      }
+    };
+  }, [repository, tenantId, themeIdentity.id]);
 
   async function saveDraft() {
     try {
@@ -786,7 +818,6 @@ function PublishingPage({
 
       onApplyDraft(stored);
       setNotice(`Loaded ${stored.content.themeId} draft revision ${stored.revision}.`);
-      await refreshPublications(stored.tenantId, stored.content.themeId);
     } catch (error) {
       setNotice(toPersistenceErrorMessage(error));
     }
@@ -807,20 +838,25 @@ function PublishingPage({
         bundle: publicationPreview.bundle,
       });
       setNotice(`Published immutable version ${publication.version} for ${publication.themeId}.`);
-      await refreshPublications(tenantId, publication.themeId);
+      await refreshPublications();
     } catch (error) {
       setNotice(toPersistenceErrorMessage(error));
     }
   }
 
-  async function refreshPublications(
-    targetTenantId = tenantId,
-    targetThemeId = themeIdentity.id,
-  ) {
+  async function refreshPublications() {
+    const requestId = publicationRequest.current + 1;
+    publicationRequest.current = requestId;
+
     try {
-      setPublications(await repository.listPublications(targetTenantId, targetThemeId));
+      const storedPublications = await repository.listPublications(tenantId, themeIdentity.id);
+      if (publicationRequest.current === requestId) {
+        setPublications(storedPublications);
+      }
     } catch (error) {
-      setNotice(toPersistenceErrorMessage(error));
+      if (publicationRequest.current === requestId) {
+        setNotice(toPersistenceErrorMessage(error));
+      }
     }
   }
 
@@ -888,7 +924,7 @@ function PublishingPage({
               <div className="artifact-file-row" key={publication.version}>
                 <span>{publication.version}</span>
                 <strong>{publication.publishedAt}</strong>
-                <code>{publication.bundle.artifacts.length} artifacts</code>
+                <code>{publication.artifacts.length} artifacts</code>
               </div>
             ))}
           </div>

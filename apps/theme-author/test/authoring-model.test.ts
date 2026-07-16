@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   createNormalizedCustomRoles,
+  getNextAuthoredRoleNumber,
   getEngineFieldRoleKey,
   INITIAL_AUTHORED_ROLES,
   INITIAL_REGION_MAPPINGS,
@@ -37,6 +38,14 @@ test("normalizes enabled roles and omits an empty optional dark seed", () => {
       seedPolicy: "anchored",
     },
   });
+});
+
+test("allocates role numbers above sparse stored keys and ids", () => {
+  assert.equal(getNextAuthoredRoleNumber(roles), 3);
+  assert.equal(getNextAuthoredRoleNumber([
+    ...roles,
+    { ...roles[0], key: "role-9", id: "custom-role-12" },
+  ]), 13);
 });
 
 test("reports invalid, reserved, and duplicate enabled role IDs", () => {

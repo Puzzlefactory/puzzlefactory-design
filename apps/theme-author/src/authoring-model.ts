@@ -129,6 +129,18 @@ export function createNormalizedCustomRoles(
   );
 }
 
+export function getNextAuthoredRoleNumber(
+  roles: readonly AuthoredCustomRole[],
+): number {
+  const usedNumbers = roles.flatMap((role) => {
+    const values = [role.key.match(/^role-(\d+)$/)?.[1], role.id.match(/^custom-role-(\d+)$/)?.[1]];
+
+    return values.flatMap((value) => value === undefined ? [] : [Number(value)]);
+  });
+
+  return Math.max(roles.length, ...usedNumbers, 0) + 1;
+}
+
 export function normalizeRegionMappings(
   mappings: readonly AuthoredRegionMapping[],
   roles: readonly AuthoredCustomRole[],
