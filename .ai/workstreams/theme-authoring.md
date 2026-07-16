@@ -2,7 +2,7 @@
 
 Status: active
 Created: 2026-06-15
-Last Updated: 2026-07-12
+Last Updated: 2026-07-16
 
 Theme Authoring is the future designer-facing workflow for creating, reviewing, versioning, and exporting design-system themes. It is separate from Kitchen Sink: Kitchen Sink remains the diagnostic lab for engine, token, and component internals, while Theme Authoring should guide humans through a coherent theme creation and artifact export flow.
 
@@ -34,7 +34,7 @@ Out of scope:
 
 ## Current State
 
-Theme Authoring has a usable input editor, designer-facing preview, artifact inspection surface, human-readable diagnostics route, and region semantic review route at `apps/theme-author`. It is a separate React + Vite + React Router app with a workflow for Overview, Theme Input, Preview, Regions, Artifacts, and Diagnostics. It imports `@puzzlefactory/color-engine`, applies curated theme presets, holds normalized theme input plus authoring-layer custom role and region mapping state, validates enabled roles through the real color engine, injects generated semantic CSS, and previews light, dark, high-contrast, and high-contrast-dark output in realistic app-shell review frames. Theme Input can create, edit, enable/disable, and remove custom roles with role ID, light seed, optional dark seed, and seed policy controls; role ID errors and engine seed errors surface at the relevant role. Stable authoring keys preserve region selections when a role ID is renamed. Header, sidebar, and footer each select an enabled authored role and `soft` or `solid` treatment. Those mappings drive region previews and APCA diagnostics. Region labels resolve per theme from quietest-to-strongest same-polarity text candidates and use the quietest token that clears APCA 60 across both rest and hover backgrounds. The exact resolved token is used for rendering and diagnostics, so visual subordination does not rely on opacity and does not collapse labels into primary text unless stronger contrast is actually required. APCA diagnostics cover label text on region rest and hover backgrounds in addition to primary/action pairs. Region borders remain part of the selected complete role treatment rather than a separately authored color. Preview includes authored role treatments. Artifacts include the generated custom-role CSS and a derived `manifest.json` containing normalized color-engine input and normalized region mappings. Disabled roles remain authoring drafts and are omitted from normalized input; unavailable region mappings are called out as incomplete. The direction remains captured in `docs/notes/direction-questions.md` and the `docs/about/*` package-boundary docs.
+Theme Authoring has a usable input editor, designer-facing preview, canonical artifact inspection, human-readable diagnostics, region semantic review, and a local publishing workflow at `apps/theme-author`. It is a separate React + Vite + React Router app with routes for Overview, Theme Input, Preview, Regions, Artifacts, Diagnostics, and Publishing. It imports `@puzzlefactory/color-engine` for curated inputs/editor types and delegates publishable theme normalization, resolved regions, APCA region diagnostics, and deterministic artifact/manifest generation to `@puzzlefactory/themes`. Theme Input can create, edit, enable/disable, and remove custom roles with role ID, light seed, optional dark seed, and seed policy controls; role ID errors and engine seed errors surface at the relevant role. Stable authoring keys preserve region selections when a role ID is renamed. Header, sidebar, and footer each select an enabled authored role and `soft` or `solid` treatment. Region labels use the quietest token that clears APCA 60 across rest and hover without opacity. Region borders remain part of the selected complete role treatment. Disabled roles remain editor drafts and are omitted from canonical source; incomplete mappings retain color preview but block composition-backed diagnostics and artifacts. A replaceable async repository port now supports tenant-scoped draft load/save with optimistic revisions and immutable publications. The browser-local adapter is development-only, and the publishing screen stores the exact bundle it previews. Production databases, Blob/CDN upload, active-version pointers, rollback, caching, tenant isolation enforcement, and application bootstrap remain consumer-owned.
 
 Current supporting pieces exist:
 
@@ -44,14 +44,15 @@ Current supporting pieces exist:
 - Custom color roles exist as generated color families and semantic aliases.
 - APCA diagnostics exist for built-in and custom role text/background pairs.
 - `@puzzlefactory/tokens` is still v1/reference-backed and not yet the v2 broader token model.
-- `@puzzlefactory/themes` now implements canonical theme source normalization, region composition, APCA region diagnostics, and deterministic artifact/manifest composition. Theme Author migration to that package is the active next slice.
+- `@puzzlefactory/themes` implements canonical theme source normalization, region composition, APCA region diagnostics, and deterministic artifact/manifest composition; Theme Author consumes it directly.
 
 ## Next Actions
 
-- Current planned Theme Authoring slices are complete. Future work should start from a new planned slice, likely one of:
+- Review, bug-fix, refactor, and harden the completed theme composition and local persistence slices as a separate pass.
+- Future feature work should start from a new planned slice, likely one of:
   - add designer-grade color picker/converter workflows using Color.js
-  - migrate Theme Author's app-local region and artifact helpers to the implemented `@puzzlefactory/themes` composition API
-  - add save/load/versioning integration once tenant catalog boundaries are known
+  - add constrained border treatment/strength authoring if product review requires it
+  - begin a consumer-owned tenant database/Blob/activation/bootstrap pilot without moving that infrastructure into this repo
 
 ## Completed Slices
 
@@ -66,6 +67,8 @@ Current supporting pieces exist:
 - `TA-10`: Made custom roles and header/sidebar/footer region mappings editable, derived normalized color-engine input from enabled role drafts, added role-aware validation, updated previews/APCA diagnostics/artifacts, and included normalized input plus region mappings in the manifest.
 - `TA-11`: Added an explicit contrast-safe region label text semantic, protected it from generic preview CSS, and expanded APCA coverage to label text on rest and hover backgrounds while keeping hierarchy typographic rather than opacity-based.
 - `TA-12`: Replaced the fixed region-label foreground with per-theme contrast resolution. Region composition now orders same-polarity text candidates from muted to strong, uses the quietest token that clears APCA 60 across rest and hover, renders and diagnoses the same token, and keeps borders inside complete named role treatments.
+- `TA-13`: Migrated canonical theme source, region resolution, APCA diagnostics, and artifact/manifest generation from app-local helpers to `@puzzlefactory/themes`; incomplete editor drafts retain color preview but cannot masquerade as publishable compositions.
+- `TA-14`: Added tenant/theme identity plus a replaceable async persistence port, browser-local draft save/load with optimistic revisions, exact-bundle publication previews, immutable local versions, visible failure preservation, focused tests, and browser interaction/visual verification.
 
 ## Completion Shape
 

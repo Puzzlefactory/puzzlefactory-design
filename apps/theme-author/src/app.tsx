@@ -888,7 +888,7 @@ function PublishingPage({
               <div className="artifact-file-row" key={publication.version}>
                 <span>{publication.version}</span>
                 <strong>{publication.publishedAt}</strong>
-                <code>{publication.manifest.files.length} files</code>
+                <code>{publication.bundle.artifacts.length} artifacts</code>
               </div>
             ))}
           </div>
@@ -1038,7 +1038,7 @@ function CustomRolesEditor({
                 </h3>
                 <label className="toggle-field">
                   <input
-                    aria-label={`${role.enabled ? "Disable" : "Enable"} ${role.id || "untitled role"}`}
+                    aria-label={`${role.id || "Untitled role"} enabled`}
                     checked={role.enabled}
                     onChange={(event) => onUpdateRole(role.key, { enabled: event.target.checked })}
                     type="checkbox"
