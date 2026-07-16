@@ -78,6 +78,25 @@ test("canonicalizes custom roles independently from caller insertion order", () 
   assert.deepEqual(reverse, forward);
 });
 
+test("canonicalizes custom roles with locale-independent code-unit order", () => {
+  const normalized = normalizeThemeSource(createSource({
+    color: {
+      namespace: "ds",
+      customRoles: {
+        z: { seed: "#24569b" },
+        aa: { seed: "#147d6f" },
+      },
+    },
+    regions: {
+      header: { roleId: "aa", treatment: "solid" },
+      sidebar: { roleId: "z", treatment: "soft" },
+      footer: { roleId: "aa", treatment: "solid" },
+    },
+  }));
+
+  assert.deepEqual(Object.keys(normalized.color.customRoles), ["aa", "z"]);
+});
+
 test("rejects unsupported schema versions and invalid theme identity", () => {
   assert.throws(
     () => normalizeThemeSource(null),

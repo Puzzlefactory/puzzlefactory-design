@@ -85,9 +85,12 @@ export function createContrastAssertionReport(options: {
   readonly primitives: PrimitiveSurfaceOutput;
   readonly semantics: Readonly<Record<SurfaceTheme, ColorEngineThemeSemantics>>;
   readonly customRoles?: Readonly<Record<string, ResolvedCustomColorRole>>;
-  readonly surfacePresets: Readonly<Record<SurfaceGenerationTheme, SurfacePreset>>;
+  readonly surfacePresets?: Readonly<Record<SurfaceGenerationTheme, SurfacePreset>>;
 }): ContrastAssertionReport {
-  const pairs = createContrastAssertionPairs(options.customRoles ?? {});
+  const pairs = createContrastAssertionPairs(
+    options.customRoles ?? {},
+    options.surfacePresets !== undefined,
+  );
   const results = pairs.map((pair) => {
     const foregroundToken = resolveSemanticToken({
       namespace: options.namespace,
@@ -95,7 +98,7 @@ export function createContrastAssertionReport(options: {
       semantics: options.semantics,
       theme: pair.theme,
       semanticName: pair.foreground,
-      surfacePresets: options.surfacePresets,
+      ...(options.surfacePresets ? { surfacePresets: options.surfacePresets } : {}),
     });
     const backgroundToken = resolveSemanticToken({
       namespace: options.namespace,
@@ -103,7 +106,7 @@ export function createContrastAssertionReport(options: {
       semantics: options.semantics,
       theme: pair.theme,
       semanticName: pair.background,
-      surfacePresets: options.surfacePresets,
+      ...(options.surfacePresets ? { surfacePresets: options.surfacePresets } : {}),
     });
     const lc = calculateApcaLcFromOklch(foregroundToken.oklch, backgroundToken.oklch);
     const absLc = Math.abs(lc);
@@ -137,11 +140,12 @@ export function createContrastAssertionReport(options: {
 
 function createContrastAssertionPairs(
   customRoles: Readonly<Record<string, ResolvedCustomColorRole>>,
+  includeSurfaceStates: boolean,
 ): readonly ContrastAssertionPair[] {
   return [
-    ...createSurfaceTextPairs("text-primary", "body", "required", "Body text"),
-    ...createSurfaceTextPairs("text-secondary", "secondary", "required", "Secondary text"),
-    ...createSurfaceTextPairs("text-muted", "muted", "diagnostic", "Muted text"),
+    ...createSurfaceTextPairs("text-primary", "body", "required", "Body text", includeSurfaceStates),
+    ...createSurfaceTextPairs("text-secondary", "secondary", "required", "Secondary text", includeSurfaceStates),
+    ...createSurfaceTextPairs("text-muted", "muted", "diagnostic", "Muted text", includeSurfaceStates),
     ...createUiPairs(),
     ...createPrimarySoftPairs(),
     ...createStatusPairs(),
@@ -154,36 +158,28 @@ function createSurfaceTextPairs(
   role: ContrastAssertionRole,
   severity: ContrastAssertionSeverity,
   label: string,
+  includeSurfaceStates: boolean,
 ): readonly ContrastAssertionPair[] {
   const pairs: ContrastAssertionPair[] = [];
+  const states = includeSurfaceStates
+    ? [undefined, "hover", "selected", "pressed"] as const
+    : [undefined] as const;
 
   for (const theme of ASSERTION_THEME_NAMES) {
-    for (const background of [
-      "surface-1",
-      "surface-1-hover",
-      "surface-1-selected",
-      "surface-1-pressed",
-      "surface-2",
-      "surface-2-hover",
-      "surface-2-selected",
-      "surface-2-pressed",
-      "surface-3",
-      "surface-3-hover",
-      "surface-3-selected",
-      "surface-3-pressed",
-      "surface-4",
-      "surface-4-hover",
-      "surface-4-selected",
-      "surface-4-pressed",
-    ] as const) {
-      pairs.push(createPair({
-        theme,
-        role,
-        severity,
-        foreground,
-        background,
-        description: `${label} on ${background}`,
-      }));
+    for (const level of [1, 2, 3, 4] as const) {
+      for (const state of states) {
+        const background = state === undefined
+          ? `surface-${level}` as const
+          : `surface-${level}-${state}` as const;
+        pairs.push(createPair({
+          theme,
+          role,
+          severity,
+          foreground,
+          background,
+          description: `${label} on ${background}`,
+        }));
+      }
     }
   }
 
@@ -339,7 +335,7 @@ function resolveSemanticToken(options: {
   readonly semantics: Readonly<Record<SurfaceTheme, ColorEngineThemeSemantics>>;
   readonly theme: SurfaceTheme;
   readonly semanticName: ContrastAssertionSemanticName;
-  readonly surfacePresets: Readonly<Record<SurfaceGenerationTheme, SurfacePreset>>;
+  readonly surfacePresets?: Readonly<Record<SurfaceGenerationTheme, SurfacePreset>>;
 }): ColorToken {
   const semanticValue = options.semantics[options.theme][options.semanticName];
   if (!semanticValue) {
@@ -355,7 +351,7 @@ function resolveSemanticToken(options: {
   const stateMatch = /^(.*)-(hover|selected|pressed)$/.exec(primitiveName);
   const baseToken = stateMatch ? findPrimitiveToken(options.primitives, stateMatch[1] ?? "") : undefined;
 
-  if (baseToken && shouldCreateStateValues(baseToken.name)) {
+  if (baseToken && shouldCreateStateValues(baseToken.name) && options.surfacePresets) {
     return createPrimitiveStateToken({
       token: baseToken,
       state: stateMatch?.[2] as SurfaceState,

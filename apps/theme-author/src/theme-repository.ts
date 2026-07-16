@@ -236,8 +236,9 @@ function parseStoredDraft(
     || parsed.schemaVersion !== THEME_DRAFT_SCHEMA_VERSION
     || typeof parsed.tenantId !== "string"
     || parsed.tenantId !== expectedTenantId
-    || !Number.isInteger(parsed.revision)
+    || !Number.isSafeInteger(parsed.revision)
     || (parsed.revision as number) < 1
+    || (parsed.revision as number) >= Number.MAX_SAFE_INTEGER
     || typeof parsed.updatedAt !== "string"
     || !isCanonicalTimestamp(parsed.updatedAt)
   ) {

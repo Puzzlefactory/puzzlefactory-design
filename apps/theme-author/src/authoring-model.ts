@@ -135,7 +135,14 @@ export function getNextAuthoredRoleNumber(
   const usedNumbers = roles.flatMap((role) => {
     const values = [role.key.match(/^role-(\d+)$/)?.[1], role.id.match(/^custom-role-(\d+)$/)?.[1]];
 
-    return values.flatMap((value) => value === undefined ? [] : [Number(value)]);
+    return values.flatMap((value) => {
+      if (value === undefined) {
+        return [];
+      }
+
+      const roleNumber = Number(value);
+      return Number.isSafeInteger(roleNumber) ? [roleNumber] : [];
+    });
   });
 
   return Math.max(roles.length, ...usedNumbers, 0) + 1;

@@ -5,6 +5,7 @@ import {
   COLOR_ENGINE_THEME_PRESETS,
   CONTRAST_ASSERTION_THRESHOLDS,
   createColorEngineTheme,
+  createContrastAssertionReport,
 } from "../dist/index.js";
 
 test("createColorEngineTheme returns APCA diagnostic assertions", () => {
@@ -22,6 +23,27 @@ test("createColorEngineTheme returns APCA diagnostic assertions", () => {
     requiredFailed: report.results.filter((result) => !result.passed && result.severity === "required").length,
     diagnosticFailed: report.results.filter((result) => !result.passed && result.severity === "diagnostic").length,
   });
+});
+
+test("public assertion helper preserves legacy calls while opting into state coverage", () => {
+  const output = createColorEngineTheme();
+  const legacy = createContrastAssertionReport({
+    namespace: output.namespace,
+    primitives: output.primitives,
+    semantics: output.semantics,
+  });
+  const stateAware = createContrastAssertionReport({
+    namespace: output.namespace,
+    primitives: output.primitives,
+    semantics: output.semantics,
+    surfacePresets: output.surfacePresets,
+  });
+
+  assert.equal(legacy.summary.total, 152);
+  assert.equal(legacy.results.some((result) => result.background.endsWith("-pressed")), true);
+  assert.equal(legacy.results.some((result) => result.background.startsWith("surface-") && result.background.endsWith("-pressed")), false);
+  assert.equal(stateAware.summary.total, 296);
+  assert.equal(stateAware.results.some((result) => result.background === "surface-1-pressed"), true);
 });
 
 test("assertion report uses role-based thresholds and severities", () => {

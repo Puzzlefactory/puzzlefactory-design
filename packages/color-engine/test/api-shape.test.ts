@@ -211,7 +211,6 @@ const assertionReportFromHelper: ContrastAssertionReport = createContrastAsserti
   namespace: output.namespace,
   primitives: output.primitives,
   semantics: output.semantics,
-  surfacePresets: output.surfacePresets,
 });
 
 void preset;

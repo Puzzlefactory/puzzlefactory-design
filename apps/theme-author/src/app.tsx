@@ -60,6 +60,10 @@ import {
   type ThemeDraftContent,
   type ThemeRepository,
 } from "./theme-repository";
+import {
+  PublicationRequestTracker,
+  createPublicationIdentity,
+} from "./publication-requests";
 
 const navItems = [
   { to: "/overview", label: "Overview" },
@@ -741,7 +745,13 @@ function PublishingPage({
     "Browser-local persistence is a development adapter; production tenant storage remains consumer-owned.",
   );
   const [publications, setPublications] = useState<readonly PublishedThemeVersion[]>([]);
-  const publicationRequest = useRef(0);
+  const activePublicationIdentity = createPublicationIdentity(tenantId, themeIdentity.id);
+  const publicationRequest = useRef<PublicationRequestTracker | null>(null);
+  if (publicationRequest.current === null) {
+    publicationRequest.current = new PublicationRequestTracker(activePublicationIdentity);
+  }
+  const publicationTracker = publicationRequest.current;
+  publicationTracker.updateIdentity(activePublicationIdentity);
   const release = useMemo<ThemeReleaseMetadata>(() => ({
     version,
     createdAt,
@@ -766,46 +776,52 @@ function PublishingPage({
   }, [engine, release]);
 
   useEffect(() => {
-    const requestId = publicationRequest.current + 1;
-    publicationRequest.current = requestId;
+    const request = publicationTracker.beginRequest();
     setPublications([]);
 
     void repository.listPublications(tenantId, themeIdentity.id)
       .then((storedPublications) => {
-        if (publicationRequest.current === requestId) {
+        if (publicationTracker.isRequestCurrent(request)) {
           setPublications(storedPublications);
         }
       })
       .catch((error: unknown) => {
-        if (publicationRequest.current === requestId) {
+        if (publicationTracker.isRequestCurrent(request)) {
           setNotice(toPersistenceErrorMessage(error));
         }
       });
 
     return () => {
-      if (publicationRequest.current === requestId) {
-        publicationRequest.current += 1;
-      }
+      publicationTracker.invalidateRequest(request);
     };
-  }, [repository, tenantId, themeIdentity.id]);
+  }, [activePublicationIdentity, publicationTracker, repository, tenantId, themeIdentity.id]);
 
   async function saveDraft() {
+    const operationIdentity = activePublicationIdentity;
     try {
       const saved = await repository.saveDraft({
         tenantId,
         expectedRevision: revision,
         content: draft,
       });
-      onDraftRevisionChange(saved.revision);
-      setNotice(`Saved ${saved.content.themeId} draft revision ${saved.revision}.`);
+      if (publicationTracker.isIdentityCurrent(operationIdentity)) {
+        onDraftRevisionChange(saved.revision);
+        setNotice(`Saved ${saved.content.themeId} draft revision ${saved.revision}.`);
+      }
     } catch (error) {
-      setNotice(toPersistenceErrorMessage(error));
+      if (publicationTracker.isIdentityCurrent(operationIdentity)) {
+        setNotice(toPersistenceErrorMessage(error));
+      }
     }
   }
 
   async function loadDraft() {
+    const operationIdentity = activePublicationIdentity;
     try {
       const stored = await repository.loadDraft(tenantId, themeIdentity.id);
+      if (!publicationTracker.isIdentityCurrent(operationIdentity)) {
+        return;
+      }
       if (!stored) {
         setNotice(`No browser-local draft exists for ${tenantId}/${themeIdentity.id}.`);
         return;
@@ -814,11 +830,18 @@ function PublishingPage({
       onApplyDraft(stored);
       setNotice(`Loaded ${stored.content.themeId} draft revision ${stored.revision}.`);
     } catch (error) {
-      setNotice(toPersistenceErrorMessage(error));
+      if (publicationTracker.isIdentityCurrent(operationIdentity)) {
+        setNotice(toPersistenceErrorMessage(error));
+      }
     }
   }
 
   async function publishTheme() {
+    const operation = {
+      identity: activePublicationIdentity,
+      tenantId,
+      themeId: themeIdentity.id,
+    };
     if (!publicationPreview || publicationPreview.kind === "error") {
       setNotice(
         publicationPreview?.message
@@ -829,27 +852,38 @@ function PublishingPage({
 
     try {
       const publication = await repository.publishTheme({
-        tenantId,
+        tenantId: operation.tenantId,
         bundle: publicationPreview.bundle,
       });
+      if (!publicationTracker.isIdentityCurrent(operation.identity)) {
+        return;
+      }
       setNotice(`Published immutable version ${publication.version} for ${publication.themeId}.`);
-      await refreshPublications();
+      await refreshPublications(operation);
     } catch (error) {
-      setNotice(toPersistenceErrorMessage(error));
+      if (publicationTracker.isIdentityCurrent(operation.identity)) {
+        setNotice(toPersistenceErrorMessage(error));
+      }
     }
   }
 
-  async function refreshPublications() {
-    const requestId = publicationRequest.current + 1;
-    publicationRequest.current = requestId;
+  async function refreshPublications(target = {
+    identity: activePublicationIdentity,
+    tenantId,
+    themeId: themeIdentity.id,
+  }) {
+    if (!publicationTracker.isIdentityCurrent(target.identity)) {
+      return;
+    }
+    const request = publicationTracker.beginRequest();
 
     try {
-      const storedPublications = await repository.listPublications(tenantId, themeIdentity.id);
-      if (publicationRequest.current === requestId) {
+      const storedPublications = await repository.listPublications(target.tenantId, target.themeId);
+      if (publicationTracker.isRequestCurrent(request)) {
         setPublications(storedPublications);
       }
     } catch (error) {
-      if (publicationRequest.current === requestId) {
+      if (publicationTracker.isRequestCurrent(request)) {
         setNotice(toPersistenceErrorMessage(error));
       }
     }

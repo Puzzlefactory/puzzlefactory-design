@@ -1141,7 +1141,7 @@ function resolveCustomColorRoleInputs(
   const resolved: Record<string, ResolvedCustomColorRoleInput> = {};
 
   for (const [roleId, roleInput] of Object.entries(customRoles).sort(([left], [right]) =>
-    left.localeCompare(right)
+    left < right ? -1 : left > right ? 1 : 0
   )) {
     validateCustomColorRoleId(roleId, `customRoles.${roleId}`);
 

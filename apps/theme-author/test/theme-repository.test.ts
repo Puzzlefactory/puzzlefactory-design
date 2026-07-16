@@ -135,6 +135,26 @@ test("draft parsing rejects malformed nested content and storage identity mismat
   );
 });
 
+test("draft parsing rejects revisions that cannot advance safely", async () => {
+  for (const revision of [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER + 1]) {
+    const storage = new MemoryStorage();
+    const repository = createBrowserLocalThemeRepository(storage);
+    await repository.saveDraft({ tenantId: "tenant-a", expectedRevision: null, content: draft });
+    const key = storage.key(0);
+    assert.ok(key);
+    const raw = storage.getItem(key);
+    assert.ok(raw);
+    const malformed = JSON.parse(raw);
+    malformed.revision = revision;
+    storage.setItem(key, JSON.stringify(malformed));
+
+    await assert.rejects(
+      repository.loadDraft("tenant-a", draft.themeId),
+      (error) => error instanceof ThemeRepositoryError && error.code === "CORRUPT_STORAGE",
+    );
+  }
+});
+
 test("publication parsing rejects tampered manifest artifacts", async () => {
   const storage = new MemoryStorage();
   const repository = createBrowserLocalThemeRepository(storage);

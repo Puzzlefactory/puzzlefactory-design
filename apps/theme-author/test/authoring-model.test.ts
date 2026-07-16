@@ -46,6 +46,10 @@ test("allocates role numbers above sparse stored keys and ids", () => {
     ...roles,
     { ...roles[0], key: "role-9", id: "custom-role-12" },
   ]), 13);
+  assert.equal(getNextAuthoredRoleNumber([
+    ...roles,
+    { ...roles[0], key: `role-${"9".repeat(400)}`, id: `custom-role-${"9".repeat(400)}` },
+  ]), 4);
 });
 
 test("reports invalid, reserved, and duplicate enabled role IDs", () => {
