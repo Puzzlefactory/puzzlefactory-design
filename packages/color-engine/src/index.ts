@@ -30,6 +30,8 @@ export type { ApcaConstants, SrgbColor } from "./apca.js";
 
 export type ColorSeed = `#${string}` | `oklch(${string})`;
 
+export const COLOR_ENGINE_CONTRACT_VERSION = 2 as const;
+
 export type ColorEngineThemePresetName =
   | "evergreen"
   | "civic-blue"

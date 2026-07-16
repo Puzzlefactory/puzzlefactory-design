@@ -1,8 +1,8 @@
 # @puzzlefactory/themes
 
-Future theme composition package.
+Portable theme composition and artifact orchestration above `@puzzlefactory/color-engine`.
 
-This package is intentionally still a placeholder. It should not be implemented until a slice explicitly authorizes the first real theme-composition API.
+The first package slice defines a versioned canonical theme source with theme identity, normalized color input, and exact header/sidebar/footer custom-role mappings. `normalizeThemeSource(...)` validates theme-owned fields, delegates color validation to the real color engine, and returns the resolved source suitable for persistence or later artifact composition.
 
 ## Intended Responsibility
 
@@ -36,4 +36,4 @@ Current v2 color CSS output still lives in `@puzzlefactory/color-engine`.
 
 `@puzzlefactory/tokens` remains v1/reference-backed for now and is expected to become the broader token model later.
 
-Theme Authoring currently uses `@puzzlefactory/color-engine` directly. A future implementation can introduce `@puzzlefactory/themes` once there is enough non-color theme composition to justify a separate package.
+Theme Authoring still uses `@puzzlefactory/color-engine` directly while the package is built in focused slices. A later slice will migrate region composition, diagnostics, and artifact manifests here.

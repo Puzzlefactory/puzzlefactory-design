@@ -90,11 +90,13 @@ Status: implemented TypeScript library/generator that consumes `EngineOutput`.
 
 ### `@puzzlefactory/themes`
 
-Status: placeholder package with documented future responsibility. This package is expected to sit above `@puzzlefactory/color-engine` and future broader `@puzzlefactory/tokens`.
+Status: active TypeScript package implementing the portable theme boundary above `@puzzlefactory/color-engine` and future broader `@puzzlefactory/tokens`.
 
 - Package folder: `packages/themes`
-- Current implementation: README only
-- Future responsibility: full theme composition, theme preset/configuration objects, theme version metadata, region mapping schemas, manifest helpers, artifact metadata helpers, and build-time or publish-time local artifact orchestration
+- Package name: `@puzzlefactory/themes`
+- Runtime dependency: `@puzzlefactory/color-engine`; this does not change the color engine's zero-runtime-dependency contract
+- Current implementation: `THEME_SCHEMA_VERSION`, color-engine contract metadata, canonical `ThemeSourceInput` / `NormalizedThemeSource`, exact header/sidebar/footer mapping types, theme identity validation, region role/treatment validation, and `normalizeThemeSource(...)`
+- Planned next implementation: resolved region composition, APCA region diagnostics, manifest helpers, artifact metadata helpers, and persistence-facing Theme Author integration
 - Expected inputs: color output from `@puzzlefactory/color-engine`; future typography, spacing, radius, elevation, density, motion, and component-default output from `@puzzlefactory/tokens`
 - Non-responsibilities: low-level color math, color ramp generation, component CSS recipes, tenant catalog persistence, blob/CDN upload execution, Azure credentials, deployment infrastructure, and app-specific theme switching behavior
 

@@ -29,7 +29,7 @@ Out of scope:
 
 ## Current State
 
-`@puzzlefactory/color-engine` generates validated color output and deterministic CSS artifact metadata. Theme Author edits color input, custom roles, and region mappings, but currently owns its canonicalization, region composition, diagnostics, and manifest assembly inside the app. `@puzzlefactory/themes` is still a README-only placeholder. No portable draft/publish persistence contract exists.
+`TTP-01` is implemented. `@puzzlefactory/themes` is a real TypeScript workspace package with a versioned canonical theme source, theme identity validation, exact header/sidebar/footer role-treatment mappings, normalized color-engine input, runtime-safe source shape checks, and explicit theme/color-engine contract versions. Color validation errors continue to surface from the real engine. Theme Author still owns region composition, diagnostics, and manifest assembly inside the app. No portable draft/publish persistence contract exists yet.
 
 The implementation is planned as independently verified commits:
 
@@ -41,7 +41,7 @@ The implementation is planned as independently verified commits:
 
 ## Next Actions
 
-- Execute `TTP-01` and commit the package foundation.
+- Execute `TTP-02`: move reusable region composition/diagnostics into the package and add deterministic manifest/artifact bundle APIs.
 - Continue through later slices without expanding into consumer infrastructure.
 
 ## Completion Shape

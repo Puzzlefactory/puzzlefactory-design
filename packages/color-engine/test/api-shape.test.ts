@@ -49,6 +49,7 @@ import type {
   TextTreatmentStrategyName,
 } from "../src/index.js";
 import {
+  COLOR_ENGINE_CONTRACT_VERSION,
   APCA_ALGORITHM_VERSION,
   APCA_CONSTANTS,
   CHROME_LEVELS,
@@ -81,6 +82,8 @@ import {
   resolveContrastForeground,
   srgbToApcaY,
 } from "../src/index.js";
+
+const colorEngineContractVersion: 2 = COLOR_ENGINE_CONTRACT_VERSION;
 
 const presetName: SurfacePresetName = "standard";
 const preset: SurfacePreset = SURFACE_PRESETS[presetName];
@@ -253,6 +256,7 @@ void textTreatmentName;
 void textTreatment;
 void cssOutput;
 void cssArtifacts;
+void colorEngineContractVersion;
 void cssArtifactsFromCssOutput;
 void cssArtifactHash;
 void cssFile;
