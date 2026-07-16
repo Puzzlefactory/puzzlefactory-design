@@ -57,9 +57,10 @@ Supported API:
 | --- | --- | --- |
 | `variant` attribute/property | `primary` or `secondary` | Defaults to `primary`; setting the property to `primary` removes the attribute. |
 | `disabled` attribute/property | boolean | Reflected to the internal native button. |
+| `aria-label` attribute | string | Forwarded to the internal native button and takes precedence over slotted text for its accessible name. |
 | `focus(options?)` | `FocusOptions` | Delegates to the internal native button when available. |
 | `click()` | none | Delegates to the internal native button when enabled; disabled buttons do not dispatch a click through this method. |
-| Slotted content | text or inline phrasing content | Provides the button's visible label and accessible name. |
+| Slotted content | text or inline phrasing content | Provides the button's visible label and, when `aria-label` is absent, accessible name. |
 
 Deferred native/form behavior:
 

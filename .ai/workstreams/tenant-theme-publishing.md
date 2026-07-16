@@ -1,6 +1,6 @@
 # Workstream: Tenant Theme Publishing Foundation
 
-Status: closing
+Status: closed
 Created: 2026-07-16
 Last Updated: 2026-07-16
 
@@ -29,7 +29,7 @@ Out of scope:
 
 ## Current State
 
-`TTP-01` through `TTP-05` are implemented and verified. `@puzzlefactory/themes` is a real TypeScript workspace package with a versioned canonical theme source, theme identity validation, exact header/sidebar/footer role-treatment mappings, normalized color-engine input, runtime-safe source shape checks, resolved region semantics, APCA region diagnostics, deterministic CSS/bundle/manifest artifacts, and explicit theme/color-engine/release metadata. Theme Author delegates publishable source composition, region resolution, region diagnostics, and artifact/manifest generation to that package while retaining editor-only stable role keys, disabled drafts, and temporary incomplete mapping state. A replaceable async repository port supports tenant-scoped load/save with optimistic draft revisions and immutable publication versions. Its browser-local adapter is explicitly a development workflow adapter; the publishing screen previews and stores the same precomputed artifact bundle so publication cannot diverge from review. Full repository build/test/typecheck passed, and browser review covered role authoring validation, region editing/contrast, draft save/load, immutable publication, and visible failure preservation with no console errors. Production persistence, Blob upload, activation, rollback, caching, and bootstrap remain consumer-owned.
+`TTP-01` through `TTP-05` and the requested hardening pass are implemented and verified. `@puzzlefactory/themes` is a real TypeScript workspace package with a versioned canonical theme source, theme identity validation, exact header/sidebar/footer role-treatment mappings, normalized color-engine input, runtime-safe source shape checks, resolved region semantics, APCA region diagnostics, and deterministic CSS/bundle/manifest artifacts with explicit theme/color-engine/release metadata. Custom roles are normalized in locale-independent code-unit order. Theme Author delegates publishable source composition, region resolution, region diagnostics, and artifact/manifest generation to that package while retaining editor-only stable role keys, disabled drafts, and temporary incomplete mapping state. A replaceable async repository port supports tenant-scoped load/save with optimistic draft revisions and immutable publication versions. Its browser-local development adapter deeply validates stored drafts and publications, stores canonical manifest/artifact data instead of duplicated engine composition, recomposes publications to detect tampering, rejects revision rollover, and guards delayed persistence results across committed tenant/theme identity changes. The publishing screen passes the exact preview bundle to the repository, which persists its canonical publication products. Full build/test/typecheck/lint and dependency audit pass; browser review and Chromium app tests cover the authoring and diagnostic apps. Production persistence, Blob upload, activation, rollback, caching, and bootstrap remain consumer-owned.
 
 The implementation is planned as independently verified commits:
 
@@ -41,9 +41,7 @@ The implementation is planned as independently verified commits:
 
 ## Next Actions
 
-- Perform the user-requested review, bug-fix, refactor, and hardening pass over the completed implementation.
 - If a consumer pilot is authorized later, create a consumer-owned workstream for database/Blob/active-pointer/runtime-loader concerns rather than expanding this package workstream.
-- Continue through later slices without expanding into consumer infrastructure.
 
 ## Completion Shape
 
@@ -56,15 +54,17 @@ This workstream is substantially complete when:
 - Theme Author can save/load drafts and create immutable local publication versions through a replaceable persistence port
 - Kitchen Sink remains the engineering diagnostic app and `@puzzlefactory/color-engine` remains zero-runtime-dependency
 
-All completion-shape conditions are met for the portable design-system foundation. The workstream remains `closing` only because the implementation review/refactor phase was intentionally deferred until all slices were complete.
+All completion-shape conditions and the independent hardening review are complete for the portable design-system foundation.
 
 ## Verification
 
+- `npm run lint` — passed on 2026-07-16
 - `npm run build` — passed across all eight workspaces on 2026-07-16
-- `npm test` — passed across all workspace suites on 2026-07-16
+- `npm test` — passed across all workspace suites, including Chromium-backed Theme Author, Kitchen Sink, and component tests, on 2026-07-16
 - `npm run typecheck` — passed across all eight workspaces on 2026-07-16
+- `npm audit --audit-level=high` — passed with zero vulnerabilities on 2026-07-16
 - Theme Author browser review — passed at 1280 × 720 for authoring, regions, publishing, and error states; no browser console warnings or errors
-- Review status — implementation review/refactor remains pending by user direction
+- Review status — independent review completed; all findings were fixed and re-review approved with no remaining actionable findings
 
 ## Blockers / Constraints
 

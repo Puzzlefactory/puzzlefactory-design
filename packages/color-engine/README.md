@@ -240,6 +240,8 @@ Custom role APCA assertions are added only when custom roles are configured. Eac
 
 These assertions use the existing soft and solid status thresholds and remain diagnostic; they do not enforce or auto-tune theme output.
 
+The engine's state-aware report also checks `text-primary`, `text-secondary`, and `text-muted` against every generated rest, hover, selected, and pressed surface level in light and dark themes. This keeps quiet text semantic and opaque while detecting contrast loss caused by interactive background changes. The public `createContrastAssertionReport(...)` helper preserves its legacy report when surface presets are omitted; engine callers pass the resolved presets to opt into the expanded state-aware report.
+
 ## Generation Models
 
 ### Build Once
