@@ -6,7 +6,6 @@ import type {
   OklchCssString,
   PaletteSlot,
   PrimitiveTokenName,
-  SemanticThemeKey,
   SemanticTokenName,
 } from "./index.js";
 import { runContrastAssertions } from "./assertions.js";

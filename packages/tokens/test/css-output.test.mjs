@@ -18,8 +18,8 @@ test("createTokenCssFiles renders primitive sRGB custom properties", () => {
   const files = createTokenCssFiles(output);
 
   assert.equal(files["tokens.css"].startsWith(":root {\n"), true);
-  assert.match(files["tokens.css"], /  --pf-neutral-l-1: oklch\([^)]+\);/);
-  assert.match(files["tokens.css"], /  --pf-palette-a-l-1: oklch\([^)]+\);/);
+  assert.match(files["tokens.css"], / {2}--pf-neutral-l-1: oklch\([^)]+\);/);
+  assert.match(files["tokens.css"], / {2}--pf-palette-a-l-1: oklch\([^)]+\);/);
   assert.equal(countDeclarations(files["tokens.css"]), Object.keys(output.primitives.srgb).length);
   assert.equal(files["tokens.css"].endsWith("\n}"), true);
 });
@@ -61,8 +61,8 @@ test("createTokenCssFiles renders theme selectors and semantic references", () =
   const files = createTokenCssFiles(output);
 
   assert.equal(files["theme-light.css"].startsWith(":root,\n[data-theme=\"light\"] {\n"), true);
-  assert.match(files["theme-light.css"], /  --pf-surface-base: var\(--pf-neutral-l-2\);/);
-  assert.match(files["theme-light.css"], /  --pf-surface-raised: var\(--pf-neutral-l-1\);/);
+  assert.match(files["theme-light.css"], / {2}--pf-surface-base: var\(--pf-neutral-l-2\);/);
+  assert.match(files["theme-light.css"], / {2}--pf-surface-raised: var\(--pf-neutral-l-1\);/);
   assert.equal(countDeclarations(files["theme-light.css"]), Object.keys(output.semantic.light).length);
   assert.equal(files["theme-dark.css"].startsWith("[data-theme=\"dark\"] {\n"), true);
   assert.equal(files["theme-dark.css"].includes(":root"), false);
@@ -111,7 +111,7 @@ test("inferNamespace handles namespace values that contain hyphens", () => {
   assert.equal(inferNamespace(output), "tenant-one");
   assert.match(
     createThemeCss(output, "light"),
-    /  --tenant-one-surface-base: var\(--tenant-one-neutral-l-2\);/,
+    / {2}--tenant-one-surface-base: var\(--tenant-one-neutral-l-2\);/,
   );
 });
 

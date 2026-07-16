@@ -27,7 +27,7 @@ test("generic preview text styling cannot override region label text", () => {
   assert.ok(scopedRule > genericRule);
   assert.match(
     styles.slice(scopedRule),
-    /^\.generated-preview \.region-example span \{\n  color: var\(--region-label-text\);\n\}/,
+    /^\.generated-preview \.region-example span \{\n {2}color: var\(--region-label-text\);\n\}/,
   );
 });
 

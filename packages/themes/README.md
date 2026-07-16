@@ -15,17 +15,22 @@ const publication = createThemeArtifactBundle(composition, {
 
 Release metadata is explicit so identical source plus identical release input produces identical artifacts. The package does not generate timestamps, upload files, resolve tenants, or select active versions.
 
-## Intended Responsibility
+## Responsibility
 
-`@puzzlefactory/themes` is expected to become the home for composed theme configuration and artifact orchestration.
+`@puzzlefactory/themes` is the stable portable boundary for composed theme configuration and artifact orchestration.
 
-It may eventually own:
+It currently owns:
 
-- full theme preset objects that combine color input with non-color token choices
 - normalized theme configuration schemas
 - theme version metadata and manifest helpers
-- region mapping schemas for header, footer, sidebar, navigation, promo, tenant, or workflow surfaces
+- complete header, sidebar, and footer custom-role treatment mappings
 - composition helpers that call `@puzzlefactory/color-engine` for color output
+- region APCA diagnostics
+- deterministic multi-file CSS, bundle, and manifest artifacts
+
+It may eventually add:
+
+- full theme preset objects that combine color input with non-color token choices
 - helpers that combine color artifacts with future typography, spacing, radius, elevation, density, and motion outputs
 - build-time or publish-time helpers for writing generated theme artifacts to a local directory
 
@@ -47,4 +52,4 @@ Current v2 color CSS output still lives in `@puzzlefactory/color-engine`.
 
 `@puzzlefactory/tokens` remains v1/reference-backed for now and is expected to become the broader token model later.
 
-Theme Authoring still uses app-local region composition and artifact helpers. The next slice migrates those consumers to this package without changing Kitchen Sink.
+Theme Author consumes this package for normalized source composition, region resolution and diagnostics, and exact artifact previews. Kitchen Sink remains the lower-level engineering diagnostic app.

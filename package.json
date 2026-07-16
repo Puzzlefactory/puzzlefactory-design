@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "packageManager": "npm@11.12.1",
+  "engines": {
+    "node": "^20.19.0 || ^22.13.0 || >=24"
+  },
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -10,11 +13,16 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "lint": "eslint .",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.7.0",
+    "globals": "^17.7.0",
     "typescript": "^6.0.3",
+    "typescript-eslint": "^8.64.0",
     "turbo": "^2.9.16"
   }
 }

@@ -169,11 +169,6 @@ type ArtifactPreviewFile = {
   readonly contentHash?: string;
 };
 
-type RegionMapping = AuthoredRegionMapping & {
-  readonly label: string;
-  readonly description: string;
-};
-
 type RegionStyle = CSSProperties & Readonly<Record<`--region-${string}`, string>>;
 
 const initialPresetName = "evergreen" satisfies ColorEngineThemePresetName;

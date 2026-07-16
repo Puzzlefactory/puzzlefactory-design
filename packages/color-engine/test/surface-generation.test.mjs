@@ -427,8 +427,6 @@ test("chrome ramps separate structural borders from surface states", () => {
   const separated = createColorEngineTheme({ preset: "high-separation" });
   const quietLight = quiet.primitives["chrome-light"];
   const quietDark = quiet.primitives["chrome-dark"];
-  const separatedLight = separated.primitives["chrome-light"];
-
   assert.ok((quietLight[0]?.oklch.l ?? 0) > (quietLight[1]?.oklch.l ?? 1));
   assert.ok((quietLight[1]?.oklch.l ?? 0) > (quietLight[2]?.oklch.l ?? 1));
   assert.ok((quietDark[0]?.oklch.l ?? 1) < (quietDark[1]?.oklch.l ?? 0));
